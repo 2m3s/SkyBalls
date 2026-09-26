@@ -28,10 +28,16 @@ import java.util.regex.Pattern;
  */
 public final class SkyBallsLocation {
     private static final Pattern FLOOR = Pattern.compile("Catacombs \\((?<floor>[FM]\\d|E)\\)");
+    /** Hypixel's "[player] entered (MM) The Catacombs, Floor VII!" / "... The Catacombs, Entrance!" when a run starts. */
+    private static final Pattern ENTERED = Pattern.compile("entered (MM )?The Catacombs, (?:Floor (?<roman>[IV]+)|(?<entrance>Entrance))!");
     private static final Pattern GLACITE = Pattern.compile("Glacite Tunnels|Dwarven Base Camp|Great Glacite Lake|Fossil Research Center");
     private static final List<Consumer<String>> AREA_LISTENERS = new CopyOnWriteArrayList<>();
 
     private static List<String> scoreboard = List.of();
+    private static List<String> teamLines = List.of();
+    /** Floor from the dungeon's "entered" chat message, only while still in that world. */
+    private static String chatFloor = "";
+    private static java.lang.ref.WeakReference<Object> chatFloorWorld = new java.lang.ref.WeakReference<>(null);
     private static String scoreboardTitle = "";
     private static String area = "";
     private static String location = "";
@@ -47,6 +53,19 @@ public final class SkyBallsLocation {
         });
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> reset());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
+        SkyBallsChat.onChat(message -> {
+            Matcher m = ENTERED.matcher(message.text());
+            if (!m.find()) return;
+            chatFloor = m.group("entrance") != null ? "E" : (m.group(1) != null ? "M" : "F") + roman(m.group("roman"));
+            chatFloorWorld = new java.lang.ref.WeakReference<>(Minecraft.getInstance().level);
+        });
+    }
+
+    private static int roman(String numeral) {
+        return switch (numeral) {
+            case "I" -> 1; case "II" -> 2; case "III" -> 3; case "IV" -> 4; case "V" -> 5; case "VI" -> 6; case "VII" -> 7;
+            default -> 0;
+        };
     }
 
     /** Called when the tab-list area changes (e.g. "Garden", "Catacombs", "Crystal Hollows"). */
@@ -56,6 +75,8 @@ public final class SkyBallsLocation {
 
     private static void reset() {
         scoreboard = List.of();
+        teamLines = List.of();
+        chatFloor = "";
         scoreboardTitle = "";
         location = "";
         floor = "";
@@ -89,17 +110,30 @@ public final class SkyBallsLocation {
             scoreboardTitle = "";
         }
         scoreboard = List.copyOf(lines);
+        // Every sidebar line is a team's prefix + suffix. Reading the teams directly works even when a scoreboard
+        // mod hides or replaces the sidebar objective, like NoammAddons does.
+        List<String> teams = new ArrayList<>();
+        for (PlayerTeam team : board.getPlayerTeams()) {
+            String text = strip(team.getPlayerPrefix().getString() + team.getPlayerSuffix().getString()).replaceAll("[\\x{10000}-\\x{10FFFF}]", "").trim();
+            if (!text.isEmpty()) teams.add(text);
+        }
+        teamLines = List.copyOf(teams);
         onSkyblock = scoreboardTitle.contains("SKYBLOCK") || scoreboardTitle.contains("SKIBLOCK");
 
         String newLocation = "";
         String newFloor = "";
+        for (String line : teams) {
+            Matcher m = FLOOR.matcher(line);
+            if (m.find() && !line.contains("Queue")) newFloor = m.group("floor");
+        }
         for (String line : lines) {
             int symbol = Math.max(line.indexOf('⏣'), line.indexOf('ф'));
             if (symbol >= 0) newLocation = line.substring(symbol + 1).trim();
             Matcher m = FLOOR.matcher(line);
-            if (m.find()) newFloor = m.group("floor");
+            if (m.find() && !line.contains("Queue")) newFloor = m.group("floor");
         }
         location = newLocation;
+        if (newFloor.isEmpty() && !chatFloor.isEmpty() && mc.level == chatFloorWorld.get()) newFloor = chatFloor;
         floor = newFloor;
 
         String newArea = "";
@@ -148,6 +182,8 @@ public final class SkyBallsLocation {
     public static String area() { return area; }
     public static String location() { return location; }
     public static List<String> scoreboard() { return scoreboard; }
+    /** The sidebar lines read from the scoreboard teams (prefix + suffix), found even when the sidebar is hidden. */
+    public static List<String> teamLines() { return teamLines; }
     /** Floor such as "F7" or "M7", or "" outside dungeons. */
     public static String dungeonFloor() { return floor; }
 

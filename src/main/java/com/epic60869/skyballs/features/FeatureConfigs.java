@@ -572,14 +572,19 @@ public final class FeatureConfigs {
 
     public static final class Score {
         @Expose
-        @ConfigOption(name = "270 Score Alert", desc = "Show a title, play a sound and print a chat message when the run reaches 270 score (S).")
+        @ConfigOption(name = "270 Score Alert", desc = "Show a title and play a sound when the run reaches 270 score (S).")
         @ConfigEditorBoolean
         public boolean alert270 = true;
 
         @Expose
-        @ConfigOption(name = "300 Score Alert", desc = "Show a title, play a sound and print a chat message with the run time when the run reaches 300 score (S+).")
+        @ConfigOption(name = "300 Score Alert", desc = "Show a title and play a sound when the run reaches 300 score (S+).")
         @ConfigEditorBoolean
         public boolean alert300 = true;
+
+        @Expose
+        @ConfigOption(name = "Score Time Message", desc = "Like NoammAddons: a chat message when the run reaches 270 and 300 score, with how long it took and the floor (\"300 score reached in 6m 12s || M7.\"). Only you see it.")
+        @ConfigEditorBoolean
+        public boolean timeMessage = true;
 
         @Expose
         @ConfigOption(name = "Send 270 to Party", desc = "Also send \"[SB] 270 Score Reached!\" to party chat.")

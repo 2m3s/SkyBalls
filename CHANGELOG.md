@@ -4,10 +4,14 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ## 1.2.8 — 2026-09-26
 
+### Added
+- Score Time Message (Dungeons > Score, on by default): like NoammAddons, a chat message when the run reaches 270 and 300 score with how long it took and the floor, e.g. "300 score reached in 6m 12s || M7." It no longer needs the 270/300 alerts on, and a run that jumps straight past 300 gets both messages.
+
 ### Removed
 - The NoammAddons dungeon map (and its Map Style, checkmark, name, scale and colour options). The dungeon map is always the Skyblocker map now.
 
 ### Fixed
+- Score Display stayed at 0 (or didn't show) for some players: the floor, Cleared % and Time Elapsed are now also read straight from the scoreboard's teams, like NoammAddons, so they're found even when a scoreboard mod hides or replaces the sidebar. The floor is also taken from the "entered The Catacombs, Floor ..." message as a last resort.
 - Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. SkyBalls now applies them last. If it still moves, turn off the other mod's animations.
 - F7/M7 positional messages (Py Stand Here, Mage Stop, Arch/Healer/Tank Stand Here, SS) didn't show when the floor couldn't be read from the sidebar. SkyBalls now also knows you're on F7/M7 from the "entered ... Floor VII" message and the Wither Lords' boss messages.
 - Quiz solver didn't highlight the answer when it couldn't find the room's corner block; it now uses the dungeon room matching to place the answers.
