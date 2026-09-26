@@ -305,6 +305,16 @@ public final class FeatureConfigs {
         public boolean allChests = false;
 
         @Expose
+        @ConfigOption(name = "Croesus", desc = "Also spin the chests you open at Croesus in the Dungeon Hub, with that run's floor drops.")
+        @ConfigEditorBoolean
+        public boolean croesus = true;
+
+        @Expose
+        @ConfigOption(name = "Hide Contents In Croesus", desc = "In Croesus's menu for a run, hide what's in the chests that will spin, so the spin shows you.")
+        @ConfigEditorBoolean
+        public boolean hideCroesusContents = true;
+
+        @Expose
         @ConfigOption(name = "Seconds", desc = "How long the spin takes.")
         @ConfigEditorSlider(minValue = 2, maxValue = 12, minStep = 1)
         public int seconds = 6;

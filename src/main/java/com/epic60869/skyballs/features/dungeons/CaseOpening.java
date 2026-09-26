@@ -6,6 +6,7 @@ import com.epic60869.skyballs.SkyBallsItemRarity;
 import com.epic60869.skyballs.SkyBallsPriceTooltip;
 import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.features.FeatureConfigs;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
@@ -14,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
@@ -24,6 +26,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -35,11 +38,18 @@ import java.util.regex.Pattern;
  * CS2-style case opening for dungeon reward chests, ported from SkyOcean's Dungeon Gambling: opening an Obsidian or
  * Bedrock chest (or any chest, if turned on) spins a strip of item cards past a red marker, slowing down and stopping
  * on the chest's most valuable item, whose name then grows onto the screen. The menu can't be clicked while it
- * spins; Esc skips it. When the winner is Legendary (gold) or better, the "GOLD GOLD GOLD" sound plays
+ * spins; Esc skips it. It also works at Croesus (like SkyOcean's Croesus gambling): the floor comes from the menu's
+ * "To Catacombs - Floor VII" back arrow, and the chests' contents are hidden in the run's menu so the spin isn't
+ * spoiled. When the winner is Legendary (gold) or better, the "GOLD GOLD GOLD" sound plays
  * (assets/skyballs/sounds/gold.ogg; a resource pack can replace it).
  */
 public final class CaseOpening {
     private static final Pattern CHEST = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?$");
+    /** Croesus's back arrow: "To Catacombs - Floor VII" or "To Master Catacombs - Floor VII". */
+    private static final Pattern CROESUS_BACK = Pattern.compile("^To (?<master>Master )?Catacombs - Floor (?<floor>[IV]+)$");
+    /** Croesus's menu for one run, which lists its chests. */
+    private static final Pattern CROESUS_RUN = Pattern.compile("^(?:Master )?Catacombs - Floor [IV]+$");
+    private static final Pattern CHEST_HEAD = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?");
     private static final Identifier GOLD_SOUND = Identifier.fromNamespaceAndPath("skyballs", "gold");
 
     private static final int ITEM_SCALE = 4;
@@ -84,6 +94,74 @@ public final class CaseOpening {
                 menuId = -1;
             });
         });
+        ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> hideCroesusContents(stack, lines));
+    }
+
+    /** Whether this chest type spins with the current settings. */
+    private static boolean spins(FeatureConfigs.CaseOpening c, String type) {
+        return c.allChests || type.equals("Obsidian") || type.equals("Bedrock");
+    }
+
+    /** In a Croesus run's menu, replaces the contents in the tooltip of a chest that will spin, so you find out when it opens. */
+    private static void hideCroesusContents(ItemStack stack, List<Component> lines) {
+        FeatureConfigs.CaseOpening c = config();
+        if (c == null || !c.enabled || !c.croesus || !c.hideCroesusContents || !Compat.isOnSkyblock() || !stack.is(Items.PLAYER_HEAD)) return;
+        if (!(Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen)
+            || !CROESUS_RUN.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim()).matches()) return;
+        var m = CHEST_HEAD.matcher(ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim());
+        if (!m.find() || !spins(c, m.group("type"))) return;
+        int contents = -1;
+        for (int i = 0; i < lines.size(); i++) {
+            if (ChatFormatting.stripFormatting(lines.get(i).getString()).trim().equals("Contents")) {
+                contents = i;
+                break;
+            }
+        }
+        if (contents < 0) return;
+        // The contents run until the blank line before the cost.
+        int end = contents + 1;
+        while (end < lines.size() && !ChatFormatting.stripFormatting(lines.get(end).getString()).isBlank()) end++;
+        lines.subList(contents + 1, end).clear();
+        lines.add(contents + 1, Component.literal("Hidden until you open it (Case Opening)").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+    }
+
+    /** The floor ("F7", "M5") when this chest menu is Croesus's, read from its back arrow; null for any other menu. */
+    private static String croesusFloor(AbstractContainerScreen<?> screen) {
+        for (Slot slot : screen.getMenu().slots) {
+            if (slot.container instanceof Inventory || !slot.getItem().is(Items.ARROW)) continue;
+            ItemLore lore = slot.getItem().get(DataComponents.LORE);
+            if (lore == null) continue;
+            for (Component line : lore.lines()) {
+                var m = CROESUS_BACK.matcher(ChatFormatting.stripFormatting(line.getString()).trim());
+                if (m.matches()) return (m.group("master") != null ? "M" : "F") + roman(m.group("floor"));
+            }
+        }
+        return null;
+    }
+
+    private static int roman(String numeral) {
+        int total = 0;
+        for (int i = 0; i < numeral.length(); i++) {
+            int value = numeral.charAt(i) == 'V' ? 5 : 1;
+            boolean subtract = value == 1 && i + 1 < numeral.length() && numeral.charAt(i + 1) == 'V';
+            total += subtract ? -1 : value;
+        }
+        return total;
+    }
+
+    /** Menu buttons (Open Reward Chest, Kismet reroll, ...) say what clicking does; the loot doesn't. */
+    private static boolean isButton(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) return false;
+        for (Component line : lore.lines()) {
+            if (ChatFormatting.stripFormatting(line.getString()).trim().startsWith("Click to")) return true;
+        }
+        return false;
+    }
+
+    /** While the case spins, the chest menu under it (background, items, tooltips) isn't drawn (see the Storage Overlay mixins). */
+    public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
+        return running(screen);
     }
 
     private static boolean running(AbstractContainerScreen<?> screen) {
@@ -103,15 +181,17 @@ public final class CaseOpening {
         if (id == menuId) return;
         var m = CHEST.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim());
         if (!m.matches()) return;
-        String type = m.group("type");
-        if (!c.allChests && !type.equals("Obsidian") && !type.equals("Bedrock")) return;
+        if (!spins(c, m.group("type"))) return;
+        String croesus = croesusFloor(screen);
+        if (croesus != null && !c.croesus) return;
+        String floor = croesus != null ? croesus : com.epic60869.skyballs.features.core.SkyBallsLocation.dungeonFloor();
 
         List<ItemStack> loot = new ArrayList<>();
         for (Slot slot : screen.getMenu().slots) {
             if (slot.container instanceof Inventory) continue;
             ItemStack stack = slot.getItem();
             if (stack.isEmpty()
-                || stack.is(Items.BARRIER) || stack.is(Items.ARROW) || stack.is(Items.CHEST)) continue;
+                || stack.is(Items.BARRIER) || stack.is(Items.ARROW) || stack.is(Items.CHEST) || isButton(stack)) continue;
             // Skip the glass pane filler, keep everything else (essence has no SkyBlock id but is loot).
             if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().endsWith("glass_pane")) continue;
             if (ChatFormatting.stripFormatting(stack.getHoverName().getString()).isBlank()) continue;
@@ -133,7 +213,7 @@ public final class CaseOpening {
         reel.clear();
         ThreadLocalRandom random = ThreadLocalRandom.current();
         // Like SkyOcean, the reel shows what the floor can drop, mixed with what's really in the chest.
-        List<ItemStack> pool = floorPool();
+        List<ItemStack> pool = floorPool(floor);
         for (int i = 0; i < ITEMS; i++) {
             boolean fromFloor = !pool.isEmpty() && random.nextInt(3) != 0;
             reel.add(fromFloor ? pool.get(random.nextInt(pool.size())) : loot.get(random.nextInt(loot.size())));
@@ -162,13 +242,12 @@ public final class CaseOpening {
     private static final List<String> MASTER_DROPS = List.of("FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR",
         "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR", "MASTER_SKULL_TIER_1");
 
-    /** Item icons for the current floor's drops (unknown ids are left out). */
-    private static List<ItemStack> floorPool() {
-        String floor = com.epic60869.skyballs.features.core.SkyBallsLocation.dungeonFloor();
+    /** Item icons for the floor's drops (unknown ids are left out). */
+    private static List<ItemStack> floorPool(String floor) {
         List<String> ids = new ArrayList<>(COMMON_DROPS);
         int number = floor.length() == 2 && Character.isDigit(floor.charAt(1)) ? floor.charAt(1) - '0' : -1;
         if (number > 0) ids.addAll(FLOOR_DROPS.getOrDefault(number, List.of()));
-        else FLOOR_DROPS.values().forEach(ids::addAll); // floor unknown (e.g. Croesus): any floor's drops
+        else FLOOR_DROPS.values().forEach(ids::addAll); // floor unknown: any floor's drops
         if (floor.startsWith("M")) ids.addAll(MASTER_DROPS);
         List<ItemStack> out = new ArrayList<>();
         for (String id : ids) {
@@ -188,8 +267,8 @@ public final class CaseOpening {
         float seconds = c == null ? 6 : c.seconds;
         int w = g.guiWidth();
         int h = g.guiHeight();
-        // Cover the chest while it spins.
-        g.fill(0, 0, w, h, 0xE0101010);
+        // Cover the screen while it spins (the chest itself isn't drawn, see hidesMenu).
+        g.fill(0, 0, w, h, 0xFF101010);
 
         float raw = (System.currentTimeMillis() - start) / (seconds * 1000f);
         float progress = Mth.clamp(raw + 0.25f, 0f, 1f);
