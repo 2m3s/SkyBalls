@@ -121,10 +121,17 @@ public final class DungeonFeatures {
     private DungeonFeatures() {}
 
     private static boolean goldorReached;
+    /** The world Goldor was reached in: a new run is a new world, even when the area never stops being Catacombs. */
+    private static java.lang.ref.WeakReference<Object> goldorWorld = new java.lang.ref.WeakReference<>(null);
 
     /** True once Goldor's first line has been seen this run (Storm defeated), until the run ends. */
     public static boolean goldorReached() {
-        return goldorReached;
+        return goldorReached && Minecraft.getInstance().level == goldorWorld.get();
+    }
+
+    private static void reachGoldor() {
+        goldorReached = true;
+        goldorWorld = new java.lang.ref.WeakReference<>(Minecraft.getInstance().level);
     }
 
     /** True from Goldor's first line until Necron's (F7/M7 phase 3). */
@@ -150,7 +157,8 @@ public final class DungeonFeatures {
         ServerTickCallback.EVENT.register(DungeonFeatures::onServerTick);
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRun());
         SkyBallsLocation.onAreaChange(area -> {
-            if (!area.equals("Catacombs")) resetRun();
+            // An empty area is the tab list briefly not being read (world load, lag), not leaving the dungeon.
+            if (!area.isEmpty() && !area.equals("Catacombs")) resetRun();
         });
         UseItemCallback.EVENT.register((player, level, hand) -> {
             if (level.isClientSide() && dragonPhase) countDebuffUse(player.getItemInHand(hand));
@@ -501,8 +509,10 @@ public final class DungeonFeatures {
         if (text.startsWith("[BOSS] Storm: Pathetic Maxor, just like expected.")) stormStartTick = serverTicks;
         else if (text.startsWith("[BOSS] Goldor: Who dares trespass into my domain?")) {
             goldorStartTick = serverTicks;
-            goldorReached = true;
+            reachGoldor();
         }
+        // Any Goldor line (or Storm's death line) also means Goldor has been reached, in case the first one was missed.
+        else if (text.startsWith("[BOSS] Goldor:") || text.startsWith("[BOSS] Storm: I should have known that I stood no chance.")) reachGoldor();
         else if (text.equals("The Core entrance is opening!")) stormStartTick = -1;
         else if (text.startsWith("[BOSS] Necron: You went further than any human before, congratulations.")) goldorStartTick = -1;
         else if (text.startsWith("[BOSS] Necron: All this, for nothing...")) dragonPhase = true;

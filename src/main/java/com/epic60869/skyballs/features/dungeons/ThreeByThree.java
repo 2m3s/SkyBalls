@@ -2,10 +2,8 @@ package com.epic60869.skyballs.features.dungeons;
 
 import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.features.FeatureConfigs;
-import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
 import com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass;
-import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonPlayerManager;
 import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -26,9 +24,8 @@ public final class ThreeByThree {
             Minecraft mc = Minecraft.getInstance();
             if (config == null || mc.player == null) return;
             FeatureConfigs.PlatformHighlight settings = config.dungeons.platformHighlight;
-            if (!settings.enabled || !DungeonFeatures.goldorReached()
-                || !SkyBallsLocation.inDungeon() || !SkyBallsLocation.dungeonFloor().endsWith("7")) return;
-            if (settings.healerOnly && DungeonPlayerManager.getClassFromPlayer(mc.player) != DungeonClass.HEALER) return;
+            if (!settings.enabled || !DungeonFeatures.goldorReached() || !PositionalMessages.onFloor7()) return;
+            if (settings.healerOnly && SelfClass.get() != DungeonClass.HEALER) return;
             int outline = colour(settings.outlineColor);
             int fill = colour(settings.fillColor);
             if (settings.style != FeatureConfigs.BoxStyle.OUTLINE) {

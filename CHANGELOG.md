@@ -18,6 +18,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Case Opening hides the chest while the case spins, so you can't see what's inside until it lands.
 
 ### Fixed
+- Platform Highlight (3x3) didn't show: it needed the floor from the sidebar and could be switched off by a moment where the tab list area wasn't read. It now uses the F7/M7 detection from chat and the boss, turns on from any Goldor line (or Storm's death) in case the first was missed, and Healer Only uses the Your Class setting.
 - Zealot Tracker sometimes counted one Summoning Eye twice, and pasting "RARE DROP! Summoning Eye" into chat counted as a drop. Only Hypixel's own drop line counts now: it has to start the message and "RARE DROP!" has to be bold like Hypixel writes it, which players can't do. The same line arriving twice at once counts once.
 - Copy Chat sometimes copied the message above the one you clicked. It now finds the line under the mouse with the same maths as vanilla chat.
 - Arrow Align misclick protection let the frames spin past the right direction: one right click could be counted twice, and when more than one layout fitted, frames that were already right could still be clicked. Both are fixed, and it also works when the floor can't be read from the sidebar.
