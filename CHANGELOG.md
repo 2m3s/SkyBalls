@@ -4,6 +4,9 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ## 1.3.0
 
+### Added
+- Hypixel Button (Misc, on by default): a Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.
+
 ## 1.2.9 — 2026-09-26
 
 ### Added

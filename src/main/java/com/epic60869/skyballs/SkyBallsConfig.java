@@ -210,6 +210,11 @@ public final class SkyBallsConfig extends Config {
         public com.epic60869.skyballs.features.misc.ScreenshotShare.Host screenshotHost = com.epic60869.skyballs.features.misc.ScreenshotShare.Host.LITTERBOX_72H;
 
         @Expose
+        @ConfigOption(name = "Hypixel Button", desc = "A Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.")
+        @ConfigEditorBoolean
+        public boolean hypixelButton = true;
+
+        @Expose
         @ConfigOption(name = "Storage Overlay", desc = "Show every Ender Chest page and backpack at once in /storage and in any page, like Firmament. Click a page's name to open it; the open page and your inventory can be clicked as normal.")
         @ConfigEditorBoolean
         public boolean storageOverlay = true;
