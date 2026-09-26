@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.2.8
+## 1.2.8 — 2026-09-26
 
 ### Added
 - Dungeon Case Opening at Croesus (Dungeons > Case Opening > Croesus, on by default): the chests you open at Croesus spin too, with that run's floor drops in the reel, like SkyOcean. Hide Contents In Croesus (on by default) hides what's in those chests in the run's menu so the spin isn't spoiled.
