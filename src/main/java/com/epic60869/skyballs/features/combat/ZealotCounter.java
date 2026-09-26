@@ -71,6 +71,15 @@ public final class ZealotCounter {
 
     private ZealotCounter() {}
 
+    /**
+     * Hypixel writes "RARE DROP!" in bold; a player typing or pasting the same words into chat can't make them bold,
+     * so this tells the real drop apart from a copy of it.
+     */
+    private static boolean boldDropTag(net.minecraft.network.chat.Component component) {
+        return component.visit((style, part) -> (part.contains("RARE DROP!") && style.isBold()) || part.contains("§lRARE DROP!")
+            ? java.util.Optional.of(Boolean.TRUE) : java.util.Optional.empty(), net.minecraft.network.chat.Style.EMPTY).isPresent();
+    }
+
     private static boolean enabled() {
         SkyBallsConfig c = SkyBallsConfig.current();
         return c != null && c.combat.zealotCounter && inEnd();
@@ -88,7 +97,7 @@ public final class ZealotCounter {
             String text = message.text().trim();
             // Only Hypixel's own drop line, not party/guild chat or other mods repeating it. The same line arriving
             // twice at once (the packet handled twice, or a mod re-sending it) is counted once.
-            if (!text.startsWith("RARE DROP! Summoning Eye")) return;
+            if (!text.startsWith("RARE DROP! Summoning Eye") || !boldDropTag(message.component())) return;
             long now = System.currentTimeMillis();
             if (text.equals(lastEyeMessage) && now - lastEyeTime < 1000) return;
             lastEyeMessage = text;
