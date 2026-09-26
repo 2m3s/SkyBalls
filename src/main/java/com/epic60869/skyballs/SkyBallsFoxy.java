@@ -12,6 +12,18 @@ public final class SkyBallsFoxy {
 
     private SkyBallsFoxy() {}
 
+    /**
+     * In a dungeon or Kuudra run. Also true while the area isn't known yet on SkyBlock (world loading into an
+     * instance), so it never fires in the moment before the location is read.
+     */
+    private static boolean inInstance() {
+        if (com.epic60869.skyballs.features.core.SkyBallsLocation.inDungeon()) return true;
+        String area = com.epic60869.skyballs.features.core.SkyBallsLocation.area();
+        String location = com.epic60869.skyballs.features.core.SkyBallsLocation.location();
+        if (area.toLowerCase(java.util.Locale.ROOT).contains("kuudra") || location.toLowerCase(java.util.Locale.ROOT).contains("kuudra's hollow")) return true;
+        return com.epic60869.skyballs.features.core.SkyBallsLocation.onSkyblock() && area.isEmpty();
+    }
+
     public static void tick(Minecraft mc) {
         tickCounter++;
 
@@ -20,8 +32,8 @@ public final class SkyBallsFoxy {
         tickCounter = 0;
 
         if (mc.gui.screen() instanceof SkyBallsFoxyScreen) return;
-        // Never in dungeons, where a surprise screen would ruin a run.
-        if (com.epic60869.skyballs.features.core.SkyBallsLocation.inDungeon()) return;
+        // Never in dungeons or Kuudra, where a surprise screen would ruin a run.
+        if (inInstance()) return;
 
         if (RANDOM.nextInt(10_000) == 0) {
             mc.getSoundManager().play(

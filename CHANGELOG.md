@@ -13,6 +13,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - The NoammAddons dungeon map (and its Map Style, checkmark, name, scale and colour options). The dungeon map is always the Skyblocker map now.
 
 ### Changed
+- The 1 in 10,000 jumpscare can't happen in Kuudra runs either (it already couldn't in dungeons), or while SkyBalls hasn't read your location yet.
 - Copy Chat has one setting, Copy Message Key: any key or mouse button (right click by default) copies the message under the mouse. Right-Click To Copy, Shift+right-click and Copy Line Key are gone.
 - Click in order terminal: the slot to click now is green, the next one yellow and the third red (Odin and NoammAddons styles). Each click moves them up a colour. The colours can be changed under Terminals (Numbers Next / Second / Third).
 - The "GOLD GOLD GOLD" sound is much louder, and it plays as soon as you open a reward chest with a Legendary or better item in it, with or without Case Opening on.
