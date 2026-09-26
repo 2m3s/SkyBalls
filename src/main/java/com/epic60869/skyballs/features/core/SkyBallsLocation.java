@@ -71,6 +71,9 @@ public final class SkyBallsLocation {
 
         Scoreboard board = mc.level.getScoreboard();
         Objective objective = board.getDisplayObjective(DisplaySlot.SIDEBAR);
+        // Scoreboard mods (CustomScoreboard, ...) can take the sidebar out of its display slot to draw their own;
+        // the SkyBlock objective is still there, so find it directly.
+        if (objective == null) objective = findSidebarObjective(board);
         List<String> lines = new ArrayList<>();
         if (objective != null) {
             scoreboardTitle = strip(objective.getDisplayName().getString());
@@ -108,6 +111,22 @@ public final class SkyBallsLocation {
             if (text.startsWith("Dungeon: ")) { newArea = text.substring(9).trim(); break; }
         }
         setArea(newArea);
+    }
+
+    /** The SkyBlock sidebar objective when nothing is in the sidebar slot: the one titled SKYBLOCK, else the biggest. */
+    private static Objective findSidebarObjective(Scoreboard board) {
+        Objective best = null;
+        int bestSize = 0;
+        for (Objective candidate : board.getObjectives()) {
+            String title = strip(candidate.getDisplayName().getString());
+            if (title.contains("SKYBLOCK") || title.contains("SKIBLOCK")) return candidate;
+            int size = board.listPlayerScores(candidate).size();
+            if (size > bestSize) {
+                best = candidate;
+                bestSize = size;
+            }
+        }
+        return best;
     }
 
     private static void setArea(String newArea) {
