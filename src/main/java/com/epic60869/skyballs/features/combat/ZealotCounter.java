@@ -112,7 +112,7 @@ public final class ZealotCounter {
         SkyBallsHuds.register("zealots", "Zealot Tracker", ZealotCounter::enabled,
             // While an inventory is open the tracker is drawn over it instead, with the clickable mode switch.
             () -> Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> ? List.of() : lines(false),
-            List.of(title(), kv("Kills: ", "1,234"), kv("Summoning Eyes: ", "4"), kv("Since last eye: ", "321")),
+            List.of(title(), kv("Total Kills: ", "1,234"), kv("Since last eye: ", "321"), kv("Summoning Eyes: ", "4")),
             8, 300);
 
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
@@ -146,9 +146,9 @@ public final class ZealotCounter {
     private static List<Component> lines(boolean withModeSwitch) {
         List<Component> lines = new ArrayList<>();
         lines.add(title());
-        lines.add(kv("Kills: ", fmt(showSession ? sessionKills : totalKills)));
-        lines.add(kv("Summoning Eyes: ", fmt(showSession ? sessionEyes : totalEyes)));
+        lines.add(kv(showSession ? "Kills: " : "Total Kills: ", fmt(showSession ? sessionKills : totalKills)));
         lines.add(kv("Since last eye: ", fmt(sinceEye)));
+        lines.add(kv("Summoning Eyes: ", fmt(showSession ? sessionEyes : totalEyes)));
         if (withModeSwitch) lines.add(modeLine());
         return lines;
     }

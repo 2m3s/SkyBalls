@@ -8,6 +8,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Dungeon Case Opening at Croesus (Dungeons > Case Opening > Croesus, on by default): the chests you open at Croesus spin too, with that run's floor drops in the reel, like SkyOcean. Hide Contents In Croesus (on by default) hides what's in those chests in the run's menu so the spin isn't spoiled.
 
 ### Changed
+- Zealot Tracker: in Total mode the kills line says "Total Kills:" (Session mode still says "Kills:"), and the lines are now kills, Since last eye, then Summoning Eyes.
 - Storage Overlay: the top row of each page (the glass panes, Go Back arrow, Close barrier and page buttons) isn't shown any more, only your items.
 
 ### Fixed
