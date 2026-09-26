@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.2.7
+## 1.2.7 — 2026-09-26
 
 ### Fixed
 - With a scoreboard mod like CustomScoreboard, SkyBalls couldn't read the sidebar, so the dungeon floor and time were unknown: the Score Display stayed at 0, the NoammAddons map drew rooms at the wrong size and place, and F7/M7 positional messages didn't show. It now finds the SkyBlock sidebar either way.
