@@ -99,6 +99,12 @@ public final class HeldItemModel {
         return config == null ? new float[]{1f, 1f, 1f} : new float[]{config.swingX, config.swingY, config.swingZ};
     }
 
+    /** Misc > Held Item Model > Swing Rotation: multiplier for how far the item turns while swinging. */
+    public static float swingRotation() {
+        SkyBallsConfig.HeldItemModel config = config();
+        return config == null ? 1f : config.swingRotation;
+    }
+
     /** Misc > Held Item Model > No Swing Animation. */
     public static boolean noSwing() {
         SkyBallsConfig.HeldItemModel config = config();

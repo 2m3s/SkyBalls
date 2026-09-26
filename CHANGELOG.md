@@ -4,6 +4,10 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ## 1.2.8.6
 
+### Added
+- Held Item Model > Swing Rotation: how far the item tilts and rolls when you swing (1 = vanilla, 0 = it doesn't turn). Swing X, Y and Z only move the item, so at 0/0/0 it stayed in place but still did the big forward roll; lower Swing Rotation to shrink that.
+- Zealot Tracker: when a Summoning Eye drops, chat says how many Zealot kills it took.
+
 ### Fixed
 - The dungeon floor still showed as "-" when the sidebar couldn't be read: the backup that reads "[MVP++] Name entered The Catacombs, Floor VII!" didn't match the message (it has lines of dashes around it) and was forgotten on the way into the run. It now works, and as a second backup the Floor 7 bosses (Maxor, Storm, Goldor, Necron) talking also sets floor 7, so positional messages show in the boss either way.
 

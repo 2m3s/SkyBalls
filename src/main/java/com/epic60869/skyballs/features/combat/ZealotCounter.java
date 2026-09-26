@@ -1,6 +1,7 @@
 package com.epic60869.skyballs.features.combat;
 
 import com.epic60869.skyballs.SkyBallsConfig;
+import com.epic60869.skyballs.features.core.SkyBallsAlerts;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsHuds;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
@@ -57,6 +58,8 @@ public final class ZealotCounter {
     private static int witherImpactTicks;
     /** Zealots that died after you hit them, waiting for your Combat XP to confirm the kill: id -> time of death. */
     private static final Map<Integer, Long> PENDING = new HashMap<>();
+    /** Pending kills already counted towards the last Summoning Eye's "It took" message. */
+    private static final Set<Integer> BEFORE_EYE = new HashSet<>();
     /** When you last gained Combat XP (Hypixel shows "+X Combat" in the action bar only for your own kills). */
     private static long lastCombatXp;
     private static final long XP_WINDOW_MS = 1500;
@@ -78,6 +81,7 @@ public final class ZealotCounter {
         file = configDir.resolve("skyballs-zealots.json");
         load();
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> save());
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> save());
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
             COUNTED.clear();
             HIT_BY_YOU.clear();
@@ -85,10 +89,17 @@ public final class ZealotCounter {
         SkyBallsChat.onChat(message -> {
             String text = message.text();
             if (text.contains("RARE DROP!") && text.contains("Summoning Eye")) {
+                // The Zealot that dropped it is usually still waiting for its Combat XP to be counted, so kills
+                // waiting now count towards this Eye (and not the next one).
+                int took = sinceEye + PENDING.size();
+                BEFORE_EYE.addAll(PENDING.keySet());
                 totalEyes++;
                 sessionEyes++;
                 sinceEye = 0;
                 save();
+                SkyBallsAlerts.chat(Component.literal("Summoning Eye! It took ").withStyle(ChatFormatting.LIGHT_PURPLE)
+                    .append(Component.literal(fmt(took)).withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD))
+                    .append(Component.literal(took == 1 ? " Zealot kill." : " Zealot kills.").withStyle(ChatFormatting.LIGHT_PURPLE)));
             }
         });
 
@@ -235,10 +246,14 @@ public final class ZealotCounter {
         PENDING.entrySet().removeIf(entry -> {
             long diedAt = entry.getValue();
             if (lastCombatXp >= diedAt - 250 && lastCombatXp <= diedAt + XP_WINDOW_MS) {
-                count();
+                count(BEFORE_EYE.remove(entry.getKey()));
                 return true;
             }
-            return now - diedAt > XP_WINDOW_MS;
+            if (now - diedAt > XP_WINDOW_MS) {
+                BEFORE_EYE.remove(entry.getKey());
+                return true;
+            }
+            return false;
         });
     }
 
@@ -256,10 +271,10 @@ public final class ZealotCounter {
         PENDING.put(entity.getId(), System.currentTimeMillis());
     }
 
-    private static void count() {
+    private static void count(boolean beforeEye) {
         totalKills++;
         sessionKills++;
-        sinceEye++;
+        if (!beforeEye) sinceEye++;
         if (totalKills % 25 == 0) save();
     }
 

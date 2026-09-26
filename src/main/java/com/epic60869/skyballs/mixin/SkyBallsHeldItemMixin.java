@@ -22,6 +22,21 @@ public abstract class SkyBallsHeldItemMixin {
         original.call(pose, x * scale[0], y * scale[1], z * scale[2]);
     }
 
+    /**
+     * Misc > Held Item Model > Swing Rotation: scales every turn in the swing (vanilla turns 45 + up to -20 degrees
+     * around Y, up to -20 around Z, up to -80 around X, then -45 back around Y; at rest they cancel out, so scaling
+     * them all keeps the resting pose and only shrinks the swing).
+     */
+    @com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "applyItemArmAttackTransform", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;"))
+    private org.joml.Quaternionf skyballs$swingRotation(org.joml.Quaternionf rotation) {
+        float scale = HeldItemModel.swingRotation();
+        if (scale == 1f) return rotation;
+        // Same axis, angle times the setting.
+        org.joml.AxisAngle4f axisAngle = new org.joml.AxisAngle4f(rotation);
+        axisAngle.angle *= scale;
+        return new org.joml.Quaternionf(axisAngle);
+    }
+
     /** Misc > Held Item Model > No Swing Animation: the first-person hand and item never swing. */
     @com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "submitHandsWithItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getAttackAnim(F)F"))
     private float skyballs$noSwing(float attack) {
