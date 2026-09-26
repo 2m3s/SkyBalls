@@ -209,6 +209,17 @@ public final class OdinTerminals {
         var font = Minecraft.getInstance().font;
         int rows = handler.type().windowSize / 9;
         graphics.fill(7, 17, 7 + 9 * 18, 17 + rows * 18, colour(config.backgroundColor, 0x80262626));
+        if (handler.type() == Type.MELODY) {
+            // Like Odin's Melody GUI: every lane (columns 1-5) and button (column 7) in rows 1-4 gets a background cell,
+            // so the board and buttons show even though the menu's own items are hidden.
+            int background = colour(config.melodyBackgroundColor, 0xFF262626);
+            for (Slot slot : screen.getMenu().slots) {
+                int row = slot.index / 9;
+                int col = slot.index % 9;
+                if (slot.index >= handler.type().windowSize || row < 1 || row > 4 || !(col >= 1 && col <= 5 || col == 7)) continue;
+                graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, background);
+            }
+        }
         for (Slot slot : screen.getMenu().slots) {
             if (slot.index >= handler.type().windowSize) continue;
             if (!handler.solution.contains(slot.index)) continue;
