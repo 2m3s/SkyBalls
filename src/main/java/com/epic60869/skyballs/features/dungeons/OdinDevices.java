@@ -14,7 +14,6 @@ import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -91,10 +90,6 @@ public final class OdinDevices {
             if (!level.isClientSide()) return InteractionResult.PASS;
             return onUseBlock(hit.getBlockPos()) ? InteractionResult.FAIL : InteractionResult.PASS;
         });
-        UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
-            if (!level.isClientSide()) return InteractionResult.PASS;
-            return onUseEntity(entity, hit != null) ? InteractionResult.FAIL : InteractionResult.PASS;
-        });
         SkyBallsWorldRender.register(OdinDevices::render);
     }
 
@@ -169,33 +164,23 @@ public final class OdinDevices {
         return false;
     }
 
-    // One right click on an item frame fires the use callback twice (interactAt with a hit, then interact without
-    // one). Only the first counts the click; the second gets the same answer, so a blocked click sends neither packet
-    // and an allowed one isn't counted twice (which made the last needed click look wrong and get blocked).
-    private static int lastUseEntity = -1;
-    private static long lastUseTime;
-    private static boolean lastUseBlocked;
-
-    private static boolean onUseEntity(Entity entity, boolean withHit) {
+    /**
+     * Right-clicking an entity, from SkyBallsEntityUseMixin (Minecraft.startUseItem, just before the interaction, like
+     * Odin's EntityInteractEvent). Called once per click.
+     * @return true to cancel the click.
+     */
+    public static boolean onUseEntity(Entity entity) {
         FeatureConfigs.Terminals config = config();
-        if (config == null || !config.odinDevices || !inF7Boss()) return false;
-        long now = System.currentTimeMillis();
-        if (!withHit && entity.getId() == lastUseEntity && now - lastUseTime < 50) {
-            lastUseEntity = -1;
-            return lastUseBlocked;
-        }
-        boolean blocked = arrowAlignClick(entity, config);
-        lastUseEntity = withHit ? entity.getId() : -1;
-        lastUseTime = now;
-        lastUseBlocked = blocked;
-        return blocked;
+        if (config == null || !config.odinDevices || !SkyBallsLocation.inDungeon()) return false;
+        return arrowAlignClick(entity, config);
     }
 
     private static void render(PrimitiveCollector collector) {
         FeatureConfigs.Terminals config = config();
-        if (config == null || !config.odinDevices || !inF7Boss()) return;
-        renderSimon(collector, config);
+        if (config == null || !config.odinDevices) return;
         renderArrowAlign(collector);
+        if (!inF7Boss()) return;
+        renderSimon(collector, config);
         renderI4(collector, config);
     }
 
@@ -301,7 +286,8 @@ public final class OdinDevices {
     private static void arrowAlignTick(Minecraft mc) {
         FeatureConfigs.Terminals config = config();
         clicksRemaining.clear();
-        if (config == null || !config.odinDevices || !config.arrowAlign || mc.player == null || mc.level == null || !inF7Boss()) return;
+        // Only near the board, whose spot is only in the F7/M7 boss, so it works even when the floor can't be read.
+        if (config == null || !config.odinDevices || !config.arrowAlign || mc.player == null || mc.level == null || !SkyBallsLocation.inDungeon()) return;
         if (mc.player.blockPosition().distSqr(ALIGN_CENTER) > 200) {
             frameRotations = null;
             solution = null;

@@ -1017,6 +1017,21 @@ public final class SkyBallsConfig extends Config {
             }
         }
 
+        // Click in order!: the 2nd and 3rd numbers were darker greens that were hard to tell apart; configs still on
+        // those defaults get yellow and red.
+        if (root.has("dungeons") && root.get("dungeons").isJsonObject()
+            && root.getAsJsonObject("dungeons").has("terminals") && root.getAsJsonObject("dungeons").get("terminals").isJsonObject()) {
+            JsonObject terminals = root.getAsJsonObject("dungeons").getAsJsonObject("terminals");
+            if (terminals.has("numbers2Color") && terminals.get("numbers2Color").getAsString().equals("0:255:42:127:42")) {
+                terminals.addProperty("numbers2Color", "0:255:255:255:85");
+                changed = true;
+            }
+            if (terminals.has("numbers3Color") && terminals.get("numbers3Color").getAsString().equals("0:255:21:63:21")) {
+                terminals.addProperty("numbers3Color", "0:255:255:85:85");
+                changed = true;
+            }
+        }
+
         if (changed) Files.writeString(path, LEGACY_GSON.toJson(root), StandardCharsets.UTF_8);
     }
 

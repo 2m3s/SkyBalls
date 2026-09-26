@@ -106,7 +106,8 @@ public final class OdinTerminals {
                 return;
             }
             if (current != null && current.menu != container.getMenu()) current = null;
-            if (current == null && enabled() && SkyBallsLocation.inDungeon()) open(container);
+            // The terminal titles only exist in F7/M7, so this doesn't wait on the dungeon being detected.
+            if (current == null && enabled() && com.epic60869.skyballs.custom.util.Compat.isOnSkyblock()) open(container);
             if (current == null) return;
             // Client prediction fallback: a click the server never answered is forgotten after the timeout.
             FeatureConfigs.Terminals config = config();
@@ -300,7 +301,8 @@ public final class OdinTerminals {
                 switch (handler.type()) {
                     case NUMBERS -> {
                         if (index > 2) continue;
-                        noammSlot(g, config, x, y, NOAMM_NUMBERS[index]);
+                        // The Numbers 1-3 colours, at NoammAddons' transparency.
+                        noammSlot(g, config, x, y, (handler.render(slot).colour() & 0x00FFFFFF) | (NOAMM_NUMBERS[index] & 0xFF000000));
                         if (config.noammShowNumbers) {
                             Render r = handler.render(slot);
                             if (r != null && r.text() != null) g.text(font, r.text(), x + 8 - font.width(r.text()) / 2, y + 4, 0xFFFFFFFF, true);
@@ -484,8 +486,8 @@ public final class OdinTerminals {
             int index = solution.indexOf(slot);
             int colour = switch (index) {
                 case 0 -> colour(c.numbers1Color, 0xFF55FF55);
-                case 1 -> colour(c.numbers2Color, 0xFF2A7F2A);
-                case 2 -> colour(c.numbers3Color, 0xFF153F15);
+                case 1 -> colour(c.numbers2Color, 0xFFFFFF55);
+                case 2 -> colour(c.numbers3Color, 0xFFFF5555);
                 default -> 0;
             };
             return new Render(colour, String.valueOf(Math.abs((solution.size() - 14) - index) + 1));

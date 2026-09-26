@@ -569,9 +569,9 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Rubix 2", desc = "") @ConfigEditorColour public String rubix2Color = "0:255:42:127:42";
         @Expose @ConfigOption(name = "Rubix -1", desc = "") @ConfigEditorColour public String rubixMinus1Color = "0:255:170:0:0";
         @Expose @ConfigOption(name = "Rubix -2", desc = "") @ConfigEditorColour public String rubixMinus2Color = "0:255:85:0:0";
-        @Expose @ConfigOption(name = "Numbers 1", desc = "") @ConfigEditorColour public String numbers1Color = "0:255:85:255:85";
-        @Expose @ConfigOption(name = "Numbers 2", desc = "") @ConfigEditorColour public String numbers2Color = "0:255:42:127:42";
-        @Expose @ConfigOption(name = "Numbers 3", desc = "") @ConfigEditorColour public String numbers3Color = "0:255:21:63:21";
+        @Expose @ConfigOption(name = "Numbers 1", desc = "The next number to click (Odin and NoammAddons).") @ConfigEditorColour public String numbers1Color = "0:255:85:255:85";
+        @Expose @ConfigOption(name = "Numbers 2", desc = "The number after that.") @ConfigEditorColour public String numbers2Color = "0:255:255:255:85";
+        @Expose @ConfigOption(name = "Numbers 3", desc = "The third number.") @ConfigEditorColour public String numbers3Color = "0:255:255:85:85";
         @Expose @ConfigOption(name = "Starts With", desc = "") @ConfigEditorColour public String startsWithColor = "0:255:85:255:85";
         @Expose @ConfigOption(name = "Select", desc = "") @ConfigEditorColour public String selectColor = "0:255:85:255:85";
         @Expose @ConfigOption(name = "Melody Column", desc = "") @ConfigEditorColour public String melodyColumnColor = "0:255:170:0:170";

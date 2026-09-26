@@ -5,10 +5,13 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.2.9
 
 ### Changed
+- Click in order! terminal: the next three numbers are green, yellow and red (they were three greens that were hard to tell apart), with the Odin and NoammAddons solvers. Settings still on the old greens are updated; Numbers 1-3 can still be changed.
 - Dungeon Case Opening: the "GOLD GOLD GOLD" sound is much louder (about 4x), and plays as soon as a gold chest starts spinning instead of when it stops.
 
 ### Fixed
 - The dungeon floor wasn't recognised (`/sb debug` showed "Dungeon floor: -"), so F7/M7 positional messages (Py Stand Here, Mage Stop, SS, ...) didn't show, and anything else that needs the floor (Score Display, dungeon map, device solvers) could break. SkyBalls now finds the SkyBlock sidebar with any scoreboard mod, even one that puts its own sidebar in its place, reads the floor even when one of Hypixel's hidden padding characters sits inside "(F7)", and falls back to the "... entered The Catacombs, Floor VII!" message when a run starts. `/sb debug` also shows the sidebar's title and location line.
+- Terminal Solver: terminals could open as the normal menu with no solver, because the solver waited for SkyBalls to know you were in a dungeon. It now starts for any terminal on Hypixel (their names only exist in F7/M7).
+- Arrow Align Block Wrong Clicks still didn't block anything: the solver only ran once the dungeon floor was known. It now runs next to the Arrow Align board in any dungeon, and wrong clicks are stopped before they're sent, the same way as Odin.
 
 ## 1.2.8 — 2026-09-26
 
