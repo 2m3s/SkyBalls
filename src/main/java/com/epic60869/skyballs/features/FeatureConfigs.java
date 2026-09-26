@@ -320,7 +320,7 @@ public final class FeatureConfigs {
         public int seconds = 6;
 
         @Expose
-        @ConfigOption(name = "Gold Sound", desc = "Play the \"GOLD GOLD GOLD\" sound when the item is Legendary (gold) or better.")
+        @ConfigOption(name = "Gold Sound", desc = "Play the \"GOLD GOLD GOLD\" sound as soon as a chest whose best item is Legendary (gold) or better starts spinning.")
         @ConfigEditorBoolean
         public boolean goldSound = true;
     }

@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * on the chest's most valuable item, whose name then grows onto the screen. The menu can't be clicked while it
  * spins; Esc skips it. It also works at Croesus (like SkyOcean's Croesus gambling): the floor comes from the menu's
  * "To Catacombs - Floor VII" back arrow, and the chests' contents are hidden in the run's menu so the spin isn't
- * spoiled. When the winner is Legendary (gold) or better, the "GOLD GOLD GOLD" sound plays
+ * spoiled. When the winner is Legendary (gold) or better, the "GOLD GOLD GOLD" sound plays as soon as the spin starts
  * (assets/skyballs/sounds/gold.ogg; a resource pack can replace it).
  */
 public final class CaseOpening {
@@ -65,7 +65,6 @@ public final class CaseOpening {
     private static long start = -1;
     private static int randomOffset;
     private static int lastSound;
-    private static boolean goldPlayed;
     private static int menuId = -1;
 
     private CaseOpening() {}
@@ -221,8 +220,9 @@ public final class CaseOpening {
         reel.set(WINNER_INDEX, winner);
         randomOffset = ((4 * ITEM_SCALE) + random.nextInt(4 * ITEM_SCALE)) * (random.nextBoolean() ? 1 : -1);
         lastSound = 0;
-        goldPlayed = false;
         start = System.currentTimeMillis();
+        // A gold chest plays "GOLD GOLD GOLD" as soon as it starts opening, over the whole spin.
+        if (isGold(winner) && c.goldSound) playGold();
     }
 
     /** Well-known drops of each floor's reward chests (NEU item ids), used to fill the reel. */
@@ -310,10 +310,6 @@ public final class CaseOpening {
             g.pose().translate(-mc.font.width(name) / 2f, 0);
             g.text(mc.font, name, 0, 0, 0xFFFFFFFF, true);
             g.pose().popMatrix();
-            if (!goldPlayed) {
-                goldPlayed = true;
-                if (isGold(winner) && (c == null || c.goldSound)) playGold();
-            }
         }
     }
 

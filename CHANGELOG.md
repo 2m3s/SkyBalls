@@ -2,6 +2,11 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.2.9
+
+### Changed
+- Dungeon Case Opening: the "GOLD GOLD GOLD" sound is much louder (about 4x), and plays as soon as a gold chest starts spinning instead of when it stops.
+
 ## 1.2.8 — 2026-09-26
 
 ### Added
