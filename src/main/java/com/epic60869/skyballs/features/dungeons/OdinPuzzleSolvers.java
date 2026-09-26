@@ -384,8 +384,12 @@ public final class OdinPuzzleSolvers {
 
     // ----- Teleport Maze -----
 
-    /** Called for each teleport packet (Odin's TPMazeSolver.tpPacket). */
-    public static void onTeleport(ClientboundPlayerPositionPacket packet) {
+    /**
+     * Called for each teleport packet (Odin's TPMazeSolver.tpPacket). {@code before} is where you stood before the
+     * teleport: Odin handles the packet before it moves you, so the pad you left counts as visited. Without that the
+     * solver could send you back to the pad you just came from, round in a loop.
+     */
+    public static void onTeleport(ClientboundPlayerPositionPacket packet, BlockPos before) {
         FeatureConfigs.Puzzles config = config();
         Minecraft mc = Minecraft.getInstance();
         if (config == null || !config.teleportMaze || !in(TP_MAZE) || tpPads.isEmpty() || mc.player == null) return;
@@ -394,13 +398,14 @@ public final class OdinPuzzleSolvers {
         float yaw = packet.change().yRot(), pitch = packet.change().xRot();
 
         AABB posBox = AABB.unitCubeFromLowerCorner(pos).inflate(1, 0, 1);
-        AABB playerBox = mc.player.getBoundingBox().inflate(1, 0, 1);
+        AABB beforeBox = before != null ? new AABB(before.getX(), before.getY(), before.getZ(), before.getX() + 1, before.getY() + 2, before.getZ() + 1) : mc.player.getBoundingBox();
+        AABB playerBox = beforeBox.inflate(1, 0, 1);
         for (BlockPos pad : tpPads) if (posBox.intersects(new AABB(pad)) || playerBox.intersects(new AABB(pad))) tpVisited.add(pad);
 
         if (tpCorrect.isEmpty()) tpCorrect = new ArrayList<>(tpPads);
         tpCorrect.removeIf(p -> tpVisited.contains(p)
             || !xzInterceptable(new AABB(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 4, p.getZ() + 1).inflate(0.75, 0, 0.75), 32, pos, yaw, pitch, mc.player.getEyeHeight())
-            || new AABB(p).inflate(0.5, 0, 0.5).intersects(mc.player.getBoundingBox()));
+            || new AABB(p).inflate(0.5, 0, 0.5).intersects(beforeBox));
 
         BlockPos current = null;
         for (BlockPos pad : tpPads) if (posBox.intersects(new AABB(pad))) { current = pad; break; }

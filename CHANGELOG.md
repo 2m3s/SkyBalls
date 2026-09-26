@@ -2,6 +2,12 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.2.7
+
+### Fixed
+- Dungeon Case Opening showed almost only enchanted books; the reel now mixes in the floor's drops (Necron's Handle, Giant's Sword, Shadow Fury, master stars, ...) with the chest's real items, like SkyOcean.
+- Teleport maze solver could send you round in a loop back to the pad you came from; the pad you leave now counts as used, like Odin's solver.
+
 ## 1.2.6 — 2026-09-26
 
 ### Added

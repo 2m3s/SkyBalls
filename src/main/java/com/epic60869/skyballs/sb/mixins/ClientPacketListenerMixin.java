@@ -40,7 +40,7 @@ public abstract class ClientPacketListenerMixin {
 		if (beforeTeleport.get() != null) {
 			TeleportMaze.INSTANCE.onTeleport(minecraft, beforeTeleport.get(), minecraft.player.blockPosition().immutable());
 		}
-		com.epic60869.skyballs.features.dungeons.OdinPuzzleSolvers.onTeleport(packet);
+		com.epic60869.skyballs.features.dungeons.OdinPuzzleSolvers.onTeleport(packet, beforeTeleport.get());
 	}
 
 	@Inject(method = "handleTakeItemEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/item/ItemEntity;getItem()Lnet/minecraft/world/item/ItemStack;"))
