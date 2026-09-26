@@ -305,16 +305,26 @@ public final class SkyBallsNick {
         String text = plain.toString();
         MutableComponent result = Component.empty();
         int cursor = 0;
+        // Where to look for the next match; separate from cursor so a skipped match doesn't drop the text before it.
+        int search = 0;
         boolean changed = false;
 
-        while (cursor < text.length()) {
-            int at = text.indexOf(actualName, cursor);
+        while (search < text.length()) {
+            int at = text.indexOf(actualName, search);
             if (at < 0) break;
             int end = at + actualName.length();
             boolean leftOk = at == 0 || !isNameChar(text.charAt(at - 1));
             boolean rightOk = end >= text.length() || !isNameChar(text.charAt(end));
             if (!leftOk || !rightOk) {
-                cursor = at + 1;
+                search = at + 1;
+                continue;
+            }
+            // Text that is already a nickname (it carries the "real name" hover) isn't replaced again, so a nick that
+            // contains the username as a word doesn't grow each time the name goes through here.
+            Style here = styleAt(runs, at);
+            if (here != null && here.getHoverEvent() instanceof HoverEvent.ShowText(Component existing)
+                && existing.getString().startsWith(REAL_NAME_PREFIX)) {
+                search = at + 1;
                 continue;
             }
 
@@ -322,6 +332,7 @@ public final class SkyBallsNick {
             result.append(withRealNameHover(replacement, actualName, styleAt(runs, at)));
             changed = true;
             cursor = end;
+            search = end;
         }
 
         if (!changed) return message;
