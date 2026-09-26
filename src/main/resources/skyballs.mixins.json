@@ -46,6 +46,7 @@
     "SkyBallsSwingMovementMixin",
     "SkyBallsHideMenuMixin",
     "SkyBallsNameTagStateMixin",
+    "SkyBallsAvatarNameTagMixin",
     "SkyBallsPlayerSizeMixin",
     "SkyBallsBossBarMixin",
     "SkyBallsLevelExtractorMixin",
