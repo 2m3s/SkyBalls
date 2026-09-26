@@ -2,6 +2,11 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.2.8.6
+
+### Fixed
+- The dungeon floor still showed as "-" when the sidebar couldn't be read: the backup that reads "[MVP++] Name entered The Catacombs, Floor VII!" didn't match the message (it has lines of dashes around it) and was forgotten on the way into the run. It now works, and as a second backup the Floor 7 bosses (Maxor, Storm, Goldor, Necron) talking also sets floor 7, so positional messages show in the boss either way.
+
 ## 1.2.8.5 — 2026-09-26
 
 ### Changed

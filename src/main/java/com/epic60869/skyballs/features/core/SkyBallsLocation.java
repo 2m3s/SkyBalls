@@ -28,8 +28,13 @@ import java.util.regex.Pattern;
  */
 public final class SkyBallsLocation {
     private static final Pattern FLOOR = Pattern.compile("The Catacombs \\((?<floor>[FM]\\d|E)\\)");
-    /** "Name entered The Catacombs, Floor VII!" / "Name entered MM The Catacombs, Floor VII!" when a run starts. */
-    private static final Pattern ENTERED = Pattern.compile("entered (?<master>MM )?The Catacombs, (?:Floor (?<floor>[IVX]+)|(?<entrance>Entrance))!$");
+    /**
+     * "[MVP+] Name entered The Catacombs, Floor VII!" (MM before The Catacombs in Master Mode), between two lines of
+     * dashes, when the party is sent into a run (Odin's DungeonQueue reads the same message).
+     */
+    private static final Pattern ENTERED = Pattern.compile("entered (?<master>MM )?The Catacombs, (?:Floor (?<floor>[IVX]+)|(?<entrance>Entrance))!");
+    /** The Floor 7 bosses; when one talks you're on floor 7 (F7 unless the run's start message said MM). */
+    private static final Pattern F7_BOSS = Pattern.compile("^\\[BOSS] (?:Maxor|Storm|Goldor|Necron|Wither King):");
     private static final Pattern GLACITE = Pattern.compile("Glacite Tunnels|Dwarven Base Camp|Great Glacite Lake|Fossil Research Center");
     private static final List<Consumer<String>> AREA_LISTENERS = new CopyOnWriteArrayList<>();
 
@@ -52,10 +57,14 @@ public final class SkyBallsLocation {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> reset());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
         SkyBallsChat.onChat(message -> {
-            Matcher m = ENTERED.matcher(message.text().trim());
-            if (!m.find()) return;
-            String number = m.group("entrance") != null ? "" : String.valueOf(roman(m.group("floor")));
-            chatFloor = m.group("entrance") != null ? "E" : (m.group("master") != null ? "M" : "F") + number;
+            String text = message.text().trim();
+            Matcher m = ENTERED.matcher(text);
+            if (m.find()) {
+                String number = m.group("entrance") != null ? "" : String.valueOf(roman(m.group("floor")));
+                chatFloor = m.group("entrance") != null ? "E" : (m.group("master") != null ? "M" : "F") + number;
+                return;
+            }
+            if (F7_BOSS.matcher(text).find() && !chatFloor.endsWith("7")) chatFloor = text.startsWith("[BOSS] Wither King") ? "M7" : "F7";
         });
     }
 
@@ -79,7 +88,6 @@ public final class SkyBallsLocation {
         scoreboardTitle = "";
         location = "";
         floor = "";
-        chatFloor = "";
         onSkyblock = false;
         setArea("");
     }
@@ -133,9 +141,8 @@ public final class SkyBallsLocation {
             if (text.startsWith("Area: ")) { newArea = text.substring(6).trim(); break; }
             if (text.startsWith("Dungeon: ")) { newArea = text.substring(9).trim(); break; }
         }
-        // The sidebar's floor, or (when a scoreboard mod hides it) the one from the run's start message, which is
-        // cleared whenever you change server.
-        floor = !newFloor.isEmpty() ? newFloor : chatFloor;
+        // The sidebar's floor, or (when it can't be read) the one from the run's start message or the F7 bosses.
+        floor = !newFloor.isEmpty() ? newFloor : newArea.equals("Catacombs") || newArea.isEmpty() ? chatFloor : "";
         setArea(newArea);
     }
 
@@ -164,6 +171,9 @@ public final class SkyBallsLocation {
 
     private static void setArea(String newArea) {
         if (newArea.equals(area)) return;
+        // The start message comes before the server switch into the run, so the floor it gave is kept until you
+        // reach an area that isn't the dungeon (the Dungeon Hub after the run, or anywhere else).
+        if (!newArea.isEmpty() && !newArea.equals("Catacombs")) chatFloor = "";
         area = newArea;
         for (Consumer<String> listener : AREA_LISTENERS) {
             try {
