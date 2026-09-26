@@ -45,6 +45,15 @@ public final class StorageOverlay {
 
     private StorageOverlay() {}
 
+    /** Hypixel's top row of every page (glass panes, Go Back arrow, Close barrier, ...) isn't shown; the page's items start at slot 9. */
+    private static int firstItem(List<ItemStack> items) {
+        return items.size() > 9 ? 9 : 0;
+    }
+
+    private static int rows(List<ItemStack> items) {
+        return Math.max(1, (items.size() - firstItem(items) + 8) / 9);
+    }
+
     private static boolean enabled() {
         SkyBallsConfig c = SkyBallsConfig.current();
         return c != null && c.misc.storageOverlay && Compat.isOnSkyblock();
@@ -111,14 +120,16 @@ public final class StorageOverlay {
         for (SkyBallsStorageSearch.StoragePage page : pages) {
             boolean open = (page.type() + ":" + page.number()).equals(openKey);
             List<ItemStack> items = open ? liveItems(screen) : page.items();
-            int rows = Math.max(1, (items.size() + 8) / 9);
+            int rows = rows(items);
             int col = 0;
             for (int i = 1; i < columns; i++) if (columnY[i] < columnY[col]) col = i;
             int x = left + col * (PANEL_W + GAP);
             int y = viewTop + columnY[col] - (int) scroll;
             headers.add(new Header(x, y, PANEL_W, page));
-            for (int i = 0; i < items.size(); i++) {
-                cells.add(new Cell(x + 4 + (i % 9) * CELL, y + HEADER + (i / 9) * CELL, items.get(i), open ? i : -1));
+            int first = firstItem(items);
+            for (int i = first; i < items.size(); i++) {
+                int shown = i - first;
+                cells.add(new Cell(x + 4 + (shown % 9) * CELL, y + HEADER + (shown / 9) * CELL, items.get(i), open ? i : -1));
             }
             columnY[col] += HEADER + rows * CELL + 6 + GAP;
         }
@@ -163,7 +174,7 @@ public final class StorageOverlay {
 
         g.enableScissor(0, layout.viewTop(), screen.width, layout.viewBottom());
         for (Header header : layout.headers()) {
-            int rows = Math.max(1, (header.page().items().size() + 8) / 9);
+            int rows = rows(header.page().items());
             int h = HEADER + rows * CELL + 6;
             if (!inView(layout, header.y(), h)) continue;
             boolean open = (header.page().type() + ":" + header.page().number()).equals(openKey);
@@ -243,7 +254,7 @@ public final class StorageOverlay {
         if (cell.menuSlot() < 0) {
             // An item on a page that isn't open: open that page.
             for (Header header : layout.headers()) {
-                int rows = Math.max(1, (header.page().items().size() + 8) / 9);
+                int rows = rows(header.page().items());
                 if (mouseX >= header.x() && mouseX < header.x() + header.w() && mouseY >= header.y() && mouseY < header.y() + HEADER + rows * CELL + 6) {
                     SkyBallsStorageSearch.StoragePage page = header.page();
                     if (mc.player != null) mc.player.connection.sendCommand((page.type().equals("ENDER_CHEST") ? "ec " : "bp ") + page.number());
