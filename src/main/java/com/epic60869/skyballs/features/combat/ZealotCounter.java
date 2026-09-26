@@ -7,6 +7,7 @@ import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
@@ -64,6 +65,9 @@ public final class ZealotCounter {
 
     private static int totalKills, totalEyes, sinceEye;
     private static String lastEyeMessage = "";
+    /** Kills the last Summoning Eye took, shown on its drop message; -1 before the first eye this session. */
+    private static int lastEyeKills = -1;
+    private static boolean skipNextSinceEye;
     private static long lastEyeTime;
     private static int sessionKills, sessionEyes;
     private static boolean showSession;
@@ -104,8 +108,23 @@ public final class ZealotCounter {
             lastEyeTime = now;
             totalEyes++;
             sessionEyes++;
+            // The Zealot that dropped it usually isn't counted yet (kills wait for the Combat XP message), so it's
+            // added here and not again once it's confirmed.
+            boolean dropperPending = !PENDING.isEmpty();
+            lastEyeKills = sinceEye + (dropperPending ? 1 : 0);
+            skipNextSinceEye = dropperPending;
             sinceEye = 0;
             save();
+        });
+        // "RARE DROP! Summoning Eye (Kills: 100)": how many Zealots that eye took, added to Hypixel's drop line.
+        ClientReceiveMessageEvents.MODIFY_GAME.register((component, overlay) -> {
+            if (overlay || lastEyeKills < 0 || System.currentTimeMillis() - lastEyeTime > 1000) return component;
+            String text = SkyBallsLocation.strip(component.getString()).trim();
+            if (!text.startsWith("RARE DROP! Summoning Eye") || !boldDropTag(component)) return component;
+            return component.copy()
+                .append(Component.literal(" (Kills: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(fmt(lastEyeKills)).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
         });
 
         AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
@@ -275,7 +294,8 @@ public final class ZealotCounter {
     private static void count() {
         totalKills++;
         sessionKills++;
-        sinceEye++;
+        if (skipNextSinceEye) skipNextSinceEye = false;
+        else sinceEye++;
         if (totalKills % 25 == 0) save();
     }
 
