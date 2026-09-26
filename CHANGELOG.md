@@ -2,12 +2,6 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.2.7
-
-### Fixed
-- Dungeon Case Opening showed almost only enchanted books; the reel now mixes in the floor's drops (Necron's Handle, Giant's Sword, Shadow Fury, master stars, ...) with the chest's real items, like SkyOcean.
-- Teleport maze solver could send you round in a loop back to the pad you came from; the pad you leave now counts as used, like Odin's solver.
-
 ## 1.2.6 — 2026-09-26
 
 ### Added
@@ -20,6 +14,8 @@ All notable changes to SkyBalls are listed here, newest first.
 - Terminals and Devices: the Odin Terminal Solver switch is now a Terminal Solver dropdown, like SkyHanni's: Odin, NoammAddons or Skyblocker Highlights. NoammAddons shows its big centred panel with the terminal's name, a Scale setting, three slot styles (Rect, Bordered Rect, Button) and its colours; you click on the panel, and rubix picks the right mouse button for you.
 
 ### Fixed
+- Dungeon Case Opening showed almost only enchanted books; the reel now mixes in the floor's drops (Necron's Handle, Giant's Sword, Shadow Fury, master stars, ...) with the chest's real items, like SkyOcean.
+- Teleport maze solver could send you round in a loop back to the pad you came from; the pad you leave now counts as used, like Odin's solver.
 - The game could crash when entering a dungeon (the dungeon map crashed while logging a player it couldn't match). The same hidden problem in waypoint groups is fixed too.
 - Storage Overlay: opening /ec showed the real Ender Chest page underneath the overlay; now only the overlay shows.
 - Messages from the SkyBalls chat bot showed as "[SkyJew]: [SJ] ..."; they show as SkyBalls and [SB].
