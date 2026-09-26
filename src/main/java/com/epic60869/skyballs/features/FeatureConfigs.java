@@ -954,7 +954,7 @@ public final class FeatureConfigs {
         public float messageSize = 1f;
 
         @Expose
-        @ConfigOption(name = "Built-in Waypoints", desc = "Show SkyBalls's hard-coded waypoints on floor 7: Py Stand Here (95, 165.5, 94.4) in Storm when you are Mage, Mage Stop (34, 169, 65) in Storm when you are Mage, Arch Stand Here (102-104, 168, 49) in Storm when you are Archer, Tank Stand Here (109, 170, 93) in Storm when you are Tank, Healer Stand Here After Lighting (58, 169, 66) in Storm when you are Healer, and SS during Goldor (until Necron) when you are Healer: the block at 109, 120, 93 is highlighted and standing at 108, 120, 93 sends \"At SS\" to party chat once.")
+        @ConfigOption(name = "Built-in Waypoints", desc = "Show SkyBalls's hard-coded waypoints on F7 and M7: Py Stand Here (95, 165.5, 94.4), Mage Stop (34, 169, 65), Arch Stand Here (102-104, 168, 49), Healer Stand Here After Lighting (58, 169, 66), Tank Stand Here (109, 170, 93) and SS: the block at 109, 120, 93 is highlighted and standing at 108, 120, 93 sends \"At SS\" to party chat once each time you step on it.")
         @ConfigEditorBoolean
         public boolean builtInWaypoints = true;
 

@@ -7,6 +7,9 @@ All notable changes to SkyBalls are listed here, newest first.
 ### Changed
 - Dungeon Case Opening: the "GOLD GOLD GOLD" sound is much louder (about 4x), and plays as soon as a gold chest starts spinning instead of when it stops.
 
+### Fixed
+- F7/M7 positional messages (Py Stand Here, Mage Stop, SS, ...) still didn't show: the floor on the sidebar could have one of Hypixel's hidden padding characters inside "(F7)", so the floor wasn't recognised. It is now, which also helps anything else that needs the floor (Score Display, dungeon map, device solvers).
+
 ## 1.2.8 — 2026-09-26
 
 ### Added

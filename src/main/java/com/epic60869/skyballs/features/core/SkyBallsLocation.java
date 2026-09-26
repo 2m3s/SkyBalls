@@ -96,7 +96,9 @@ public final class SkyBallsLocation {
         for (String line : lines) {
             int symbol = Math.max(line.indexOf('⏣'), line.indexOf('ф'));
             if (symbol >= 0) newLocation = line.substring(symbol + 1).trim();
-            Matcher m = FLOOR.matcher(line);
+            // Hypixel's padding emoji can land inside "(F7)" (it sits between the team prefix and suffix, and some are
+            // in the basic plane, like ⚽), so only printable ASCII is kept for the floor, as Skyblocker's \D* allows.
+            Matcher m = FLOOR.matcher(line.replaceAll("[^\\x20-\\x7E]", ""));
             if (m.find()) newFloor = m.group("floor");
         }
         location = newLocation;
