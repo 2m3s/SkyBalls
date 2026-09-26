@@ -231,7 +231,8 @@ public final class OdinTerminals {
     // ----- NoammAddons style (layout, colours and click handling follow NoammAddons' TerminalSolver) -----
 
     private static final int NOAMM_SOLUTION = 0x8200FF00;
-    private static final int[] NOAMM_NUMBERS = {0x8200FF00, 0x8200C800, 0x82009600};
+    /** Click in order: green to click now, then yellow, then red. */
+    private static final int[] NOAMM_NUMBERS = {0x8200FF00, 0x82FFFF00, 0x82FF0000};
     private static final int NOAMM_RUBIX_PLUS = 0x820072FF;
     private static final int NOAMM_RUBIX_MINUS = 0x82CD0000;
     private static final int NOAMM_MELODY_COLUMN = 0x82FF00FF;
@@ -493,9 +494,10 @@ public final class OdinTerminals {
             FeatureConfigs.Terminals c = config();
             int index = solution.indexOf(slot);
             int colour = switch (index) {
-                case 0 -> colour(c.numbers1Color, 0xFF55FF55);
-                case 1 -> colour(c.numbers2Color, 0xFF2A7F2A);
-                case 2 -> colour(c.numbers3Color, 0xFF153F15);
+                // Green to click now, then yellow, then red; each moves up a colour as you click.
+                case 0 -> colour(c.numbersNextColor, 0xFF55FF55);
+                case 1 -> colour(c.numbersSecondColor, 0xFFFFFF55);
+                case 2 -> colour(c.numbersThirdColor, 0xFFFF5555);
                 default -> 0;
             };
             return new Render(colour, String.valueOf(Math.abs((solution.size() - 14) - index) + 1));
