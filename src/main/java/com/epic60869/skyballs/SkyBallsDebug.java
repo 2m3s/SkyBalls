@@ -25,6 +25,15 @@ public final class SkyBallsDebug {
         line("Area", SkyBallsLocation.area());
         line("Location", SkyBallsLocation.location());
         line("Dungeon floor", SkyBallsLocation.dungeonFloor());
+        line("Sidebar title", SkyBallsLocation.scoreboardTitle());
+        String catacombs = "";
+        for (String sidebarLine : SkyBallsLocation.scoreboard()) {
+            if (sidebarLine.contains("Catacombs") || sidebarLine.contains("⏣")) {
+                catacombs = sidebarLine;
+                break;
+            }
+        }
+        line("Sidebar location line", catacombs);
         if (config != null) {
             line("Item rarity enabled", String.valueOf(config.misc.itemRarity.enabled));
             line("Calendar enabled", String.valueOf(config.misc.calendarTimeToRealTime));

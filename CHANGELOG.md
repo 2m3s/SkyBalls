@@ -8,7 +8,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Dungeon Case Opening: the "GOLD GOLD GOLD" sound is much louder (about 4x), and plays as soon as a gold chest starts spinning instead of when it stops.
 
 ### Fixed
-- F7/M7 positional messages (Py Stand Here, Mage Stop, SS, ...) still didn't show: the floor on the sidebar could have one of Hypixel's hidden padding characters inside "(F7)", so the floor wasn't recognised. It is now, which also helps anything else that needs the floor (Score Display, dungeon map, device solvers).
+- The dungeon floor wasn't recognised (`/sb debug` showed "Dungeon floor: -"), so F7/M7 positional messages (Py Stand Here, Mage Stop, SS, ...) didn't show, and anything else that needs the floor (Score Display, dungeon map, device solvers) could break. SkyBalls now finds the SkyBlock sidebar with any scoreboard mod, even one that puts its own sidebar in its place, reads the floor even when one of Hypixel's hidden padding characters sits inside "(F7)", and falls back to the "... entered The Catacombs, Floor VII!" message when a run starts. `/sb debug` also shows the sidebar's title and location line.
 
 ## 1.2.8 — 2026-09-26
 

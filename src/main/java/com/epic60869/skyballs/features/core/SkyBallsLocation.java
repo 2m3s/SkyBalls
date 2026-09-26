@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
  */
 public final class SkyBallsLocation {
     private static final Pattern FLOOR = Pattern.compile("The Catacombs \\((?<floor>[FM]\\d|E)\\)");
+    /** "Name entered The Catacombs, Floor VII!" / "Name entered MM The Catacombs, Floor VII!" when a run starts. */
+    private static final Pattern ENTERED = Pattern.compile("entered (?<master>MM )?The Catacombs, (?:Floor (?<floor>[IVX]+)|(?<entrance>Entrance))!$");
     private static final Pattern GLACITE = Pattern.compile("Glacite Tunnels|Dwarven Base Camp|Great Glacite Lake|Fossil Research Center");
     private static final List<Consumer<String>> AREA_LISTENERS = new CopyOnWriteArrayList<>();
 
@@ -36,6 +38,8 @@ public final class SkyBallsLocation {
     private static String area = "";
     private static String location = "";
     private static String floor = "";
+    /** The floor from the run's start message, used when the sidebar can't be read. */
+    private static String chatFloor = "";
     private static boolean onSkyblock;
     private static int ticks;
 
@@ -47,6 +51,22 @@ public final class SkyBallsLocation {
         });
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> reset());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
+        SkyBallsChat.onChat(message -> {
+            Matcher m = ENTERED.matcher(message.text().trim());
+            if (!m.find()) return;
+            String number = m.group("entrance") != null ? "" : String.valueOf(roman(m.group("floor")));
+            chatFloor = m.group("entrance") != null ? "E" : (m.group("master") != null ? "M" : "F") + number;
+        });
+    }
+
+    private static int roman(String numeral) {
+        int total = 0;
+        for (int i = 0; i < numeral.length(); i++) {
+            int value = switch (numeral.charAt(i)) { case 'X' -> 10; case 'V' -> 5; default -> 1; };
+            int next = i + 1 < numeral.length() ? switch (numeral.charAt(i + 1)) { case 'X' -> 10; case 'V' -> 5; default -> 1; } : 0;
+            total += value < next ? -value : value;
+        }
+        return total;
     }
 
     /** Called when the tab-list area changes (e.g. "Garden", "Catacombs", "Crystal Hollows"). */
@@ -59,6 +79,7 @@ public final class SkyBallsLocation {
         scoreboardTitle = "";
         location = "";
         floor = "";
+        chatFloor = "";
         onSkyblock = false;
         setArea("");
     }
@@ -70,10 +91,11 @@ public final class SkyBallsLocation {
         }
 
         Scoreboard board = mc.level.getScoreboard();
-        Objective objective = board.getDisplayObjective(DisplaySlot.SIDEBAR);
-        // Scoreboard mods (CustomScoreboard, ...) can take the sidebar out of its display slot to draw their own;
-        // the SkyBlock objective is still there, so find it directly.
-        if (objective == null) objective = findSidebarObjective(board);
+        // Scoreboard mods can take the sidebar out of its display slot, or put their own objective there, to draw
+        // their own; the server's SkyBlock objective is still in the scoreboard, so it's found by its title first.
+        Objective objective = findSkyblockObjective(board);
+        if (objective == null) objective = board.getDisplayObjective(DisplaySlot.SIDEBAR);
+        if (objective == null) objective = biggestObjective(board);
         List<String> lines = new ArrayList<>();
         if (objective != null) {
             scoreboardTitle = strip(objective.getDisplayName().getString());
@@ -102,7 +124,6 @@ public final class SkyBallsLocation {
             if (m.find()) newFloor = m.group("floor");
         }
         location = newLocation;
-        floor = newFloor;
 
         String newArea = "";
         for (PlayerInfo info : SkyBallsTabWidgetManager.players()) {
@@ -112,16 +133,26 @@ public final class SkyBallsLocation {
             if (text.startsWith("Area: ")) { newArea = text.substring(6).trim(); break; }
             if (text.startsWith("Dungeon: ")) { newArea = text.substring(9).trim(); break; }
         }
+        // The sidebar's floor, or (when a scoreboard mod hides it) the one from the run's start message, which is
+        // cleared whenever you change server.
+        floor = !newFloor.isEmpty() ? newFloor : chatFloor;
         setArea(newArea);
     }
 
-    /** The SkyBlock sidebar objective when nothing is in the sidebar slot: the one titled SKYBLOCK, else the biggest. */
-    private static Objective findSidebarObjective(Scoreboard board) {
-        Objective best = null;
-        int bestSize = 0;
+    /** The server's SkyBlock sidebar objective (titled SKYBLOCK), wherever it is displayed. */
+    private static Objective findSkyblockObjective(Scoreboard board) {
         for (Objective candidate : board.getObjectives()) {
             String title = strip(candidate.getDisplayName().getString());
             if (title.contains("SKYBLOCK") || title.contains("SKIBLOCK")) return candidate;
+        }
+        return null;
+    }
+
+    /** The objective with the most lines, when none is titled SKYBLOCK. */
+    private static Objective biggestObjective(Scoreboard board) {
+        Objective best = null;
+        int bestSize = 0;
+        for (Objective candidate : board.getObjectives()) {
             int size = board.listPlayerScores(candidate).size();
             if (size > bestSize) {
                 best = candidate;
@@ -150,6 +181,7 @@ public final class SkyBallsLocation {
     public static String area() { return area; }
     public static String location() { return location; }
     public static List<String> scoreboard() { return scoreboard; }
+    public static String scoreboardTitle() { return scoreboardTitle; }
     /** Floor such as "F7" or "M7", or "" outside dungeons. */
     public static String dungeonFloor() { return floor; }
 
