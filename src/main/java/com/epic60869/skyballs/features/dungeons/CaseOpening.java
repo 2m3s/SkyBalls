@@ -112,7 +112,9 @@ public final class CaseOpening {
             ItemStack stack = slot.getItem();
             if (stack.isEmpty()
                 || stack.is(Items.BARRIER) || stack.is(Items.ARROW) || stack.is(Items.CHEST)) continue;
-            if (Compat.neuName(stack).isEmpty()) continue;
+            // Skip the glass pane filler, keep everything else (essence has no SkyBlock id but is loot).
+            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().endsWith("glass_pane")) continue;
+            if (ChatFormatting.stripFormatting(stack.getHoverName().getString()).isBlank()) continue;
             loot.add(stack);
         }
         if (loot.isEmpty()) return; // items not here yet; try again next frame
@@ -130,12 +132,50 @@ public final class CaseOpening {
         }
         reel.clear();
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        for (int i = 0; i < ITEMS; i++) reel.add(loot.get(random.nextInt(loot.size())));
+        // Like SkyOcean, the reel shows what the floor can drop, mixed with what's really in the chest.
+        List<ItemStack> pool = floorPool();
+        for (int i = 0; i < ITEMS; i++) {
+            boolean fromFloor = !pool.isEmpty() && random.nextInt(3) != 0;
+            reel.add(fromFloor ? pool.get(random.nextInt(pool.size())) : loot.get(random.nextInt(loot.size())));
+        }
         reel.set(WINNER_INDEX, winner);
         randomOffset = ((4 * ITEM_SCALE) + random.nextInt(4 * ITEM_SCALE)) * (random.nextBoolean() ? 1 : -1);
         lastSound = 0;
         goldPlayed = false;
         start = System.currentTimeMillis();
+    }
+
+    /** Well-known drops of each floor's reward chests (NEU item ids), used to fill the reel. */
+    private static final java.util.Map<Integer, List<String>> FLOOR_DROPS = java.util.Map.of(
+        1, List.of("BONZO_STAFF", "BONZO_MASK", "RED_NOSE"),
+        2, List.of("SCARF_STUDIES", "SCARF_THESIS", "SCARF_GRIMOIRE", "RED_SCARF"),
+        3, List.of("ADAPTIVE_HELMET", "ADAPTIVE_CHESTPLATE"),
+        4, List.of("ITEM_SPIRIT_BOW", "SPIRIT_BONE", "SPIRIT_WING", "THORNS_BOOTS"),
+        5, List.of("SHADOW_ASSASSIN_CHESTPLATE", "SHADOW_ASSASSIN_HELMET", "SHADOW_FURY", "LAST_BREATH", "LIVID_DAGGER"),
+        6, List.of("GIANTS_SWORD", "PRECURSOR_EYE", "NECROMANCER_LORD_CHESTPLATE", "SUMMONING_RING", "FEL_SKULL", "NECROMANCER_SWORD", "GIANT_TOOTH", "SADAN_BROOCH"),
+        7, List.of("NECRON_HANDLE", "IMPLOSION_SCROLL", "SHADOW_WARP_SCROLL", "WITHER_SHIELD_SCROLL", "AUTO_RECOMBOBULATOR",
+            "POWER_WITHER_CHESTPLATE", "POWER_WITHER_HELMET", "POWER_WITHER_LEGGINGS", "POWER_WITHER_BOOTS", "WITHER_BLOOD",
+            "WITHER_CLOAK", "PRECURSOR_GEAR", "DARK_CLAYMORE"));
+    /** Drops every floor's chests can have. */
+    private static final List<String> COMMON_DROPS = List.of("RECOMBOBULATOR_3000", "FUMING_POTATO_BOOK", "HOT_POTATO_BOOK");
+    /** Master Mode chests can also have a master star. */
+    private static final List<String> MASTER_DROPS = List.of("FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR",
+        "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR", "MASTER_SKULL_TIER_1");
+
+    /** Item icons for the current floor's drops (unknown ids are left out). */
+    private static List<ItemStack> floorPool() {
+        String floor = com.epic60869.skyballs.features.core.SkyBallsLocation.dungeonFloor();
+        List<String> ids = new ArrayList<>(COMMON_DROPS);
+        int number = floor.length() == 2 && Character.isDigit(floor.charAt(1)) ? floor.charAt(1) - '0' : -1;
+        if (number > 0) ids.addAll(FLOOR_DROPS.getOrDefault(number, List.of()));
+        else FLOOR_DROPS.values().forEach(ids::addAll); // floor unknown (e.g. Croesus): any floor's drops
+        if (floor.startsWith("M")) ids.addAll(MASTER_DROPS);
+        List<ItemStack> out = new ArrayList<>();
+        for (String id : ids) {
+            ItemStack stack = com.epic60869.skyballs.custom.RepoItems.itemStack(id);
+            if (!stack.isEmpty() && !stack.is(Items.BARRIER)) out.add(stack);
+        }
+        return out;
     }
 
     private static float ease(float t) {
