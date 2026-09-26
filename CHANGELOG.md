@@ -2,6 +2,8 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.0
+
 ## 1.2.9 — 2026-09-26
 
 ### Added
