@@ -1,13 +1,13 @@
 package com.epic60869.skyballs.features.combat;
 
 import com.epic60869.skyballs.SkyBallsConfig;
-import com.epic60869.skyballs.features.core.SkyBallsAlerts;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsHuds;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
@@ -66,11 +66,24 @@ public final class ZealotCounter {
     private static final java.util.regex.Pattern COMBAT_XP = java.util.regex.Pattern.compile("\\+[\\d,.]+ Combat \\(");
 
     private static int totalKills, totalEyes, sinceEye;
+    private static String lastEyeMessage = "";
+    /** Kills the last Summoning Eye took, shown on its drop message; -1 before the first eye this session. */
+    private static int lastEyeKills = -1;
+    private static long lastEyeTime;
     private static int sessionKills, sessionEyes;
     private static boolean showSession;
     private static Path file;
 
     private ZealotCounter() {}
+
+    /**
+     * Hypixel writes "RARE DROP!" in bold; a player typing or pasting the same words into chat can't make them bold,
+     * so this tells the real drop apart from a copy of it.
+     */
+    private static boolean boldDropTag(net.minecraft.network.chat.Component component) {
+        return component.visit((style, part) -> (part.contains("RARE DROP!") && style.isBold()) || part.contains("§lRARE DROP!")
+            ? java.util.Optional.of(Boolean.TRUE) : java.util.Optional.empty(), net.minecraft.network.chat.Style.EMPTY).isPresent();
+    }
 
     private static boolean enabled() {
         SkyBallsConfig c = SkyBallsConfig.current();
@@ -87,20 +100,32 @@ public final class ZealotCounter {
             HIT_BY_YOU.clear();
         });
         SkyBallsChat.onChat(message -> {
-            String text = message.text();
-            if (text.contains("RARE DROP!") && text.contains("Summoning Eye")) {
-                // The Zealot that dropped it is usually still waiting for its Combat XP to be counted, so kills
-                // waiting now count towards this Eye (and not the next one).
-                int took = sinceEye + PENDING.size();
-                BEFORE_EYE.addAll(PENDING.keySet());
-                totalEyes++;
-                sessionEyes++;
-                sinceEye = 0;
-                save();
-                SkyBallsAlerts.chat(Component.literal("Summoning Eye! It took ").withStyle(ChatFormatting.LIGHT_PURPLE)
-                    .append(Component.literal(fmt(took)).withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD))
-                    .append(Component.literal(took == 1 ? " Zealot kill." : " Zealot kills.").withStyle(ChatFormatting.LIGHT_PURPLE)));
-            }
+            String text = message.text().trim();
+            // Only Hypixel's own drop line, not party/guild chat or other mods repeating it. The same line arriving
+            // twice at once (the packet handled twice, or a mod re-sending it) is counted once.
+            if (!text.startsWith("RARE DROP! Summoning Eye") || !boldDropTag(message.component())) return;
+            long now = System.currentTimeMillis();
+            if (text.equals(lastEyeMessage) && now - lastEyeTime < 1000) return;
+            lastEyeMessage = text;
+            lastEyeTime = now;
+            totalEyes++;
+            sessionEyes++;
+            // The Zealot that dropped it is usually still waiting for its Combat XP to be counted, so kills waiting
+            // now count towards this Eye (and not again towards the next one once they're confirmed).
+            lastEyeKills = sinceEye + PENDING.size();
+            BEFORE_EYE.addAll(PENDING.keySet());
+            sinceEye = 0;
+            save();
+        });
+        // "RARE DROP! Summoning Eye (Kills: 100)": how many Zealots that eye took, added to Hypixel's drop line.
+        ClientReceiveMessageEvents.MODIFY_GAME.register((component, overlay) -> {
+            if (overlay || lastEyeKills < 0 || System.currentTimeMillis() - lastEyeTime > 1000) return component;
+            String text = SkyBallsLocation.strip(component.getString()).trim();
+            if (!text.startsWith("RARE DROP! Summoning Eye") || !boldDropTag(component)) return component;
+            return component.copy()
+                .append(Component.literal(" (Kills: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(fmt(lastEyeKills)).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
         });
 
         AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {

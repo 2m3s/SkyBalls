@@ -17,6 +17,8 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -173,7 +175,10 @@ public final class ScoreCalculator {
         }
         puzzlesDone = done;
 
-        for (String line : SkyBallsLocation.scoreboard()) {
+        // The sidebar lines, and the same lines read from the scoreboard teams (works when a scoreboard mod hides the sidebar).
+        List<String> sidebar = new ArrayList<>(SkyBallsLocation.scoreboard());
+        sidebar.addAll(SkyBallsLocation.teamLines());
+        for (String line : sidebar) {
             Matcher m;
             if ((m = CLEARED.matcher(line)).find()) {
                 int cleared = Integer.parseInt(m.group(1));
@@ -229,13 +234,14 @@ public final class ScoreCalculator {
 
         score = secretsScore + roomScore + Math.max(20, Math.min(100, 20 + skillRooms - puzzlePenalty - deathPenalty)) + bonus + speed;
 
-        if (score >= 300 && !had300) {
-            had300 = true;
-            had270 = true;
-            milestone(300);
-        } else if (score >= 270 && !had270) {
+        // Like NoammAddons, each milestone the score passes gets its own message (both when it jumps straight past 300).
+        if (score >= 270 && !had270) {
             had270 = true;
             milestone(270);
+        }
+        if (score >= 300 && !had300) {
+            had300 = true;
+            milestone(300);
         }
     }
 
@@ -260,11 +266,14 @@ public final class ScoreCalculator {
         String message = (milestone == 300 ? config.message300 : config.message270).replace("[score]", String.valueOf(milestone));
         Minecraft mc = Minecraft.getInstance();
         if (party && mc.getConnection() != null) mc.getConnection().sendCommand("pc [SB] " + message);
+        // NoammAddons' chat line: "270 score reached in 5m 12s || M7."
+        if (config.timeMessage) {
+            String floor = SkyBallsLocation.dungeonFloor();
+            String floorColour = floor.startsWith("M") ? "§c" : "§a";
+            SkyBallsAlerts.chat(Component.literal("§e" + milestone + "§a score reached in §6" + formatTime(secondsElapsed) + " §f|| " + floorColour + (floor.isEmpty() ? "?" : floor) + "."));
+        }
         if (!alert) return;
         SkyBallsAlerts.title(Component.literal((milestone == 300 ? "§c" : "§e") + message), Component.empty());
-        String floor = SkyBallsLocation.dungeonFloor();
-        String floorColour = floor.startsWith("M") ? "§c" : "§a";
-        SkyBallsAlerts.chat(Component.literal("§e" + milestone + "§a score reached in §6" + formatTime(secondsElapsed) + " §f|| " + floorColour + floor + "."));
         var sound = SimpleSoundInstance.forUI(SoundEvents.EXPERIENCE_ORB_PICKUP, 0f);
         mc.getSoundManager().play(sound);
     }

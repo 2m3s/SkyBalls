@@ -158,21 +158,6 @@ public final class OdinTerminals {
 
     // ----- Hooks (ContainerSolverMenuMixin / ContainerSolverScreenMixin) -----
 
-    /** NoammAddons style: the vanilla terminal (background, items, tooltips) isn't drawn behind the panel (see the Storage Overlay mixins). */
-    public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
-        Handler handler = current;
-        return handler != null && enabled() && noammStyle() && screen.getMenu() == handler.menu;
-    }
-
-    /** Odin style: the terminal's own items and their tooltips aren't drawn, only the solution, like Odin. */
-    public static boolean hidesSlot(AbstractContainerScreen<?> screen, Slot slot) {
-        Handler handler = current;
-        FeatureConfigs.Terminals config = config();
-        if (handler == null || config == null || slot == null || screen.getMenu() != handler.menu) return false;
-        if (handler.type() == Type.MELODY && !config.melodySolver) return false;
-        return slot.index < handler.type().windowSize;
-    }
-
     /** A slot of the open menu changed. */
     public static void onSetItem(AbstractContainerMenu menu, int slot) {
         Handler handler = current;
@@ -197,6 +182,31 @@ public final class OdinTerminals {
         if (slot < 0 || slot >= handler.type().windowSize) return true;
         handler.click(slot, button);
         return true;
+    }
+
+    /** True when the solver replaces the whole terminal menu (Hide Menu on), so only the solver is drawn. */
+    public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
+        Handler handler = current;
+        FeatureConfigs.Terminals config = config();
+        if (handler == null || config == null || !config.hideMenu || screen.getMenu() != handler.menu) return false;
+        return handler.type() != Type.MELODY || config.melodySolver;
+    }
+
+    /**
+     * Draws the solver on its own in place of the menu (items, chest texture, inventory and tooltips are skipped).
+     * The NoammAddons panel is drawn after the screen by {@link #renderNoamm}; the Odin one goes where the chest was,
+     * so clicks still land on the right slots.
+     */
+    public static void renderOwn(GuiGraphicsExtractor graphics, AbstractContainerScreen<?> screen, int left, int top) {
+        Handler handler = current;
+        if (handler == null || noammStyle()) return;
+        var font = Minecraft.getInstance().font;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(left, top);
+        String title = noammTitle(handler.type());
+        graphics.text(font, title, 7 + 9 * 18 / 2 - font.width(title) / 2, 6, 0xFFFFFFFF, true);
+        render(graphics, screen);
+        graphics.pose().popMatrix();
     }
 
     /** Covers the terminal and draws the solution. The pose is already at the container's origin. */
@@ -233,7 +243,8 @@ public final class OdinTerminals {
     // ----- NoammAddons style (layout, colours and click handling follow NoammAddons' TerminalSolver) -----
 
     private static final int NOAMM_SOLUTION = 0x8200FF00;
-    private static final int[] NOAMM_NUMBERS = {0x8200FF00, 0x8200C800, 0x82009600};
+    /** Click in order: green to click now, then yellow, then red. */
+    private static final int[] NOAMM_NUMBERS = {0x8200FF00, 0x82FFFF00, 0x82FF0000};
     private static final int NOAMM_RUBIX_PLUS = 0x820072FF;
     private static final int NOAMM_RUBIX_MINUS = 0x82CD0000;
     private static final int NOAMM_MELODY_COLUMN = 0x82FF00FF;
@@ -271,7 +282,7 @@ public final class OdinTerminals {
         Minecraft mc = Minecraft.getInstance();
         var font = mc.font;
         g.nextStratum();
-        // Dim the screen behind the panel (the vanilla menu itself isn't drawn, see hidesMenu).
+        // Dim the screen behind the panel (with Hide Menu on, the vanilla menu itself isn't drawn, see hidesMenu).
         g.fill(0, 0, g.guiWidth(), g.guiHeight(), 0xC0000000);
 
         float scale = noammScale();
@@ -496,9 +507,10 @@ public final class OdinTerminals {
             FeatureConfigs.Terminals c = config();
             int index = solution.indexOf(slot);
             int colour = switch (index) {
-                case 0 -> colour(c.numbers1Color, 0xFF55FF55);
-                case 1 -> colour(c.numbers2Color, 0xFFFFFF55);
-                case 2 -> colour(c.numbers3Color, 0xFFFF5555);
+                // Green to click now, then yellow, then red; each moves up a colour as you click.
+                case 0 -> colour(c.numbersNextColor, 0xFF55FF55);
+                case 1 -> colour(c.numbersSecondColor, 0xFFFFFF55);
+                case 2 -> colour(c.numbersThirdColor, 0xFFFF5555);
                 default -> 0;
             };
             return new Render(colour, String.valueOf(Math.abs((solution.size() - 14) - index) + 1));

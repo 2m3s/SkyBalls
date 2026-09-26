@@ -62,7 +62,7 @@ public final class OdinDevices {
     }
 
     private static boolean inF7Boss() {
-        return SkyBallsLocation.inDungeon() && SkyBallsLocation.dungeonFloor().endsWith("7") && DungeonManager.isInBoss();
+        return PositionalMessages.onFloor7() && DungeonManager.isInBoss();
     }
 
     private static boolean sneaking() {
@@ -322,6 +322,8 @@ public final class OdinDevices {
                 int needed = clicksNeeded(rotations[i], candidate[i]);
                 if (needed != 0) clicksRemaining.put(i, needed);
             }
+            // Only the first layout that fits: mixing in another one's counts let clicks through on frames that were already right.
+            break;
         }
     }
 
@@ -330,7 +332,11 @@ public final class OdinDevices {
         BlockPos pos = frame.blockPosition();
         int index = (pos.getY() - FRAME_CORNER.getY()) + (pos.getZ() - FRAME_CORNER.getZ()) * 5;
         if (pos.getX() != FRAME_CORNER.getX() || index < 0 || index > 24 || frameRotations[index] == -1) return false;
-        if (config.arrowAlignBlockWrong && !sneaking() && !clicksRemaining.containsKey(index)) return true;
+        // One right click can reach this twice (interact at + interact): the second gets the same answer as the first
+        // and isn't counted again, so the prediction doesn't run ahead of the frame.
+        Long last = recentClicks.get(index);
+        if (last != null && System.currentTimeMillis() - last < 30) return false;
+        if (config.arrowAlignBlockWrong && !sneaking() && (solution == null || !clicksRemaining.containsKey(index))) return true;
         recentClicks.put(index, System.currentTimeMillis());
         frameRotations[index] = (frameRotations[index] + 1) % 8;
         if (solution != null && clicksNeeded(frameRotations[index], solution[index]) == 0) clicksRemaining.remove(index);

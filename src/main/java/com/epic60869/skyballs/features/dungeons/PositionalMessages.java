@@ -4,6 +4,7 @@ import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsAlerts;
+import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonManager;
@@ -114,15 +115,36 @@ public final class PositionalMessages {
         return SelfClass.get() == dungeonClass;
     }
 
-    private static boolean onFloor7() {
+    /**
+     * The world in which chat showed we are on F7/M7 (the "entered ... Floor VII" line or a Wither Lord speaking), so the
+     * spots still show when the sidebar can't be read. Only counts while you are still in that world.
+     */
+    private static java.lang.ref.WeakReference<Object> floor7World = new java.lang.ref.WeakReference<>(null);
+
+    /** On F7 or M7: from the sidebar, the boss tracking, or this world's chat. */
+    static boolean onFloor7() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level == floor7World.get()) return true;
+        if (DungeonManager.getBoss().isFloor(7)) return true;
         return SkyBallsLocation.inDungeon() && SkyBallsLocation.dungeonFloor().endsWith("7");
+    }
+
+    private static void onChat(SkyBallsChat.Message message) {
+        String text = message.text();
+        if (text.startsWith("[BOSS] Maxor:") || text.startsWith("[BOSS] Storm:") || text.startsWith("[BOSS] Goldor:")
+            || text.startsWith("[BOSS] Necron:") || text.startsWith("[BOSS] Wither King:")
+            || (text.contains("entered") && text.contains("The Catacombs, Floor VII"))) {
+            floor7World = new java.lang.ref.WeakReference<>(Minecraft.getInstance().level);
+        }
     }
 
     public static void init(Path configDir) {
         file = configDir.resolve("skyballs-posmsgs.json");
         load();
         ClientTickEvents.END_CLIENT_TICK.register(PositionalMessages::tick);
+        SkyBallsChat.onChat(PositionalMessages::onChat);
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
+            floor7World = new java.lang.ref.WeakReference<>(null);
             SENT.clear();
             FIXED_SENT.clear();
             PENDING.clear();

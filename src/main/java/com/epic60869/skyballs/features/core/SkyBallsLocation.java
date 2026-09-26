@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * Updated twice a second; listeners are told when the tab-list area changes.
  */
 public final class SkyBallsLocation {
-    private static final Pattern FLOOR = Pattern.compile("The Catacombs \\((?<floor>[FM]\\d|E)\\)");
+    private static final Pattern FLOOR = Pattern.compile("Catacombs \\((?<floor>[FM]\\d|E)\\)");
     /**
      * "[MVP+] Name entered The Catacombs, Floor VII!" (MM before The Catacombs in Master Mode), between two lines of
      * dashes, when the party is sent into a run (Odin's DungeonQueue reads the same message).
@@ -39,6 +39,7 @@ public final class SkyBallsLocation {
     private static final List<Consumer<String>> AREA_LISTENERS = new CopyOnWriteArrayList<>();
 
     private static List<String> scoreboard = List.of();
+    private static List<String> teamLines = List.of();
     private static String scoreboardTitle = "";
     private static String area = "";
     private static String location = "";
@@ -85,6 +86,7 @@ public final class SkyBallsLocation {
 
     private static void reset() {
         scoreboard = List.of();
+        teamLines = List.of();
         scoreboardTitle = "";
         location = "";
         floor = "";
@@ -119,17 +121,29 @@ public final class SkyBallsLocation {
             scoreboardTitle = "";
         }
         scoreboard = List.copyOf(lines);
+        // Every sidebar line is a team's prefix + suffix. Reading the teams directly works even when a scoreboard
+        // mod hides or replaces the sidebar objective, like NoammAddons does.
+        List<String> teams = new ArrayList<>();
+        for (PlayerTeam team : board.getPlayerTeams()) {
+            String text = strip(team.getPlayerPrefix().getString() + team.getPlayerSuffix().getString()).replaceAll("[\\x{10000}-\\x{10FFFF}]", "").trim();
+            if (!text.isEmpty()) teams.add(text);
+        }
+        teamLines = List.copyOf(teams);
         onSkyblock = scoreboardTitle.contains("SKYBLOCK") || scoreboardTitle.contains("SKIBLOCK");
 
         String newLocation = "";
         String newFloor = "";
+        for (String line : teams) {
+            Matcher m = FLOOR.matcher(line.replaceAll("[^\\x20-\\x7E]", ""));
+            if (m.find() && !line.contains("Queue")) newFloor = m.group("floor");
+        }
         for (String line : lines) {
             int symbol = Math.max(line.indexOf('⏣'), line.indexOf('ф'));
             if (symbol >= 0) newLocation = line.substring(symbol + 1).trim();
             // Hypixel's padding emoji can land inside "(F7)" (it sits between the team prefix and suffix, and some are
             // in the basic plane, like ⚽), so only printable ASCII is kept for the floor, as Skyblocker's \D* allows.
             Matcher m = FLOOR.matcher(line.replaceAll("[^\\x20-\\x7E]", ""));
-            if (m.find()) newFloor = m.group("floor");
+            if (m.find() && !line.contains("Queue")) newFloor = m.group("floor");
         }
         location = newLocation;
 
@@ -192,6 +206,8 @@ public final class SkyBallsLocation {
     public static String location() { return location; }
     public static List<String> scoreboard() { return scoreboard; }
     public static String scoreboardTitle() { return scoreboardTitle; }
+    /** The sidebar lines read from the scoreboard teams (prefix + suffix), found even when the sidebar is hidden. */
+    public static List<String> teamLines() { return teamLines; }
     /** Floor such as "F7" or "M7", or "" outside dungeons. */
     public static String dungeonFloor() { return floor; }
 

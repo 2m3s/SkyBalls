@@ -455,24 +455,15 @@ public final class SkyBallsConfig extends Config {
 
     public static final class CopyChat {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Copy chat messages, like NoFrills' Chat Tweaks: with chat open, right-click a message to copy it, Shift+right-click to copy one line. SkyBalls rank prefixes aren't copied.")
+        @ConfigOption(name = "Enabled", desc = "Copy chat messages, like NoFrills' Chat Tweaks: with chat open, press the Copy Message Key over a message to copy it. SkyBalls rank prefixes aren't copied.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
+        /** A keyboard key, or a mouse button stored the MoulConfig way (-100 + button; right click is -99). */
         @Expose
-        @ConfigOption(name = "Right-Click To Copy", desc = "Right-click a message to copy it (Shift+right-click for one line).")
-        @ConfigEditorBoolean
-        public boolean rightClick = true;
-
-        @Expose
-        @ConfigOption(name = "Copy Message Key", desc = "Key that copies the message under the mouse while chat is open.")
-        @ConfigEditorKeybind(defaultKey = GLFW.GLFW_KEY_UNKNOWN)
-        public int copyKey = GLFW.GLFW_KEY_UNKNOWN;
-
-        @Expose
-        @ConfigOption(name = "Copy Line Key", desc = "Key that copies just the line under the mouse while chat is open.")
-        @ConfigEditorKeybind(defaultKey = GLFW.GLFW_KEY_UNKNOWN)
-        public int copyLineKey = GLFW.GLFW_KEY_UNKNOWN;
+        @ConfigOption(name = "Copy Message Key", desc = "Key or mouse button that copies the message under the mouse while chat is open. Right click by default.")
+        @ConfigEditorKeybind(defaultKey = -100 + GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+        public int copyMessageKey = -100 + GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
         @Expose
         @ConfigOption(name = "Copy Preview", desc = "Show what was copied in chat.")
@@ -1014,21 +1005,6 @@ public final class SkyBallsConfig extends Config {
                     ? root.getAsJsonObject("mining") : new JsonObject();
                 if (!mining.has("commissions")) mining.add("commissions", farming.remove("commissions"));
                 root.add("mining", mining);
-                changed = true;
-            }
-        }
-
-        // Click in order!: the 2nd and 3rd numbers were darker greens that were hard to tell apart; configs still on
-        // those defaults get yellow and red.
-        if (root.has("dungeons") && root.get("dungeons").isJsonObject()
-            && root.getAsJsonObject("dungeons").has("terminals") && root.getAsJsonObject("dungeons").get("terminals").isJsonObject()) {
-            JsonObject terminals = root.getAsJsonObject("dungeons").getAsJsonObject("terminals");
-            if (terminals.has("numbers2Color") && terminals.get("numbers2Color").getAsString().equals("0:255:42:127:42")) {
-                terminals.addProperty("numbers2Color", "0:255:255:255:85");
-                changed = true;
-            }
-            if (terminals.has("numbers3Color") && terminals.get("numbers3Color").getAsString().equals("0:255:21:63:21")) {
-                terminals.addProperty("numbers3Color", "0:255:255:85:85");
                 changed = true;
             }
         }

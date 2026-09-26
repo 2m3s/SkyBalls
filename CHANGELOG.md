@@ -5,11 +5,29 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.2.9 — 2026-09-26
 
 ### Added
+- Terminals > Hide Menu (on by default): while a terminal is being solved, only the solver shows. The chest, its items, your inventory and item tooltips are hidden, like other terminal solvers. The Odin style shows the terminal's name above the solver, and Melody keeps its lanes and buttons.
+- Score Time Message (Dungeons > Score, on by default): like NoammAddons, a chat message when the run reaches 270 and 300 score with how long it took and the floor, e.g. "300 score reached in 6m 12s || M7." It no longer needs the 270/300 alerts on, and a run that jumps straight past 300 gets both messages.
+- Summoning Eye drops show how many Zealot kills that eye took, on Hypixel's drop message: "RARE DROP! Summoning Eye (Kills: 100)". The Zealot that dropped it is counted too.
 - Held Item Model > Swing Rotation: how far the item tilts and rolls when you swing (1 = vanilla, 0 = it doesn't turn). Swing X, Y and Z only move the item, so at 0/0/0 it stayed in place but still did the big forward roll; lower Swing Rotation to shrink that.
-- Zealot Tracker: when a Summoning Eye drops, chat says how many Zealot kills it took.
+
+### Removed
+- The NoammAddons dungeon map (and its Map Style, checkmark, name, scale and colour options). The dungeon map is always the Skyblocker map now.
+
+### Changed
+- Click in order! colours are now Numbers Next / Second / Third under Terminals (green, yellow and red by default).
+- The 1 in 10,000 jumpscare can't happen in Kuudra runs either (it already couldn't in dungeons), or while SkyBalls hasn't read your location yet.
+- Copy Chat has one setting, Copy Message Key: any key or mouse button (right click by default) copies the message under the mouse. Right-Click To Copy, Shift+right-click and Copy Line Key are gone.
+- The "GOLD GOLD GOLD" sound is louder again.
 
 ### Fixed
-- The dungeon floor still showed as "-" when the sidebar couldn't be read: the backup that reads "[MVP++] Name entered The Catacombs, Floor VII!" didn't match the message (it has lines of dashes around it) and was forgotten on the way into the run. It now works, and as a second backup the Floor 7 bosses (Maxor, Storm, Goldor, Necron) talking also sets floor 7, so positional messages show in the boss either way.
+- The dungeon floor still showed as "-" for some players. SkyBalls now also reads the sidebar straight from the scoreboard's teams (like NoammAddons), so it's found even when a scoreboard mod hides or replaces the sidebar, and doesn't take the Dungeon Hub's queue line for the floor. The backup that reads "[MVP++] Name entered The Catacombs, Floor VII!" now matches the message (it has lines of dashes around it) and is kept on the way into the run, and the Floor 7 bosses talking also set floor 7. This fixes F7/M7 positional messages, the Score Display, Platform Highlight and the device solvers when the sidebar can't be read.
+- Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. SkyBalls now applies them last. If it still moves, turn off the other mod's animations.
+- Arrow Align misclick protection: when more than one layout fitted, frames that were already right could still be clicked. Only the first layout that fits is used now.
+- Nicknames above heads (yours and other SkyBalls users') kept the plain name with no colour or font. The nick is now put into the player name tag right where it's made, like NoammAddons does for its badges, and also into every entity's name tag, so it shows however the tag was made (vanilla or another mod). A nickname that contains the real username as a word is no longer replaced twice, and text before a skipped partial match (like "2m3sx") is no longer dropped from the name.
+- Platform Highlight (3x3) didn't show: it needed the floor from the sidebar and could be switched off by a moment where the tab list area wasn't read. It now uses the F7/M7 detection from chat and the boss, turns on from any Goldor line (or Storm's death) in case the first was missed, and Healer Only uses the Your Class setting.
+- Zealot Tracker sometimes counted one Summoning Eye twice, and pasting "RARE DROP! Summoning Eye" into chat counted as a drop. Only Hypixel's own drop line counts now: it has to start the message and "RARE DROP!" has to be bold like Hypixel writes it, which players can't do. The same line arriving twice at once counts once. The tracker also saves when the game closes.
+- Copy Chat sometimes copied the message above the one you clicked. It now finds the line under the mouse with the same maths as vanilla chat.
+- Quiz solver didn't highlight the answer when it couldn't find the room's corner block; it now uses the dungeon room matching to place the answers.
 
 ## 1.2.8.5 — 2026-09-26
 

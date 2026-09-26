@@ -7,8 +7,8 @@ import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-/** Misc > Held Item Model > Swing Speed: changes how long your own arm swing takes. */
-@Mixin(LivingEntity.class)
+/** Misc > Held Item Model > Swing Speed: changes how long your own arm swing takes. High priority so it applies after other mods set the duration. */
+@Mixin(value = LivingEntity.class, priority = 2000)
 public abstract class SkyBallsSwingSpeedMixin {
     @ModifyReturnValue(method = "getCurrentSwingDuration", at = @At("RETURN"))
     private int skyballs$swingDuration(int original) {

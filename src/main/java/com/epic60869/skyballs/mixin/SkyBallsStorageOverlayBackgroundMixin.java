@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Storage Overlay, Case Opening and the NoammAddons terminal panel: while they show, the chest's background texture isn't drawn either. */
+/** Storage Overlay, Case Opening and Terminals > Hide Menu: while they show, the chest's background texture isn't drawn either. */
 @Mixin(ContainerScreen.class)
 public abstract class SkyBallsStorageOverlayBackgroundMixin {
     @Inject(method = "extractBackground", at = @At("HEAD"), cancellable = true)

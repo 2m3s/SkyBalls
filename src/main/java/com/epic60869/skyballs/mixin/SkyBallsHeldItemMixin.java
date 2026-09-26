@@ -15,13 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /** Misc > Held Item Model: transforms the first-person item. The collector copies the pose, so popping at the end is safe. */
 @Mixin(ItemInHandRenderer.class)
 public abstract class SkyBallsHeldItemMixin {
-    /** Misc > Held Item Model > Swing X / Y / Z: scales how far the item moves during a swing (0 keeps only the rotation). */
-    @com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method = "swingArm", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(FFF)V", ordinal = 0))
-    private void skyballs$swingMovement(PoseStack pose, float x, float y, float z, com.llamalad7.mixinextras.injector.wrapoperation.Operation<Void> original) {
-        float[] scale = HeldItemModel.swingScale();
-        original.call(pose, x * scale[0], y * scale[1], z * scale[2]);
-    }
-
     /**
      * Misc > Held Item Model > Swing Rotation: scales every turn in the swing (vanilla turns 45 + up to -20 degrees
      * around Y, up to -20 around Z, up to -80 around X, then -45 back around Y; at rest they cancel out, so scaling
