@@ -455,24 +455,15 @@ public final class SkyBallsConfig extends Config {
 
     public static final class CopyChat {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Copy chat messages, like NoFrills' Chat Tweaks: with chat open, right-click a message to copy it, Shift+right-click to copy one line. SkyBalls rank prefixes aren't copied.")
+        @ConfigOption(name = "Enabled", desc = "Copy chat messages, like NoFrills' Chat Tweaks: with chat open, press the Copy Message Key over a message to copy it. SkyBalls rank prefixes aren't copied.")
         @ConfigEditorBoolean
         public boolean enabled = true;
 
+        /** A keyboard key, or a mouse button stored the MoulConfig way (-100 + button; right click is -99). */
         @Expose
-        @ConfigOption(name = "Right-Click To Copy", desc = "Right-click a message to copy it (Shift+right-click for one line).")
-        @ConfigEditorBoolean
-        public boolean rightClick = true;
-
-        @Expose
-        @ConfigOption(name = "Copy Message Key", desc = "Key that copies the message under the mouse while chat is open.")
-        @ConfigEditorKeybind(defaultKey = GLFW.GLFW_KEY_UNKNOWN)
-        public int copyKey = GLFW.GLFW_KEY_UNKNOWN;
-
-        @Expose
-        @ConfigOption(name = "Copy Line Key", desc = "Key that copies just the line under the mouse while chat is open.")
-        @ConfigEditorKeybind(defaultKey = GLFW.GLFW_KEY_UNKNOWN)
-        public int copyLineKey = GLFW.GLFW_KEY_UNKNOWN;
+        @ConfigOption(name = "Copy Message Key", desc = "Key or mouse button that copies the message under the mouse while chat is open. Right click by default.")
+        @ConfigEditorKeybind(defaultKey = -100 + GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+        public int copyMessageKey = -100 + GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
         @Expose
         @ConfigOption(name = "Copy Preview", desc = "Show what was copied in chat.")
