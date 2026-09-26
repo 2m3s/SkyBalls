@@ -5,12 +5,18 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.2.8 — 2026-09-26
 
 ### Added
+- Terminals > Hide Menu (on by default): while a terminal is being solved, only the solver shows. The chest, its items, your inventory and item tooltips are hidden, like other terminal solvers. The Odin style shows the terminal's name above the solver.
 - Score Time Message (Dungeons > Score, on by default): like NoammAddons, a chat message when the run reaches 270 and 300 score with how long it took and the floor, e.g. "300 score reached in 6m 12s || M7." It no longer needs the 270/300 alerts on, and a run that jumps straight past 300 gets both messages.
 
 ### Removed
 - The NoammAddons dungeon map (and its Map Style, checkmark, name, scale and colour options). The dungeon map is always the Skyblocker map now.
 
+### Changed
+- The "GOLD GOLD GOLD" sound is much louder, and it plays as soon as you open a reward chest with a Legendary or better item in it, with or without Case Opening on.
+- Case Opening hides the chest while the case spins, so you can't see what's inside until it lands.
+
 ### Fixed
+- Arrow Align misclick protection let the frames spin past the right direction: one right click could be counted twice, and when more than one layout fitted, frames that were already right could still be clicked. Both are fixed, and it also works when the floor can't be read from the sidebar.
 - Score Display stayed at 0 (or didn't show) for some players: the floor, Cleared % and Time Elapsed are now also read straight from the scoreboard's teams, like NoammAddons, so they're found even when a scoreboard mod hides or replaces the sidebar. The floor is also taken from the "entered The Catacombs, Floor ..." message as a last resort.
 - Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. SkyBalls now applies them last. If it still moves, turn off the other mod's animations.
 - F7/M7 positional messages (Py Stand Here, Mage Stop, Arch/Healer/Tank Stand Here, SS) didn't show when the floor couldn't be read from the sidebar. SkyBalls now also knows you're on F7/M7 from the "entered ... Floor VII" message and the Wither Lords' boss messages.

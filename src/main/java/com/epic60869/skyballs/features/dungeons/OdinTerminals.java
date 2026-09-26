@@ -183,6 +183,31 @@ public final class OdinTerminals {
         return true;
     }
 
+    /** True when the solver replaces the whole terminal menu (Hide Menu on), so only the solver is drawn. */
+    public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
+        Handler handler = current;
+        FeatureConfigs.Terminals config = config();
+        if (handler == null || config == null || !config.hideMenu || screen.getMenu() != handler.menu) return false;
+        return handler.type() != Type.MELODY || config.melodySolver;
+    }
+
+    /**
+     * Draws the solver on its own in place of the menu (items, chest texture, inventory and tooltips are skipped).
+     * The NoammAddons panel is drawn after the screen by {@link #renderNoamm}; the Odin one goes where the chest was,
+     * so clicks still land on the right slots.
+     */
+    public static void renderOwn(GuiGraphicsExtractor graphics, AbstractContainerScreen<?> screen, int left, int top) {
+        Handler handler = current;
+        if (handler == null || noammStyle()) return;
+        var font = Minecraft.getInstance().font;
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(left, top);
+        String title = noammTitle(handler.type());
+        graphics.text(font, title, 7 + 9 * 18 / 2 - font.width(title) / 2, 6, 0xFFFFFFFF, true);
+        render(graphics, screen);
+        graphics.pose().popMatrix();
+    }
+
     /** Covers the terminal and draws the solution. The pose is already at the container's origin. */
     public static void render(GuiGraphicsExtractor graphics, AbstractContainerScreen<?> screen) {
         Handler handler = current;

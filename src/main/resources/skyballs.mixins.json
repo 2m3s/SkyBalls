@@ -44,6 +44,7 @@
     "SkyBallsHeldItemMixin",
     "SkyBallsSwingSpeedMixin",
     "SkyBallsSwingMovementMixin",
+    "SkyBallsHideMenuMixin",
     "SkyBallsPlayerSizeMixin",
     "SkyBallsBossBarMixin",
     "SkyBallsLevelExtractorMixin",

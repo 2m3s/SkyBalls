@@ -310,7 +310,7 @@ public final class FeatureConfigs {
         public int seconds = 6;
 
         @Expose
-        @ConfigOption(name = "Gold Sound", desc = "Play the \"GOLD GOLD GOLD\" sound when the item is Legendary (gold) or better.")
+        @ConfigOption(name = "Gold Sound", desc = "Play the \"GOLD GOLD GOLD\" sound as soon as you open a reward chest with a Legendary (gold) or better item in it. Works with Case Opening off too.")
         @ConfigEditorBoolean
         public boolean goldSound = true;
     }
@@ -442,6 +442,7 @@ public final class FeatureConfigs {
 
     public static final class Terminals {
         @Expose @ConfigOption(name = "Terminal Solver", desc = "Which terminal solver to use. Odin: covers the terminal and shows what to click. NoammAddons: its big centred panel with the terminal's name, slot styles and colours.") @ConfigEditorDropdown public TerminalStyle solverStyle = TerminalStyle.ODIN;
+        @Expose @ConfigOption(name = "Hide Menu", desc = "While a terminal is solved, only the solver is drawn: the chest, its items, your inventory and item tooltips are hidden, like other terminal solvers.") @ConfigEditorBoolean public boolean hideMenu = true;
         @Expose @ConfigOption(name = "NoammAddons: Scale", desc = "Size of the NoammAddons terminal panel.") @ConfigEditorSlider(minValue = 0.3f, maxValue = 2f, minStep = 0.05f) public float noammScale = 1f;
         @Expose @ConfigOption(name = "NoammAddons: Slot Style", desc = "How solution slots are drawn in the NoammAddons panel.") @ConfigEditorDropdown public NoammSlotStyle noammSlotStyle = NoammSlotStyle.RECT;
         @Expose @ConfigOption(name = "NoammAddons: Show Numbers", desc = "Show the number on each slot in Click in order!") @ConfigEditorBoolean public boolean noammShowNumbers = false;

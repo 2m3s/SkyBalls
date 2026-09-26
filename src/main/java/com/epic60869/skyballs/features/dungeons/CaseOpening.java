@@ -34,9 +34,9 @@ import java.util.regex.Pattern;
 /**
  * CS2-style case opening for dungeon reward chests, ported from SkyOcean's Dungeon Gambling: opening an Obsidian or
  * Bedrock chest (or any chest, if turned on) spins a strip of item cards past a red marker, slowing down and stopping
- * on the chest's most valuable item, whose name then grows onto the screen. The menu can't be clicked while it
- * spins; Esc skips it. When the winner is Legendary (gold) or better, the "GOLD GOLD GOLD" sound plays
- * (assets/skyballs/sounds/gold.ogg; a resource pack can replace it).
+ * on the chest's most valuable item, whose name then grows onto the screen. The chest is hidden and can't be clicked
+ * while it spins; Esc skips it. When a reward chest with a Legendary (gold) or better item opens, the "GOLD GOLD GOLD"
+ * sound plays straight away, spin or not (assets/skyballs/sounds/gold.ogg; a resource pack can replace it).
  */
 public final class CaseOpening {
     private static final Pattern CHEST = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?$");
@@ -55,7 +55,7 @@ public final class CaseOpening {
     private static long start = -1;
     private static int randomOffset;
     private static int lastSound;
-    private static boolean goldPlayed;
+    private static int goldMenuId = -1;
     private static int menuId = -1;
 
     private CaseOpening() {}
@@ -69,6 +69,7 @@ public final class CaseOpening {
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
             ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> {
+                checkGold(container);
                 maybeStart(container);
                 if (running(container)) render(g);
             });
@@ -82,8 +83,43 @@ public final class CaseOpening {
             ScreenEvents.remove(screen).register(s -> {
                 stop();
                 menuId = -1;
+                goldMenuId = -1;
             });
         });
+    }
+
+    /** While the case spins, the chest itself (items, texture, inventory) isn't drawn underneath it. */
+    public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
+        return running(screen);
+    }
+
+    /** Gold Sound: plays "GOLD GOLD GOLD" as soon as a reward chest with a Legendary or better item opens. */
+    private static void checkGold(AbstractContainerScreen<?> screen) {
+        FeatureConfigs.CaseOpening c = config();
+        if (c == null || !c.goldSound || !Compat.isOnSkyblock()) return;
+        int id = screen.getMenu().containerId;
+        if (id == goldMenuId) return;
+        if (!CHEST.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim()).matches()) return;
+        List<ItemStack> loot = loot(screen);
+        if (loot.isEmpty()) return; // items not here yet; try again next frame
+        goldMenuId = id;
+        if (loot.stream().anyMatch(CaseOpening::isGold)) playGold();
+    }
+
+    /** The chest's reward items (no filler panes, barriers, arrows or the chest icon). */
+    private static List<ItemStack> loot(AbstractContainerScreen<?> screen) {
+        List<ItemStack> loot = new ArrayList<>();
+        for (Slot slot : screen.getMenu().slots) {
+            if (slot.container instanceof Inventory) continue;
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty()
+                || stack.is(Items.BARRIER) || stack.is(Items.ARROW) || stack.is(Items.CHEST)) continue;
+            // Skip the glass pane filler, keep everything else (essence has no SkyBlock id but is loot).
+            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().endsWith("glass_pane")) continue;
+            if (ChatFormatting.stripFormatting(stack.getHoverName().getString()).isBlank()) continue;
+            loot.add(stack);
+        }
+        return loot;
     }
 
     private static boolean running(AbstractContainerScreen<?> screen) {
@@ -106,17 +142,7 @@ public final class CaseOpening {
         String type = m.group("type");
         if (!c.allChests && !type.equals("Obsidian") && !type.equals("Bedrock")) return;
 
-        List<ItemStack> loot = new ArrayList<>();
-        for (Slot slot : screen.getMenu().slots) {
-            if (slot.container instanceof Inventory) continue;
-            ItemStack stack = slot.getItem();
-            if (stack.isEmpty()
-                || stack.is(Items.BARRIER) || stack.is(Items.ARROW) || stack.is(Items.CHEST)) continue;
-            // Skip the glass pane filler, keep everything else (essence has no SkyBlock id but is loot).
-            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().endsWith("glass_pane")) continue;
-            if (ChatFormatting.stripFormatting(stack.getHoverName().getString()).isBlank()) continue;
-            loot.add(stack);
-        }
+        List<ItemStack> loot = loot(screen);
         if (loot.isEmpty()) return; // items not here yet; try again next frame
         menuId = id;
 
@@ -141,7 +167,6 @@ public final class CaseOpening {
         reel.set(WINNER_INDEX, winner);
         randomOffset = ((4 * ITEM_SCALE) + random.nextInt(4 * ITEM_SCALE)) * (random.nextBoolean() ? 1 : -1);
         lastSound = 0;
-        goldPlayed = false;
         start = System.currentTimeMillis();
     }
 
@@ -231,10 +256,6 @@ public final class CaseOpening {
             g.pose().translate(-mc.font.width(name) / 2f, 0);
             g.text(mc.font, name, 0, 0, 0xFFFFFFFF, true);
             g.pose().popMatrix();
-            if (!goldPlayed) {
-                goldPlayed = true;
-                if (isGold(winner) && (c == null || c.goldSound)) playGold();
-            }
         }
     }
 

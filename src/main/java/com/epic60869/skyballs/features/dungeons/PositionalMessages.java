@@ -121,7 +121,8 @@ public final class PositionalMessages {
      */
     private static java.lang.ref.WeakReference<Object> floor7World = new java.lang.ref.WeakReference<>(null);
 
-    private static boolean onFloor7() {
+    /** On F7 or M7: from the sidebar, the boss tracking, or this world's chat. */
+    static boolean onFloor7() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level == floor7World.get()) return true;
         if (DungeonManager.getBoss().isFloor(7)) return true;
