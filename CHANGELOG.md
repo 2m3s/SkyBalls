@@ -5,7 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.2.8 — 2026-09-26
 
 ### Added
-- Summoning Eye drops show how many Zealot kills that eye took, on Hypixel's drop message: "RARE DROP! Summoning Eye (Kills: 100)". Always on. The count starts from the first eye you get with this version.
+- Summoning Eye drops show how many Zealot kills that eye took, on Hypixel's drop message: "RARE DROP! Summoning Eye (Kills: 100)". Always on; it uses the same count as the tracker's "Since last eye".
 - Terminals > Hide Menu (on by default): while a terminal is being solved, only the solver shows. The chest, its items, your inventory and item tooltips are hidden, like other terminal solvers. The Odin style shows the terminal's name above the solver.
 - Score Time Message (Dungeons > Score, on by default): like NoammAddons, a chat message when the run reaches 270 and 300 score with how long it took and the floor, e.g. "300 score reached in 6m 12s || M7." It no longer needs the 270/300 alerts on, and a run that jumps straight past 300 gets both messages.
 
