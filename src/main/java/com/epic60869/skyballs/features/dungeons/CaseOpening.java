@@ -106,7 +106,7 @@ public final class CaseOpening {
     private static void hideCroesusContents(ItemStack stack, List<Component> lines) {
         FeatureConfigs.CaseOpening c = config();
         if (c == null || !c.enabled || !c.croesus || !c.hideCroesusContents || !Compat.isOnSkyblock() || !stack.is(Items.PLAYER_HEAD)) return;
-        if (!(Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen)
+        if (!(Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> screen)
             || !CROESUS_RUN.matcher(ChatFormatting.stripFormatting(screen.getTitle().getString()).trim()).matches()) return;
         var m = CHEST_HEAD.matcher(ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim());
         if (!m.find() || !spins(c, m.group("type"))) return;
