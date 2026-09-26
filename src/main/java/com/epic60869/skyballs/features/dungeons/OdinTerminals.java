@@ -157,6 +157,21 @@ public final class OdinTerminals {
 
     // ----- Hooks (ContainerSolverMenuMixin / ContainerSolverScreenMixin) -----
 
+    /** NoammAddons style: the vanilla terminal (background, items, tooltips) isn't drawn behind the panel (see the Storage Overlay mixins). */
+    public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
+        Handler handler = current;
+        return handler != null && enabled() && noammStyle() && screen.getMenu() == handler.menu;
+    }
+
+    /** Odin style: the terminal's own items and their tooltips aren't drawn, only the solution, like Odin. */
+    public static boolean hidesSlot(AbstractContainerScreen<?> screen, Slot slot) {
+        Handler handler = current;
+        FeatureConfigs.Terminals config = config();
+        if (handler == null || config == null || slot == null || screen.getMenu() != handler.menu) return false;
+        if (handler.type() == Type.MELODY && !config.melodySolver) return false;
+        return slot.index < handler.type().windowSize;
+    }
+
     /** A slot of the open menu changed. */
     public static void onSetItem(AbstractContainerMenu menu, int slot) {
         Handler handler = current;
@@ -244,7 +259,7 @@ public final class OdinTerminals {
         Minecraft mc = Minecraft.getInstance();
         var font = mc.font;
         g.nextStratum();
-        // Hide the menu behind the panel.
+        // Dim the screen behind the panel (the vanilla menu itself isn't drawn, see hidesMenu).
         g.fill(0, 0, g.guiWidth(), g.guiHeight(), 0xC0000000);
 
         float scale = noammScale();

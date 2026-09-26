@@ -77,7 +77,14 @@ public abstract class ContainerSolverScreenMixin {
 		return hoveredSlot == null ? stack : skyballs$displayStack(hoveredSlot, stack);
 	}
 
+	// SkyBalls: Odin's terminal solver hides the terminal's own items and their tooltips.
+	@Inject(method = "extractTooltip", at = @At("HEAD"), cancellable = true)
+	private void skyballs$hideTerminalTooltip(CallbackInfo ci) {
+		if (com.epic60869.skyballs.features.dungeons.OdinTerminals.hidesSlot((AbstractContainerScreen<?>) (Object) this, hoveredSlot)) ci.cancel();
+	}
+
 	private ItemStack skyballs$displayStack(Slot slot, ItemStack stack) {
+		if (com.epic60869.skyballs.features.dungeons.OdinTerminals.hidesSlot((AbstractContainerScreen<?>) (Object) this, slot)) return ItemStack.EMPTY;
 		ContainerSolver solver = ContainerSolverManager.getCurrentSolver();
 		if (solver instanceof StackDisplayModifier modifier && solver.isSolverSlot(slot, (AbstractContainerScreen<?>) (Object) this)) {
 			return modifier.modifyDisplayStack(slot.getContainerSlot(), stack);

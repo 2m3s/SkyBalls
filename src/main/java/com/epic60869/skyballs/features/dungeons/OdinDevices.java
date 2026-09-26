@@ -93,7 +93,7 @@ public final class OdinDevices {
         });
         UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
             if (!level.isClientSide()) return InteractionResult.PASS;
-            return onUseEntity(entity) ? InteractionResult.FAIL : InteractionResult.PASS;
+            return onUseEntity(entity, hit != null) ? InteractionResult.FAIL : InteractionResult.PASS;
         });
         SkyBallsWorldRender.register(OdinDevices::render);
     }
@@ -169,10 +169,26 @@ public final class OdinDevices {
         return false;
     }
 
-    private static boolean onUseEntity(Entity entity) {
+    // One right click on an item frame fires the use callback twice (interactAt with a hit, then interact without
+    // one). Only the first counts the click; the second gets the same answer, so a blocked click sends neither packet
+    // and an allowed one isn't counted twice (which made the last needed click look wrong and get blocked).
+    private static int lastUseEntity = -1;
+    private static long lastUseTime;
+    private static boolean lastUseBlocked;
+
+    private static boolean onUseEntity(Entity entity, boolean withHit) {
         FeatureConfigs.Terminals config = config();
         if (config == null || !config.odinDevices || !inF7Boss()) return false;
-        return arrowAlignClick(entity, config);
+        long now = System.currentTimeMillis();
+        if (!withHit && entity.getId() == lastUseEntity && now - lastUseTime < 50) {
+            lastUseEntity = -1;
+            return lastUseBlocked;
+        }
+        boolean blocked = arrowAlignClick(entity, config);
+        lastUseEntity = withHit ? entity.getId() : -1;
+        lastUseTime = now;
+        lastUseBlocked = blocked;
+        return blocked;
     }
 
     private static void render(PrimitiveCollector collector) {

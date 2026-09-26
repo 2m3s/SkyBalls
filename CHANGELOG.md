@@ -12,6 +12,8 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ### Fixed
 - Dungeon Case Opening: the chest could still be seen through the spin, and its tooltips drawn over it; the chest is now hidden until the spin ends.
+- Terminal Solver: the vanilla terminal showed through. With NoammAddons the real menu isn't drawn behind the panel any more; with Odin the terminal's own items and their tooltips are hidden and only the solution shows, like Odin.
+- Arrow Align Block Wrong Clicks: each click on a frame was counted twice, so the last click a frame needed could be blocked as wrong. Clicks are counted once, and frames that are already right can't be clicked (hold shift to click anyway), like Odin.
 
 ## 1.2.7 — 2026-09-26
 
