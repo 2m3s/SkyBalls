@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * Updated twice a second; listeners are told when the tab-list area changes.
  */
 public final class SkyBallsLocation {
-    private static final Pattern FLOOR = Pattern.compile("The Catacombs \\((?<floor>[FM]\\d|E)\\)");
+    private static final Pattern FLOOR = Pattern.compile("Catacombs \\((?<floor>[FM]\\d|E)\\)");
     private static final Pattern GLACITE = Pattern.compile("Glacite Tunnels|Dwarven Base Camp|Great Glacite Lake|Fossil Research Center");
     private static final List<Consumer<String>> AREA_LISTENERS = new CopyOnWriteArrayList<>();
 

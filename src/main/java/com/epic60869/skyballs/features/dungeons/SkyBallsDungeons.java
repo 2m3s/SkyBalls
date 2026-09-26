@@ -57,7 +57,6 @@ public final class SkyBallsDungeons {
         OdinTerminals.init();
         OdinDevices.init();
         DungeonMap.init();
-        NoammMap.init();
         DungeonMapLabels.init();
         DungeonMapTexture.init();
         Boulder.init();

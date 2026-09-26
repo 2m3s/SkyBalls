@@ -332,98 +332,9 @@ public final class FeatureConfigs {
         public boolean roomLabels = true;
 
         @Expose
-        @ConfigOption(name = "Background", desc = "Skyblocker style: draw a blurred background behind the dungeon map.")
+        @ConfigOption(name = "Background", desc = "Draw a blurred background behind the dungeon map.")
         @ConfigEditorBoolean
         public boolean background = false;
-
-        @Expose
-        @ConfigOption(name = "Map Style", desc = "NoammAddons (legit): rooms redrawn in clean colours with checkmarks, names and bordered heads, only showing what the vanilla map shows. Skyblocker: the vanilla map image.")
-        @ConfigEditorDropdown
-        public MapStyle style = MapStyle.NOAMM;
-
-        @Expose
-        @ConfigOption(name = "Checkmark Style", desc = "NoammAddons style: what to draw on each room.")
-        @ConfigEditorDropdown
-        public CheckmarkStyle checkmarkStyle = CheckmarkStyle.CHECKMARKS;
-
-        @Expose
-        @ConfigOption(name = "Center Checkmark", desc = "Put the checkmark/name in the middle of big rooms instead of the top-left square.")
-        @ConfigEditorBoolean
-        public boolean centerCheckmark = true;
-
-        @Expose
-        @ConfigOption(name = "Hide Unknown Room Checkmark", desc = "Don't draw the ? on rooms you haven't opened.")
-        @ConfigEditorBoolean
-        public boolean hideQuestionCheckmarks = false;
-
-        @Expose
-        @ConfigOption(name = "Limit Room Name Size", desc = "Shrink room names so they fit inside the room.")
-        @ConfigEditorBoolean
-        public boolean limitRoomNameSize = true;
-
-        @Expose
-        @ConfigOption(name = "Show Extra Info Under Map", desc = "Secrets, crypts, score, deaths, mimic and prince under the map.")
-        @ConfigEditorBoolean
-        public boolean extraInfo = false;
-
-        @Expose
-        @ConfigOption(name = "Show Player Names", desc = "Names under the player heads.")
-        @ConfigEditorDropdown
-        public PlayerNames playerNames = PlayerNames.HOLDING_LEAP;
-
-        @Expose
-        @ConfigOption(name = "Class Coloured Head Border", desc = "Colour each head's border by class instead of the Head Border colour.")
-        @ConfigEditorBoolean
-        public boolean classHeadBorder = false;
-
-        @Expose
-        @ConfigOption(name = "Class Coloured Names", desc = "Colour player names by class.")
-        @ConfigEditorBoolean
-        public boolean classNames = false;
-
-        @Expose
-        @ConfigOption(name = "Text Scale", desc = "Scale of room names and secret counts.")
-        @ConfigEditorSlider(minValue = 0.4f, maxValue = 1.5f, minStep = 0.1f)
-        public float textScale = 1f;
-
-        @Expose
-        @ConfigOption(name = "Checkmark Scale", desc = "Scale of the room checkmarks.")
-        @ConfigEditorSlider(minValue = 0.3f, maxValue = 1.5f, minStep = 0.1f)
-        public float checkmarkScale = 1f;
-
-        @Expose
-        @ConfigOption(name = "Player Head Scale", desc = "Scale of the player heads.")
-        @ConfigEditorSlider(minValue = 0.3f, maxValue = 1.5f, minStep = 0.1f)
-        public float headScale = 1f;
-
-        @Expose
-        @ConfigOption(name = "Player Name Scale", desc = "Scale of the player names.")
-        @ConfigEditorSlider(minValue = 0.3f, maxValue = 1.5f, minStep = 0.1f)
-        public float nameScale = 0.5f;
-
-        @Expose
-        @ConfigOption(name = "Border Thickness", desc = "Thickness of the map border.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 5, minStep = 1)
-        public int borderWidth = 1;
-
-        @Expose @ConfigOption(name = "Map Background Colour", desc = "") @ConfigEditorColour public String backgroundColor = "0:50:255:255:255";
-        @Expose @ConfigOption(name = "Map Border Colour", desc = "") @ConfigEditorColour public String borderColor = "0:255:255:255:255";
-        @Expose @ConfigOption(name = "Head Border Colour", desc = "") @ConfigEditorColour public String headBorderColor = "0:255:0:0:0";
-        @Expose @ConfigOption(name = "Blood Room", desc = "") @ConfigEditorColour public String colorBlood = "0:255:178:0:0";
-        @Expose @ConfigOption(name = "Entrance Room", desc = "") @ConfigEditorColour public String colorEntrance = "0:255:0:255:0";
-        @Expose @ConfigOption(name = "Fairy Room", desc = "") @ConfigEditorColour public String colorFairy = "0:255:227:155:226";
-        @Expose @ConfigOption(name = "Miniboss Room", desc = "") @ConfigEditorColour public String colorMiniboss = "0:255:255:200:0";
-        @Expose @ConfigOption(name = "Normal Room", desc = "") @ConfigEditorColour public String colorRoom = "0:255:121:70:0";
-        @Expose @ConfigOption(name = "Puzzle Room", desc = "") @ConfigEditorColour public String colorPuzzle = "0:255:123:0:123";
-        @Expose @ConfigOption(name = "Rare Room", desc = "") @ConfigEditorColour public String colorRare = "0:255:178:178:178";
-        @Expose @ConfigOption(name = "Trap Room", desc = "") @ConfigEditorColour public String colorTrap = "0:255:255:130:0";
-        @Expose @ConfigOption(name = "Unopened Room", desc = "") @ConfigEditorColour public String colorUnopened = "0:255:65:65:65";
-        @Expose @ConfigOption(name = "Blood Door", desc = "") @ConfigEditorColour public String colorBloodDoor = "0:255:178:0:0";
-        @Expose @ConfigOption(name = "Entrance Door", desc = "") @ConfigEditorColour public String colorEntranceDoor = "0:255:0:255:0";
-        @Expose @ConfigOption(name = "Normal Door", desc = "") @ConfigEditorColour public String colorRoomDoor = "0:255:121:70:0";
-        @Expose @ConfigOption(name = "Wither Door", desc = "") @ConfigEditorColour public String colorWitherDoor = "0:255:16:16:16";
-        @Expose @ConfigOption(name = "Opened Wither Door", desc = "") @ConfigEditorColour public String colorOpenWitherDoor = "0:255:121:70:0";
-        @Expose @ConfigOption(name = "Unopened Door", desc = "") @ConfigEditorColour public String colorUnopenedDoor = "0:255:65:65:65";
 
         @Expose public int x = 2;
         @Expose public int y = 2;
@@ -712,51 +623,6 @@ public final class FeatureConfigs {
         private final String label;
 
         ClassOverride(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
-    }
-
-    public enum MapStyle {
-        NOAMM("NoammAddons (Legit)"), SKYBLOCKER("Skyblocker");
-
-        private final String label;
-
-        MapStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
-    }
-
-    public enum CheckmarkStyle {
-        CHECKMARKS("Checkmarks"), SECRETS("Secrets"), ROOM_NAME("Room Name"), ROOM_NAME_SECRETS("Room Name + Secrets");
-
-        private final String label;
-
-        CheckmarkStyle(String label) {
-            this.label = label;
-        }
-
-        @Override
-        public String toString() {
-            return label;
-        }
-    }
-
-    public enum PlayerNames {
-        OFF("Off"), HOLDING_LEAP("Holding Leap"), ALWAYS("Always");
-
-        private final String label;
-
-        PlayerNames(String label) {
             this.label = label;
         }
 

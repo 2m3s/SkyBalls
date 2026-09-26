@@ -2,6 +2,16 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.2.8 — 2026-09-26
+
+### Removed
+- The NoammAddons dungeon map (and its Map Style, checkmark, name, scale and colour options). The dungeon map is always the Skyblocker map now.
+
+### Fixed
+- Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. SkyBalls now applies them last. If it still moves, turn off the other mod's animations.
+- F7/M7 positional messages (Py Stand Here, Mage Stop, Arch/Healer/Tank Stand Here, SS) didn't show when the floor couldn't be read from the sidebar. SkyBalls now also knows you're on F7/M7 from the "entered ... Floor VII" message and the Wither Lords' boss messages.
+- Quiz solver didn't highlight the answer when it couldn't find the room's corner block; it now uses the dungeon room matching to place the answers.
+
 ## 1.2.7 — 2026-09-26
 
 ### Fixed

@@ -189,6 +189,10 @@ public final class OdinPuzzleSolvers {
         return room != null && frame != null && name.equals(room.getName());
     }
 
+    private static boolean inQuiz() {
+        return room != null && QUIZ.equals(room.getName());
+    }
+
     public static void init() {
         loadData();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> reset());
@@ -251,6 +255,12 @@ public final class OdinPuzzleSolvers {
             room = current;
             frame = findFrame(mc.level, current);
             resetRoomState();
+            if (inQuiz()) {
+                // The quiz uses Skyblocker's room transform, so it works even when the roof corner block isn't found.
+                quizOptions[0] = current.relativeToActual(new BlockPos(20, 70, 6));
+                quizOptions[1] = current.relativeToActual(new BlockPos(15, 70, 9));
+                quizOptions[2] = current.relativeToActual(new BlockPos(10, 70, 6));
+            }
             if (frame != null) onRoomEnter(mc.level, config);
         }
         if (frame == null) return;
@@ -266,11 +276,6 @@ public final class OdinPuzzleSolvers {
             case ICE_FILL -> solveIceFill(level, config.iceFillOptimized);
             case BOULDER -> solveBoulder(level);
             case BEAMS -> scanBeams(level);
-            case QUIZ -> {
-                quizOptions[0] = frame.real(20, 70, 6);
-                quizOptions[1] = frame.real(15, 70, 9);
-                quizOptions[2] = frame.real(10, 70, 6);
-            }
             case TP_MAZE -> {
                 for (int[] p : TP_PADS) tpPads.add(frame.real(p[0], p[1], p[2]));
             }
@@ -461,7 +466,7 @@ public final class OdinPuzzleSolvers {
     private static void onChat(String text) {
         FeatureConfigs.Puzzles config = config();
         Minecraft mc = Minecraft.getInstance();
-        if (config == null || frame == null || mc.level == null) return;
+        if (config == null || mc.level == null) return;
 
         if (config.threeWeirdos && in(WEIRDOS)) {
             Matcher m = WEIRDOS_NPC.matcher(text);
@@ -486,7 +491,7 @@ public final class OdinPuzzleSolvers {
             }
         }
 
-        if (config.trivia && in(QUIZ)) {
+        if (config.trivia && inQuiz()) {
             if (text.startsWith("[STATUE] Oruo the Omniscient: ") && text.endsWith("correctly!")) {
                 if (text.contains("answered the final question")) {
                     quizAnswers = null;
@@ -512,7 +517,7 @@ public final class OdinPuzzleSolvers {
     private static void render(PrimitiveCollector collector) {
         FeatureConfigs.Puzzles config = config();
         Minecraft mc = Minecraft.getInstance();
-        if (config == null || frame == null || mc.level == null) return;
+        if (config == null || mc.level == null) return;
 
         if (config.iceFill && in(ICE_FILL) && icePath.size() > 1) {
             collector.submitLinesFromPoints(icePath.toArray(new Vec3[0]), new float[]{1f, 0.33f, 1f}, 1f, 3f, true);
@@ -536,7 +541,7 @@ public final class OdinPuzzleSolvers {
             if (weirdosCorrect != null) collector.submitFilledBox(weirdosCorrect, new float[]{0.33f, 1f, 0.33f}, 0.5f, false);
             for (BlockPos wrong : weirdosWrong) collector.submitFilledBox(wrong, new float[]{1f, 0.33f, 0.33f}, 0.5f, false);
         }
-        if (config.trivia && in(QUIZ) && quizAnswers != null) {
+        if (config.trivia && inQuiz() && quizAnswers != null) {
             for (int i = 0; i < 3; i++) {
                 if (quizCorrect[i] && quizOptions[i] != null) collector.submitFilledBoxWithBeaconBeam(quizOptions[i].below(), new float[]{0.33f, 1f, 0.33f}, 0.6f, false);
             }
