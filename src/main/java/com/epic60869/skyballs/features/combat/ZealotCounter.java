@@ -63,6 +63,8 @@ public final class ZealotCounter {
     private static final java.util.regex.Pattern COMBAT_XP = java.util.regex.Pattern.compile("\\+[\\d,.]+ Combat \\(");
 
     private static int totalKills, totalEyes, sinceEye;
+    private static String lastEyeMessage = "";
+    private static long lastEyeTime;
     private static int sessionKills, sessionEyes;
     private static boolean showSession;
     private static Path file;
@@ -83,13 +85,18 @@ public final class ZealotCounter {
             HIT_BY_YOU.clear();
         });
         SkyBallsChat.onChat(message -> {
-            String text = message.text();
-            if (text.contains("RARE DROP!") && text.contains("Summoning Eye")) {
-                totalEyes++;
-                sessionEyes++;
-                sinceEye = 0;
-                save();
-            }
+            String text = message.text().trim();
+            // Only Hypixel's own drop line, not party/guild chat or other mods repeating it. The same line arriving
+            // twice at once (the packet handled twice, or a mod re-sending it) is counted once.
+            if (!text.startsWith("RARE DROP! Summoning Eye")) return;
+            long now = System.currentTimeMillis();
+            if (text.equals(lastEyeMessage) && now - lastEyeTime < 1000) return;
+            lastEyeMessage = text;
+            lastEyeTime = now;
+            totalEyes++;
+            sessionEyes++;
+            sinceEye = 0;
+            save();
         });
 
         AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {

@@ -95,25 +95,25 @@ public final class CopyChat {
         SkyBallsChatComponentAccessor access = (SkyBallsChatComponentAccessor) chat;
         List<GuiMessage.Line> all = access.skyballs$trimmedMessages();
         double chatScale = mc.options.chatScale().get();
-        int chatBottom = Mth.floor(mc.getWindow().getGuiScaledHeight() - 40);
         int entryHeight = (int) (9.0 * (mc.options.chatLineSpacing().get() + 1.0));
         int chatHeight = ChatComponent.getHeight(mc.options.chatHeightFocused().get());
         int start = access.skyballs$chatScrollbarPos();
-        int end = Math.min(all.size(), start + chatHeight / Math.max(1, entryHeight));
-        if (start >= end) return "";
-        List<GuiMessage.Line> visible = all.subList(start, end);
-        int width = (int) (ChatComponent.getWidth(mc.options.chatWidth().get()) * chatScale) + 8;
-        for (int index = 0; index < visible.size(); index++) {
-            int entryBottom = (int) (chatBottom - index * (entryHeight * chatScale));
-            int entryTop = (int) (entryBottom - (entryHeight * chatScale));
-            if (mouseX >= 0 && mouseX <= width && mouseY >= entryTop && mouseY < entryBottom) {
-                if (singleLine) return plain(visible.get(index).content());
-                StringBuilder out = new StringBuilder();
-                for (GuiMessage.Line line : fullMessage(visible, index)) out.append(plain(line.content()));
-                return out.toString();
-            }
-        }
-        return "";
+        int perPage = chatHeight / Math.max(1, entryHeight);
+        int shown = Math.min(perPage, all.size() - start);
+        if (shown <= 0) return "";
+        // Same maths as vanilla's ChatComponent (screenToChatX/Y, getMessageLineIndexAt), in doubles, so the line
+        // found is exactly the one the mouse is over. Rounding each line's edges to whole pixels could pick the
+        // line above or below near an edge.
+        double chatX = mouseX / chatScale - 4.0;
+        double chatY = (mc.getWindow().getGuiScaledHeight() - mouseY - 40.0) / (chatScale * entryHeight);
+        if (chatX < -4.0 || chatX > Mth.floor(ChatComponent.getWidth(mc.options.chatWidth().get()) / chatScale)) return "";
+        if (chatY < 0.0 || chatY >= shown) return "";
+        int index = Mth.floor(chatY);
+        List<GuiMessage.Line> visible = all.subList(start, start + shown);
+        if (singleLine) return plain(visible.get(index).content());
+        StringBuilder out = new StringBuilder();
+        for (GuiMessage.Line line : fullMessage(visible, index)) out.append(plain(line.content()));
+        return out.toString();
     }
 
     private static List<GuiMessage.Line> fullMessage(List<GuiMessage.Line> visible, int index) {

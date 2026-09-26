@@ -17,6 +17,8 @@ All notable changes to SkyBalls are listed here, newest first.
 - Case Opening hides the chest while the case spins, so you can't see what's inside until it lands.
 
 ### Fixed
+- Zealot Tracker sometimes counted one Summoning Eye twice. Only Hypixel's own "RARE DROP! Summoning Eye" line counts now (not party chat or other mods repeating it), and the same line arriving twice at once counts once.
+- Copy Chat sometimes copied the message above the one you clicked. It now finds the line under the mouse with the same maths as vanilla chat.
 - Arrow Align misclick protection let the frames spin past the right direction: one right click could be counted twice, and when more than one layout fitted, frames that were already right could still be clicked. Both are fixed, and it also works when the floor can't be read from the sidebar.
 - Score Display stayed at 0 (or didn't show) for some players: the floor, Cleared % and Time Elapsed are now also read straight from the scoreboard's teams, like NoammAddons, so they're found even when a scoreboard mod hides or replaces the sidebar. The floor is also taken from the "entered The Catacombs, Floor ..." message as a last resort.
 - Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. SkyBalls now applies them last. If it still moves, turn off the other mod's animations.
