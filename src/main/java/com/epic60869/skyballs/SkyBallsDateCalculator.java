@@ -19,6 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,8 +30,9 @@ import java.util.regex.Pattern;
  * works alongside other mods that change tooltip rendering.
  */
 public final class SkyBallsDateCalculator {
+    private static final Pattern TIMER_PATTERN = Pattern.compile("((?<days>\\d+)d)? ?((?<hours>\\d+)h)? ?((?<minutes>\\d+)m)? ?((?<seconds>\\d+)s)?");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("E MMM d yyyy HH:mm", Locale.US).withZone(ZoneId.systemDefault());
-    private static final TimeProvider[] PROVIDERS = {new Calendar()};
+    private static final TimeProvider[] PROVIDERS = {new Calendar(), new Events()};
     private static TimeProvider currentTimer;
 
     private SkyBallsDateCalculator() {}
@@ -73,72 +76,47 @@ public final class SkyBallsDateCalculator {
 
     private static final Pattern DATE_LINE = Pattern.compile("^[A-Z][a-z]{2} [A-Z][a-z]{2} \\d{1,2} \\d{4} \\d{2}:\\d{2}$");
 
-    /** "Starts in: 1d 2h 3m", "Ends in: 5m 10s", "Starts in: 2 days 3 hours": the countdown after "in". */
-    private static final Pattern COUNTDOWN_LINE = Pattern.compile("(?:Starts|Ends|Begins|Ending|Starting) in:? (?<time>.+)$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern TIME_PART = Pattern.compile("(?<n>\\d+) ?(?<unit>days?|d|hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s)\\b", Pattern.CASE_INSENSITIVE);
-    private static final Pattern DAY_NUMBER = Pattern.compile("(?:^|\\D)(?<day>\\d{1,2})(?:st|nd|rd|th)?(?:\\D|$)");
-
     private static void addToTooltip(ItemStack stack, List<Component> lines) {
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config == null || !config.misc.calendarTimeToRealTime || !Compat.isOnSkyblock() || lines.isEmpty()) return;
+        if (config == null || !config.misc.calendarTimeToRealTime || !Compat.isOnSkyblock()) return;
 
-        // 1. Countdowns ("Starts in: 1d 2h") in any SkyBlock menu: now + the time left, like Skyblocker's Events.
         boolean added = false;
-        for (int i = 1; i < lines.size(); i++) {
-            Instant instant = countdown(ChatFormatting.stripFormatting(lines.get(i).getString()));
-            if (instant == null) continue;
-            lines.add(++i, dateLine(instant));
-            added = true;
+        if (currentTimer != null) {
+            for (int i = 1; i < lines.size(); i++) {
+                String text = ChatFormatting.stripFormatting(lines.get(i).getString());
+
+                //Only attempt to look for a timer if the line contains the qualifying text
+                if (!currentTimer.qualifier().test(text)) continue;
+
+                Instant instant = currentTimer.getStartTime(stack, text);
+
+                if (instant != null) {
+                    lines.add(++i, dateLine(instant));
+                    added = true;
+                }
+            }
+            // SkyBalls: a day in the month view without an event line still gets its date, at the end.
+            if (!added && currentTimer instanceof Calendar calendar) {
+                Instant instant = calendar.getStartTime(stack, "");
+                if (instant != null) {
+                    lines.add(dateLine(instant));
+                    added = true;
+                }
+            }
         }
         if (added) return;
 
-        // 2. A SkyBlock date written in the tooltip ("Late Spring 12th, Year 412"), in any menu.
+        // SkyBalls: any SkyBlock date written in the tooltip itself ("Late Spring 12th, Year 412"), in any menu.
         for (int i = 0; i < lines.size(); i++) {
             Matcher m = WRITTEN_DATE.matcher(ChatFormatting.stripFormatting(lines.get(i).getString()));
             if (!m.find()) continue;
             int month = Calendar.MONTHS.indexOf(m.group("month").toLowerCase(Locale.ROOT));
             int day = Integer.parseInt(m.group("day"));
-            int year = m.group("year") != null ? Integer.parseInt(m.group("year"))
-                : currentTimer instanceof Calendar calendar ? calendar.year : currentYear();
+            int year = m.group("year") != null ? Integer.parseInt(m.group("year")) : currentYear();
             if (month < 0 || day < 1 || day > 31 || year < 1) continue;
             lines.add(i + 1, dateLine(SkyBallsSkyblockTime.toRealWorld(year, month, day).toInstant()));
             return;
         }
-
-        // 3. A day in a month view ("Early Spring, Year 412"): Hypixel shows the day as the stack size, as Skyblocker
-        // reads it. Only for items whose name has that day number, so buttons and filler never get a made-up date.
-        if (currentTimer instanceof Calendar calendar) {
-            int day = stack.getCount();
-            String name = ChatFormatting.stripFormatting(lines.getFirst().getString());
-            Matcher m = DAY_NUMBER.matcher(name);
-            boolean named = false;
-            while (m.find()) if (Integer.parseInt(m.group("day")) == day) named = true;
-            if (!named || day < 1 || day > 31) return;
-            lines.add(1, dateLine(SkyBallsSkyblockTime.toRealWorld(calendar.year, calendar.monthIndex, day).toInstant()));
-        }
-    }
-
-    /** The real time a "Starts in: ..." line points to, rounded to the minute, or null. */
-    private static Instant countdown(String line) {
-        if (line == null) return null;
-        Matcher m = COUNTDOWN_LINE.matcher(line);
-        if (!m.find()) return null;
-        long seconds = 0;
-        boolean any = false;
-        Matcher part = TIME_PART.matcher(m.group("time"));
-        while (part.find()) {
-            long n = Long.parseLong(part.group("n"));
-            char unit = Character.toLowerCase(part.group("unit").charAt(0));
-            seconds += switch (unit) {
-                case 'd' -> n * 86400;
-                case 'h' -> n * 3600;
-                case 'm' -> n * 60;
-                default -> n;
-            };
-            any = true;
-        }
-        if (!any) return null;
-        return Instant.now().plusSeconds(seconds + 30).truncatedTo(ChronoUnit.MINUTES);
     }
 
     private static final Pattern WRITTEN_DATE = Pattern.compile("(?<month>(?:Early |Late )?(?:Spring|Summer|Autumn|Winter)) (?<day>\\d{1,2})(?:st|nd|rd|th)?(?:,? Year (?<year>\\d+))?");
@@ -152,10 +130,53 @@ public final class SkyBallsDateCalculator {
         return Component.literal(DATE_FORMATTER.format(instant)).withStyle(ChatFormatting.ITALIC, ChatFormatting.DARK_GRAY);
     }
 
+    private static boolean hasAnyGroup(MatchResult result) {
+        for (String group : result.namedGroups().keySet()) {
+            if (result.group(group) != null) return true;
+        }
+        return false;
+    }
+
+    private static int group(MatchResult result, String name) {
+        String value = result.group(name);
+        return value == null ? 0 : Integer.parseInt(value);
+    }
+
     private interface TimeProvider {
         boolean test(String screenTitle);
 
+        default Predicate<String> qualifier() {
+            return l -> l.contains("Starts in") || l.contains("Ends in") || l.contains(" (");
+        }
+
         Instant getStartTime(ItemStack stack, String qualifiedLine);
+    }
+
+    private static class Events implements TimeProvider {
+        @Override
+        public boolean test(String screenTitle) {
+            // SkyBalls: also "SkyBlock Calendar" and other calendar menus.
+            return screenTitle.toLowerCase(Locale.ROOT).contains("calendar");
+        }
+
+        @Override
+        public Instant getStartTime(ItemStack stack, String qualifiedLine) {
+            MatchResult result = TIMER_PATTERN.matcher(qualifiedLine).results()
+                .filter(SkyBallsDateCalculator::hasAnyGroup) //Look for the first match that has what we're looking for
+                .findFirst()
+                .orElse(null);
+
+            if (result != null) {
+                return Instant.now()
+                    .plus(group(result, "days"), ChronoUnit.DAYS)
+                    .plus(group(result, "hours"), ChronoUnit.HOURS)
+                    .plus(group(result, "minutes"), ChronoUnit.MINUTES)
+                    .plusSeconds(group(result, "seconds"))
+                    .plusSeconds(30) // Add 30 seconds to round to the nearest minute
+                    .truncatedTo(ChronoUnit.MINUTES);
+            }
+            return null;
+        }
     }
 
     private static class Calendar implements TimeProvider {
