@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.2.9
+## 1.2.8.5 — 2026-09-26
 
 ### Changed
 - Click in order! terminal: the next three numbers are green, yellow and red (they were three greens that were hard to tell apart), with the Odin and NoammAddons solvers. Settings still on the old greens are updated; Numbers 1-3 can still be changed.
