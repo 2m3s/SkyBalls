@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.2.8.6
+## 1.2.9 — 2026-09-26
 
 ### Added
 - Held Item Model > Swing Rotation: how far the item tilts and rolls when you swing (1 = vanilla, 0 = it doesn't turn). Swing X, Y and Z only move the item, so at 0/0/0 it stayed in place but still did the big forward roll; lower Swing Rotation to shrink that.
