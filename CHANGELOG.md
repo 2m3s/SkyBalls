@@ -2,6 +2,11 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.3
+
+### Added
+- Storage overlay Dark Mode (Misc > Storage Overlay Settings): the backgrounds, slots and scroll bar are drawn dark, with a Dark Mode Shade to pick how dark.
+
 ## 1.3.2 — 2026-09-27
 
 ### Added

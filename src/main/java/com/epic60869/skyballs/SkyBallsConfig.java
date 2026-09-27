@@ -744,6 +744,8 @@ public final class SkyBallsConfig extends Config {
 
     /** Firmament's storage overlay options (Firmament's StorageOverlay.TConfig). */
     public static final class StorageOverlaySettings {
+        @Expose @ConfigOption(name = "Dark Mode", desc = "Draw the storage overlay's backgrounds, slots and scroll bar dark instead of Minecraft's light grey.") @ConfigEditorBoolean public boolean darkMode = false;
+        @Expose @ConfigOption(name = "Dark Mode Shade", desc = "How dark Dark Mode is: the colour the overlay's textures are tinted with (darker is darker).") @ConfigEditorColour public String darkModeShade = "0:255:70:70:78";
         @Expose @ConfigOption(name = "Outline Active Page", desc = "Put a border around the selected storage page in the storage overlay.") @ConfigEditorBoolean public boolean outlineActivePage = false;
         @Expose @ConfigOption(name = "Outline Colour", desc = "Change the colour of the border around your selected storage page.") @ConfigEditorColour public String outlineActivePageColour = "0:255:255:255:0";
         @Expose @ConfigOption(name = "Inactive Page Tooltips", desc = "Show item tooltips when hovering over items on pages other than the active one.") @ConfigEditorBoolean public boolean inactivePageTooltips = false;

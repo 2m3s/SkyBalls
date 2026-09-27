@@ -169,6 +169,15 @@ public class StorageOverlayScreen extends Screen {
         drawControls(context, mouseX, mouseY, delta);
     }
 
+    /** The overlay's textures, tinted dark with Dark Mode on. */
+    public static void sprite(GuiGraphicsExtractor context, Identifier id, int x, int y, int w, int h) {
+        if (StorageOverlay.config().darkMode) {
+            context.blitSprite(RenderPipelines.GUI_TEXTURED, id, x, y, w, h, 0xFF000000 | StorageOverlay.colour(StorageOverlay.config().darkModeShade));
+        } else {
+            context.blitSprite(RenderPipelines.GUI_TEXTURED, id, x, y, w, h);
+        }
+    }
+
     public float getScrollbarPercentage() {
         float max = getMaxScroll();
         return max <= 0 ? 0 : scroll / max;
@@ -176,8 +185,8 @@ public class StorageOverlayScreen extends Screen {
 
     public void drawScrollBar(GuiGraphicsExtractor context) {
         CustomGui.Rect sb = getScrollBarRect();
-        context.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLBAR_BACKGROUND, sb.x(), sb.y(), sb.width(), sb.height());
-        context.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLBAR_KNOB,
+        sprite(context, SCROLLBAR_BACKGROUND, sb.x(), sb.y(), sb.width(), sb.height());
+        sprite(context, SCROLLBAR_KNOB,
             sb.x(), sb.y() + (int) (getScrollbarPercentage() * (sb.height() - SCROLL_BAR_HEIGHT)), SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT);
     }
 
@@ -196,15 +205,15 @@ public class StorageOverlayScreen extends Screen {
     }
 
     public void drawControls(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.blitSprite(RenderPipelines.GUI_TEXTURED, CONTROLLER_BACKGROUND, measurements.controlX, measurements.controlY, CONTROL_BACKGROUND_WIDTH, CONTROL_HEIGHT);
+        sprite(context, CONTROLLER_BACKGROUND, measurements.controlX, measurements.controlY, CONTROL_BACKGROUND_WIDTH, CONTROL_HEIGHT);
         placeControls();
         searchField.extractRenderState(context, mouseX, mouseY, delta);
         editButton.extractRenderState(context, mouseX, mouseY, delta);
     }
 
     public void drawBackgrounds(GuiGraphicsExtractor context) {
-        context.blitSprite(RenderPipelines.GUI_TEXTURED, UPPER_BACKGROUND_SPRITE, measurements.x, measurements.y, measurements.overviewWidth, measurements.overviewHeight);
-        context.blitSprite(RenderPipelines.GUI_TEXTURED, PLAYER_INVENTORY_SPRITE, measurements.playerX, measurements.playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
+        sprite(context, UPPER_BACKGROUND_SPRITE, measurements.x, measurements.y, measurements.overviewWidth, measurements.overviewHeight);
+        sprite(context, PLAYER_INVENTORY_SPRITE, measurements.playerX, measurements.playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
     }
 
     public int[] getPlayerInventorySlotPosition(int index) {
@@ -431,7 +440,7 @@ public class StorageOverlayScreen extends Screen {
                         List<Slot> slots, int slotOffsetX, int slotOffsetY, int mouseX, int mouseY) {
         VirtualInventory inv = inventory.inventory;
         if (inv == null) {
-            context.blitSprite(RenderPipelines.GUI_TEXTURED, UPPER_BACKGROUND_SPRITE, x, y, PAGE_WIDTH, 18);
+            sprite(context, UPPER_BACKGROUND_SPRITE, x, y, PAGE_WIDTH, 18);
             context.text(font, Component.literal(StorageData.data().displayName(page) + ": click to load"), x + 4, y + 4, -1, true);
             return 18;
         }
@@ -449,7 +458,7 @@ public class StorageOverlayScreen extends Screen {
             context.horizontalLine(x, x + PAGE_WIDTH, top + h, colour);
         }
         context.text(font, Component.literal(name), x + 6, y + 3, slots == null ? 0xFFFFFFFF : 0xFFFFFF00, true);
-        context.blitSprite(RenderPipelines.GUI_TEXTURED, SLOT_ROW_SPRITE, x + 2, y + 5 + font.lineHeight, PAGE_SLOTS_WIDTH, inv.rows() * SLOT_SIZE);
+        sprite(context, SLOT_ROW_SPRITE, x + 2, y + 5 + font.lineHeight, PAGE_SLOTS_WIDTH, inv.rows() * SLOT_SIZE);
         CustomGui.Rect scrollPanel = getScrollPanelInner();
         for (int index = 0; index < stacks.size(); index++) {
             int slotX = (index % 9) * SLOT_SIZE + x + 3;
