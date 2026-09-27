@@ -74,22 +74,22 @@ public final class PositionalMessages {
     private static final List<FixedWaypoint> FIXED = List.of(
         // After the yellow pad in Storm (F7/M7 phase 2): where to stand. The player's feet go at 95, 165.5, 94.4.
         new FixedWaypoint("Py Stand Here", new AABB(94.5, 164.5, 93.9, 95.5, 165.5, 94.9), new float[]{1f, 0.9f, 0.1f},
-            PositionalMessages::onFloor7, null, null),
+            () -> onFloor7() && isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.MAGE), null, null),
         // Mage stop in Storm (F7/M7 phase 2). The player's feet go at 34, 169, 65.
         new FixedWaypoint("Mage Stop", new AABB(34, 168, 65, 35, 169, 66), new float[]{0.33f, 0.67f, 1f},
-            PositionalMessages::onFloor7, null, null),
+            () -> onFloor7() && isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.MAGE), null, null),
         // Archer spot in Storm (F7/M7 phase 2): the block at 103, 168, 49 plus one to the east and west (floor blocks below).
         new FixedWaypoint("Arch Stand Here", new AABB(102, 167, 49, 105, 168, 50), new float[]{1f, 0.67f, 0f},
-            PositionalMessages::onFloor7, null, null),
+            () -> onFloor7() && isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.ARCHER), null, null),
         // Healer spot on floor 7 (Storm arena), during Storm. The player's feet go at 58, 169, 66.
         new FixedWaypoint("Healer Stand Here After Lighting", new AABB(58, 168, 66, 59, 169, 67), new float[]{1f, 0.33f, 1f},
-            PositionalMessages::onFloor7, null, null),
+            () -> onFloor7() && isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.HEALER), null, null),
         // Tank spot on floor 7 (Storm arena), during Storm. The player's feet go at 109, 170, 93.
         new FixedWaypoint("Tank Stand Here", new AABB(109, 169, 93, 110, 170, 94), new float[]{0.33f, 1f, 0.33f},
-            PositionalMessages::onFloor7, null, null),
+            () -> onFloor7() && isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.TANK), null, null),
         // Simon Says in Goldor's phase (P3, until Necron starts): stand at 108, 120, 93 (ring, sends "At SS"); the block east of it, 109, 120, 93, is highlighted.
         new FixedWaypoint("SS", new AABB(109, 120, 93, 110, 121, 94), new float[]{1f, 0.33f, 1f},
-            PositionalMessages::onFloor7, new BlockPos(108, 120, 93), "At SS")
+            () -> onFloor7() && isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.HEALER), new BlockPos(108, 120, 93), "At SS")
     );
     private static final Set<FixedWaypoint> FIXED_SENT = new HashSet<>();
 
@@ -172,12 +172,8 @@ public final class PositionalMessages {
             BlockPos feet = mc.player.blockPosition();
             for (FixedWaypoint w : FIXED) {
                 if (w.partyMessage() == null) continue;
-                // Sent once each time you step onto the spot.
-                if (!feet.equals(w.stand())) {
-                    FIXED_SENT.remove(w);
-                    continue;
-                }
-                if (FIXED_SENT.contains(w) || !w.when().getAsBoolean()) continue;
+                // Sent once per run (cleared when you join the next server), even if you step off and back on.
+                if (!feet.equals(w.stand()) || FIXED_SENT.contains(w) || !w.when().getAsBoolean()) continue;
                 FIXED_SENT.add(w);
                 PENDING.add(new Pending(w.partyMessage(), 0));
             }

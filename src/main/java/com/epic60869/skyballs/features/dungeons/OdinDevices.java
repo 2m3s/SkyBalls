@@ -61,8 +61,12 @@ public final class OdinDevices {
         return c == null ? null : c.dungeons.terminals;
     }
 
+    /**
+     * The F7 device solvers only react to blocks at their exact boss-room coordinates, so being in a dungeon is enough;
+     * waiting for the floor and Skyblocker's boss-room detection too made Simon Says miss the lanterns.
+     */
     private static boolean inF7Boss() {
-        return PositionalMessages.onFloor7() && DungeonManager.isInBoss();
+        return com.epic60869.skyballs.features.core.SkyBallsLocation.inDungeon();
     }
 
     private static boolean sneaking() {

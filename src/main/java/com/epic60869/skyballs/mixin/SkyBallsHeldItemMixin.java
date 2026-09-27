@@ -30,6 +30,27 @@ public abstract class SkyBallsHeldItemMixin {
         return new org.joml.Quaternionf(axisAngle);
     }
 
+    @org.spongepowered.asm.mixin.Shadow private float mainHandHeight;
+    @org.spongepowered.asm.mixin.Shadow private float oMainHandHeight;
+    @org.spongepowered.asm.mixin.Shadow private float offHandHeight;
+    @org.spongepowered.asm.mixin.Shadow private float oOffHandHeight;
+
+    /** Misc > Held Item Model > No Re-equip Animation: a changed item is shown straight away, like NoFrills. */
+    @Inject(method = "shouldInstantlyReplaceVisibleItem", at = @At("HEAD"), cancellable = true)
+    private void skyballs$noEquipAnimation(ItemStack current, ItemStack expected, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (HeldItemModel.noEquipAnimation()) cir.setReturnValue(true);
+    }
+
+    /** ...and the hand never lowers to swap it. */
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void skyballs$holdHandUp(CallbackInfo ci) {
+        if (!HeldItemModel.noEquipAnimation()) return;
+        mainHandHeight = 1f;
+        oMainHandHeight = 1f;
+        offHandHeight = 1f;
+        oOffHandHeight = 1f;
+    }
+
     /** Misc > Held Item Model > No Swing Animation: the first-person hand and item never swing. */
     @com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "submitHandsWithItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getAttackAnim(F)F"))
     private float skyballs$noSwing(float attack) {
