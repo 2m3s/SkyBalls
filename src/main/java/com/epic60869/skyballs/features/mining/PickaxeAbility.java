@@ -39,10 +39,11 @@ public final class PickaxeAbility {
         return c == null ? null : c.mining.features;
     }
 
+    /** The mining islands: Gold Mine, Deep Caverns, Dwarven Mines (with the Glacite Tunnels), Crystal Hollows, Mineshafts. */
     private static boolean inMiningArea() {
         String area = SkyBallsLocation.area();
         return SkyBallsLocation.inDwarvenMines() || SkyBallsLocation.inCrystalHollows() || area.contains("Mineshaft")
-            || area.equals("Gold Mine") || area.equals("Deep Caverns") || area.equals("The End") || area.equals("Crimson Isle");
+            || area.equals("Gold Mine") || area.equals("Deep Caverns");
     }
 
     public static void init() {

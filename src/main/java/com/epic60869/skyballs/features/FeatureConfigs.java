@@ -227,7 +227,7 @@ public final class FeatureConfigs {
         public boolean crystalWaypointsFromChat = true;
 
         @Expose
-        @ConfigOption(name = "Pickaxe Ability HUD", desc = "Cooldown of your pickaxe ability (Mining Speed Boost, Pickobulus, ...) while mining. Move it in /sb gui.")
+        @ConfigOption(name = "Pickaxe Ability HUD", desc = "Cooldown of your pickaxe ability (Mining Speed Boost, Pickobulus, ...) on the mining islands (Gold Mine, Deep Caverns, Dwarven Mines, Crystal Hollows, Mineshafts). Move it in /sb gui.")
         @ConfigEditorBoolean
         public boolean pickaxeAbilityHud = true;
 
