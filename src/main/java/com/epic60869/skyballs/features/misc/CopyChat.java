@@ -36,12 +36,12 @@ public final class CopyChat {
             if (!(screen instanceof ChatScreen)) return;
             ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> {
                 SkyBallsConfig.CopyChat c = config();
-                if (c == null || !c.enabled || c.copyMessageKey != -100 + event.button()) return true;
+                if (c == null || !c.enabled || !isMouseBind(c.copyMessageKey, event.button())) return true;
                 return !copy(event.x(), event.y());
             });
             ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
                 SkyBallsConfig.CopyChat c = config();
-                if (c == null || !c.enabled || c.copyMessageKey < 0 || c.copyMessageKey == GLFW.GLFW_KEY_UNKNOWN || event.key() != c.copyMessageKey) return true;
+                if (c == null || !c.enabled || c.copyMessageKey <= 9 || c.copyMessageKey == GLFW.GLFW_KEY_UNKNOWN || event.key() != c.copyMessageKey) return true;
                 Minecraft mc = Minecraft.getInstance();
                 double x = mc.mouseHandler.getScaledXPos(mc.getWindow());
                 double y = mc.mouseHandler.getScaledYPos(mc.getWindow());
@@ -83,29 +83,59 @@ public final class CopyChat {
     }
 
     /** The plain text of the chat message under the mouse, like NoFrills' getHoveredMsg. */
+    /** A key bound to a mouse button: MoulConfig uses 0-9 for mouse buttons (older versions -100 + button). */
+    private static boolean isMouseBind(int bind, int button) {
+        return bind == button || bind == -100 + button;
+    }
+
+    private record DrawnLine(FormattedCharSequence content, float top, float bottom) {}
+
+    private static final List<DrawnLine> DRAWN = new ArrayList<>();
+
+    /** A new chat frame is being drawn (SkyBallsChatLineMixin). */
+    public static void beginFrame() {
+        DRAWN.clear();
+    }
+
+    /** A chat line was drawn at this height on screen (SkyBallsChatLineMixin). */
+    public static void recordLine(FormattedCharSequence content, float top, float bottom) {
+        DRAWN.add(new DrawnLine(content, Math.min(top, bottom), Math.max(top, bottom)));
+    }
+
+    /**
+     * The plain text of the chat message under the mouse. Uses the lines exactly as vanilla drew them this frame, so
+     * the right line is found whatever the chat scale, line spacing or position (the old maths could land a couple of
+     * lines too high).
+     */
     private static String hovered(double mouseX, double mouseY) {
         Minecraft mc = Minecraft.getInstance();
-        ChatComponent chat = mc.gui.hud.getChat();
-        SkyBallsChatComponentAccessor access = (SkyBallsChatComponentAccessor) chat;
+        SkyBallsChatComponentAccessor access = (SkyBallsChatComponentAccessor) mc.gui.hud.getChat();
         List<GuiMessage.Line> all = access.skyballs$trimmedMessages();
         double chatScale = mc.options.chatScale().get();
-        int entryHeight = (int) (9.0 * (mc.options.chatLineSpacing().get() + 1.0));
-        int chatHeight = ChatComponent.getHeight(mc.options.chatHeightFocused().get());
-        int start = access.skyballs$chatScrollbarPos();
-        int perPage = chatHeight / Math.max(1, entryHeight);
-        int shown = Math.min(perPage, all.size() - start);
-        if (shown <= 0) return "";
-        // Same maths as vanilla's ChatComponent (screenToChatX/Y, getMessageLineIndexAt), in doubles, so the line
-        // found is exactly the one the mouse is over. Rounding each line's edges to whole pixels could pick the
-        // line above or below near an edge.
-        double chatX = mouseX / chatScale - 4.0;
-        double chatY = (mc.getWindow().getGuiScaledHeight() - mouseY - 40.0) / (chatScale * entryHeight);
-        if (chatX < -4.0 || chatX > Mth.floor(ChatComponent.getWidth(mc.options.chatWidth().get()) / chatScale)) return "";
-        if (chatY < 0.0 || chatY >= shown) return "";
-        int index = Mth.floor(chatY);
-        List<GuiMessage.Line> visible = all.subList(start, start + shown);
+        double maxX = ChatComponent.getWidth(mc.options.chatWidth().get()) * chatScale + 8;
+        if (mouseX < 0 || mouseX > maxX) return "";
+        DrawnLine found = null;
+        float gap = DRAWN.size() > 1 ? Math.abs(DRAWN.get(0).top() - DRAWN.get(1).top()) : 9;
+        for (DrawnLine line : DRAWN) {
+            // A line owns its row: from its top down to where the next row starts.
+            float top = line.top() - Math.max(0, gap - (line.bottom() - line.top())) / 2f;
+            float bottom = top + Math.max(gap, line.bottom() - line.top());
+            if (mouseY >= top && mouseY < bottom) {
+                found = line;
+                break;
+            }
+        }
+        if (found == null) return "";
+        int index = -1;
+        for (int k = 0; k < all.size(); k++) {
+            if (all.get(k).content() == found.content()) {
+                index = k;
+                break;
+            }
+        }
+        if (index < 0) return plain(found.content());
         StringBuilder out = new StringBuilder();
-        for (GuiMessage.Line line : fullMessage(visible, index)) out.append(plain(line.content()));
+        for (GuiMessage.Line line : fullMessage(all, index)) out.append(plain(line.content()));
         return out.toString();
     }
 

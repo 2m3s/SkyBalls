@@ -6,6 +6,17 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ### Added
 - Hypixel Button (Misc, on by default): a Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.
+- Held Item Model > No Re-equip Animation (on by default): the held item doesn't dip and roll back up when Hypixel updates it or you switch items. This was the "roll across the screen" that happened sometimes even with Swing X, Y and Z at 0.
+
+### Changed
+- Built-in positional messages are class specific again (on F7/M7): Py Stand Here and Mage Stop for Mage, Arch for Archer, Healer and SS for Healer, Tank for Tank.
+- Platform Highlight (3x3) shows whenever you're on F7/M7 (it waited for Goldor's chat line and often didn't show).
+
+### Fixed
+- "At SS" was sent again every time you stepped back onto the spot; it's sent once per run.
+- Simon Says solver didn't work: it waited for the floor and Skyblocker's boss-room detection; it now works anywhere in a dungeon (it only reacts to the Simon Says blocks).
+- Copy Chat could copy a line a couple of rows above the one under the mouse; it now uses where chat really drew each line.
+- Copy Chat's key set to right click (or another mouse button) did nothing.
 
 ## 1.2.9 — 2026-09-26
 

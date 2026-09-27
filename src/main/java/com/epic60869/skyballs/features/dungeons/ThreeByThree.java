@@ -10,8 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 
 /**
- * Dungeons > Platform Highlight (3x3): one box over the 3x3 floor at x 53-55, z 113-115 (y 63) on floor 7, shown from
- * when Goldor starts. The spot, options and default colours match NoFrills' Platform Highlight.
+ * Dungeons > Platform Highlight (3x3): one box over the 3x3 floor at x 53-55, z 113-115 (y 63) on floor 7 and M7. The spot, options and default colours match NoFrills' Platform Highlight.
  */
 public final class ThreeByThree {
     private static final AABB BOX = AABB.encapsulatingFullBlocks(new BlockPos(53, 63, 113), new BlockPos(55, 63, 115));
@@ -24,7 +23,9 @@ public final class ThreeByThree {
             Minecraft mc = Minecraft.getInstance();
             if (config == null || mc.player == null) return;
             FeatureConfigs.PlatformHighlight settings = config.dungeons.platformHighlight;
-            if (!settings.enabled || !DungeonFeatures.goldorReached() || !PositionalMessages.onFloor7()) return;
+            // Shown whenever you're on F7/M7: the box is in the boss room, so it only appears there, and waiting for
+            // Goldor's chat line meant it often didn't show at all.
+            if (!settings.enabled || !PositionalMessages.onFloor7()) return;
             if (settings.healerOnly && SelfClass.get() != DungeonClass.HEALER) return;
             int outline = colour(settings.outlineColor);
             int fill = colour(settings.fillColor);

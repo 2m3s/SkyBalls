@@ -18,6 +18,7 @@
     "SkyBallsMultiLineEditBoxAccessor",
     "SkyBallsContainerTooltipMixin",
     "SkyBallsChatComponentAccessor",
+    "SkyBallsChatLineMixin",
     "SkyBallsDropMixin",
     "SkyBallsStorageOverlayMixin",
     "SkyBallsStorageOverlayBackgroundMixin",
