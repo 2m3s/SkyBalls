@@ -928,10 +928,16 @@ public final class SkyBallsConfig extends Config {
         return managed == null ? null : managed.getInstance();
     }
 
+    /**
+     * The config editor, kept between openings so /sb opens where you left it (same category, scroll position and
+     * open sections). MoulConfig's openConfigGui() builds a new editor every time, which always started at the top.
+     */
+    private static io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor<SkyBallsConfig> editor;
+
     public static void openGui() {
-        if (managed != null) {
-            managed.openConfigGui();
-        }
+        if (managed == null) return;
+        if (editor == null) editor = managed.getEditor();
+        io.github.notenoughupdates.moulconfig.common.IMinecraft.INSTANCE.openWrappedScreen(editor);
     }
 
     public static void saveCurrent(SkyBallsConfig config) {
