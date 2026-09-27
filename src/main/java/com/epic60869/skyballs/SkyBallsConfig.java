@@ -75,6 +75,16 @@ public final class SkyBallsConfig extends Config {
         public boolean chatEmoji = true;
 
         @Expose
+        @ConfigOption(name = "Hypixel Item Emojis", desc = "In SkyBalls chat, :item_id: shows that SkyBlock item's icon, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: others see it with SkyBalls too. Hover the icon for the item's name.")
+        @ConfigEditorBoolean
+        public boolean itemEmojis = true;
+
+        @Expose
+        @ConfigOption(name = "Emoji Autocomplete", desc = "Suggest emojis (with a picture of each) while you type :name in chat. Turn off to hide the emoji suggestions.")
+        @ConfigEditorBoolean
+        public boolean emojiAutocomplete = true;
+
+        @Expose
         @ConfigOption(name = "Current Chat Display", desc = "Show which chat you are typing in (All, Party, Guild, Officer, Co-op, a private conversation or SkyBalls chat) just above the chat box while it is open.")
         @ConfigEditorBoolean
         public boolean currentChatDisplay = true;

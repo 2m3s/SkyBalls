@@ -550,7 +550,7 @@ public final class SkyBallsGlobalChat {
                 } catch (Exception ignored) {
                     shownName = SkyBallsNick.displayName(displayName);
                 }
-                Component messageComponent = SkyBallsNopoFeatures.replaceChatEmojis(Component.literal(message));
+                Component messageComponent = com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(Component.literal(message)));
                 // [SB] in dark green, like Hypixel's "Guild >"; messages from Discord add a blue [Discord] after it.
                 MutableComponent line = Component.empty()
                     .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.DARK_GREEN))

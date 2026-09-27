@@ -11,6 +11,7 @@
     "SkyBallsChatHudMixin",
     "SkyBallsChatScreenMixin",
     "SkyBallsEmojiSuggestionsMixin",
+    "SkyBallsEmojiPreviewMixin",
     "SkyBallsMouseHandlerMixin",
     "SkyBallsTooltipScrollMixin",
     "SkyBallsPlayerInfoMixin",

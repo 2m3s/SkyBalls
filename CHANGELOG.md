@@ -5,6 +5,11 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.3.3
 
 ### Added
+- Hypixel item emojis in SkyBalls chat, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond: (any SkyBlock item id in lower case) show the item's icon; hover it for the name. Chat > Hypixel Item Emojis.
+- Emoji autocomplete shows each emoji's picture next to its name, includes the item emojis, and can be turned off (Chat > Emoji Autocomplete).
+
+### Fixed
+- Typing ":" in chat lagged: it listed every emoji. The list is now up to 50 matches (names starting with what you typed first).
 - Storage overlay Dark Mode (Misc > Storage Overlay Settings): the backgrounds, slots and scroll bar are drawn dark, with a Dark Mode Shade to pick how dark.
 
 ## 1.3.2 — 2026-09-27

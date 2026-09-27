@@ -102,6 +102,13 @@ public final class RepoItems {
 		}
 	}
 
+	/** Every SkyBlock item id; empty until the item list has loaded. */
+	public static List<String> allIds() {
+		synchronized (ITEMS) {
+			return new ArrayList<>(ITEMS.keySet());
+		}
+	}
+
 	/** Every item's name with its colour codes, for suggestions; empty until the item list has loaded. */
 	public static List<String> allNames() {
 		synchronized (ITEMS) {

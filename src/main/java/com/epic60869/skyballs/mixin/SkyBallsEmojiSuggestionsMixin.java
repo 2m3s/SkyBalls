@@ -41,7 +41,7 @@ public abstract class SkyBallsEmojiSuggestionsMixin {
 
     @Inject(method = "updateCommandInfo", at = @At("TAIL"), cancellable = true)
     private void skyballs$emojiSuggestions(CallbackInfo ci) {
-        if (!SkyBallsNopoFeatures.chatEmojisEnabled()) return;
+        if (!com.epic60869.skyballs.features.misc.ItemEmojis.autocompleteEnabled()) return;
 
         String text = input.getValue();
         int cursor = input.getCursorPosition();
@@ -54,16 +54,24 @@ public abstract class SkyBallsEmojiSuggestionsMixin {
         if (!token.startsWith(":")) return;
         if (token.indexOf(':', 1) >= 0) return;
 
-        pendingSuggestions = SharedSuggestionProvider.suggest(
-            SkyBallsNopoFeatures.getChatEmojiSuggestions(),
-            new SuggestionsBuilder(uptoCursor, whitespace)
-        );
+        // A short list (up to 50), not every emoji: typing ':' listed thousands and lagged.
+        SuggestionsBuilder builder = new SuggestionsBuilder(uptoCursor, whitespace);
+        for (String emoji : com.epic60869.skyballs.features.misc.ItemEmojis.suggestions(token)) builder.suggest(emoji);
+        pendingSuggestions = builder.buildFuture();
         pendingSuggestions.thenRun(() -> {
             if (pendingSuggestions != null && pendingSuggestions.isDone()) {
                 showSuggestions(false);
             }
         });
         ci.cancel();
+    }
+
+    /** Room for the emoji's picture in front of its name. */
+    @com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method = "showSuggestions", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/Font;width(Ljava/lang/String;)I"))
+    private int skyballs$emojiPreviewWidth(net.minecraft.client.gui.Font font, String text, com.llamalad7.mixinextras.injector.wrapoperation.Operation<Integer> original) {
+        int width = original.call(font, text);
+        return com.epic60869.skyballs.features.misc.ItemEmojis.isEmojiSuggestion(text) ? width + com.epic60869.skyballs.features.misc.ItemEmojis.PREVIEW_WIDTH : width;
     }
 
     @Unique

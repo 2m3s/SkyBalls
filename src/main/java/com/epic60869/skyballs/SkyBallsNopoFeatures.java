@@ -743,6 +743,17 @@ public final class SkyBallsNopoFeatures {
         return new ArrayList<>(EMOJIS.stream().map(name -> ":" + name + ":").sorted().toList());
     }
 
+    /** Every Nopo emoji name (without colons). */
+    public static java.util.Set<String> chatEmojiNames() {
+        return java.util.Collections.unmodifiableSet(EMOJIS);
+    }
+
+    /** The Nopo emoji's sprite in the gui atlas, or null if it isn't one. */
+    public static Identifier chatEmojiSprite(String name) {
+        if (!chatEmojisEnabled() || !EMOJIS.contains(name)) return null;
+        return Identifier.fromNamespaceAndPath("skyballs", EMOJI_CANONICAL.getOrDefault(name, name));
+    }
+
     public static boolean isChatEmoji(String value) {
         if (value == null) return false;
         String clean = value;
