@@ -61,7 +61,11 @@ public final class ItemNotification {
      */
     private static final Map<String, Integer> recentMax = new HashMap<>();
     private static final Map<String, Long> recentMaxAt = new HashMap<>();
-    private static final long RECENT_MS = 10_000L;
+    /**
+     * Only a quick swap (gone and back within half a second) is Hypixel updating the stack. Longer, and it's a new item:
+     * a compactor putting each new enchanted item into your sacks makes it come and go, and every one counts.
+     */
+    private static final long RECENT_MS = 500L;
     /** Inventory gains in the last few seconds, so the same drop also reported by a [Sacks] message isn't shown twice. */
     private static final Map<String, Long> inventoryGainAt = new HashMap<>();
     /**
@@ -201,7 +205,12 @@ public final class ItemNotification {
             for (Map.Entry<String, Integer> e : nowCounts.entrySet()) {
                 int before = lastInventory.getOrDefault(e.getKey(), 0);
                 Long at = recentMaxAt.get(e.getKey());
-                if (at != null && now - at < RECENT_MS) before = Math.max(before, recentMax.getOrDefault(e.getKey(), 0));
+                if (at != null && now - at < RECENT_MS && e.getValue() > lastInventory.getOrDefault(e.getKey(), 0)) {
+                    before = Math.max(before, recentMax.getOrDefault(e.getKey(), 0));
+                    // The swap is over: the next time the item leaves and comes back counts again.
+                    recentMax.remove(e.getKey());
+                    recentMaxAt.remove(e.getKey());
+                }
                 int gained = e.getValue() - before;
                 String name = NAMES.getOrDefault(e.getKey(), e.getKey());
                 if (gained > 0 && listed(name, e.getKey()) && !takenFromSacks(name)) {
