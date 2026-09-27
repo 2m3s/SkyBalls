@@ -1,5 +1,17 @@
 # Third-party notices
 
+## Firmament storage overlay
+
+SkyBalls's storage overlay (the `com.epic60869.skyballs.features.misc.storage` package and the SkyBallsCustomGuiScreenMixin, SkyBallsCustomGuiContainerMixin, SkyBallsSlotCoordsMixin and SkyBallsScreenChangeMixin mixins) is ported from Firmament:
+
+- https://github.com/FirmamentMC/Firmament (branch mc-26.1)
+- Copyright Linnea Gräf <nea@nea.moe> and Firmament Contributors
+- Relevant source: src/main/kotlin/features/inventory/storageoverlay/, src/main/kotlin/util/customgui/, src/main/java/moe/nea/firmament/mixins/customgui/ and mixins/ScreenChangeEventPatch.java
+- Code license: GNU General Public License v3.0 or later (GPL-3.0-or-later). Because of this, SkyBalls as a whole is distributed under GPL-3.0-or-later (see LICENSE).
+- Assets: the storage overlay sprites under assets/skyballs/textures/gui/sprites/storageoverlay/ are Firmament's, licensed under Creative Commons Attribution 4.0 (CC-BY-4.0), by Linnea Gräf and Firmament Contributors.
+
+Each ported source file keeps a Firmament attribution and SPDX header. The Kotlin code was rewritten in Java; Firmament's MoulConfig search field and button are vanilla widgets here, and its storage data is saved in config/skyballs/storage-overlay.json.
+
 ## NopoMod emoji assets
 
 SkyBalls's integrated chat-emoji renderer uses the emoji sprite set and emoji-name data from NopoMod.

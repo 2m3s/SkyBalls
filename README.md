@@ -23,4 +23,8 @@ An all-in-one Fabric mod for Hypixel SkyBlock on Minecraft 26.2. Commands are no
 
 ## Credits
 
-Ports code from Skyblocker, CommandKeys, SkyOcean, SkyHanni, NopoMod, Stella, Odin and NoammAddons. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Built with Java 25 and Gradle 9.5+; GitHub Actions builds every push.
+Ports code from Firmament (storage overlay), Skyblocker, CommandKeys, SkyOcean, SkyHanni, NopoMod, Stella, Odin and NoammAddons. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Built with Java 25 and Gradle 9.5+; GitHub Actions builds every push.
+
+## License
+
+SkyBalls is licensed under the GNU General Public License v3.0 or later (see [LICENSE](LICENSE)), as it includes code ported from Firmament.

@@ -76,6 +76,21 @@ public final class SkyBallsStorageSearch {
 
     /** Current SkyBlock profile id (from "Profile ID: ..."), or "" until Hypixel has told us. */
     private static String profile = "";
+
+    /** The current SkyBlock profile id ("" until known); the storage overlay keeps its pages per profile too. */
+    public static String currentProfile() {
+        return profile;
+    }
+
+    /** Items to a compact string (compressed NBT, base64), or null without a world to encode against. */
+    public static String encodeItems(List<ItemStack> stacks) {
+        return encode(stacks);
+    }
+
+    /** The items from {@link #encodeItems}, or null if they can't be read yet (no world loaded). */
+    public static List<ItemStack> decodeItems(String blob) {
+        return decode(blob);
+    }
     private static final String PROFILE_KEY = "_profile";
     private static final java.util.regex.Pattern PROFILE_ID = java.util.regex.Pattern.compile("^Profile ID: (?<id>[0-9a-fA-F-]+)$");
 

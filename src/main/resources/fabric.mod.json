@@ -7,6 +7,10 @@
   "authors": [
     "2m3s"
   ],
+  "license": "GPL-3.0-or-later",
+  "contributors": [
+    "Firmament Contributors (storage overlay)"
+  ],
   "icon": "assets/skyballs/icon.png",
   "environment": "client",
   "entrypoints": {

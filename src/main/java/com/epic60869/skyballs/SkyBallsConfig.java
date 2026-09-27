@@ -13,6 +13,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorText;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorColour;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
@@ -215,9 +216,14 @@ public final class SkyBallsConfig extends Config {
         public boolean hypixelButton = true;
 
         @Expose
-        @ConfigOption(name = "Storage Overlay", desc = "Show every Ender Chest page and backpack at once in /storage and in any page, like Firmament. Click a page's name to open it; the open page and your inventory can be clicked as normal.")
+        @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay (ported from Firmament): /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /sb storage opens it even with this off.")
         @ConfigEditorBoolean
         public boolean storageOverlay = true;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Storage Overlay Settings", desc = "Layout and search options for the storage overlay.")
+        public StorageOverlaySettings storageOverlaySettings = new StorageOverlaySettings();
 
         @Expose
         @ConfigOption(name = "Recipe HUD", desc = "While a /sb recipe is selected, show a movable HUD with the item and the base ingredients you still need (like SkyOcean's craft helper overlay). Move it in /sb gui.")
@@ -719,6 +725,23 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Hide Explosions", desc = "Hide explosion particles (TNT, Bonzo staff, Wither impact and other server explosions).")
         @ConfigEditorBoolean
         public boolean hideExplosions = false;
+    }
+
+    /** Firmament's storage overlay options (Firmament's StorageOverlay.TConfig). */
+    public static final class StorageOverlaySettings {
+        @Expose @ConfigOption(name = "Outline Active Page", desc = "Put a border around the selected storage page in the storage overlay.") @ConfigEditorBoolean public boolean outlineActivePage = false;
+        @Expose @ConfigOption(name = "Outline Colour", desc = "Change the colour of the border around your selected storage page.") @ConfigEditorColour public String outlineActivePageColour = "0:255:255:255:0";
+        @Expose @ConfigOption(name = "Inactive Page Tooltips", desc = "Show item tooltips when hovering over items on pages other than the active one.") @ConfigEditorBoolean public boolean inactivePageTooltips = false;
+        @Expose @ConfigOption(name = "Columns", desc = "Max columns used by the storage overlay and overview.") @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1) public int columns = 3;
+        @Expose @ConfigOption(name = "Storage Height", desc = "The height of the scrollable storage panel.") @ConfigEditorSlider(minValue = 80, maxValue = 3000, minStep = 10) public int height = 3 * 18 * 6;
+        @Expose @ConfigOption(name = "Retain Scroll Position", desc = "Retain scroll position when closing storage overlay and overview.") @ConfigEditorBoolean public boolean retainScroll = true;
+        @Expose @ConfigOption(name = "Scroll Speed", desc = "Scroll speed inside of the storage overlay and overview.") @ConfigEditorSlider(minValue = 1, maxValue = 50, minStep = 1) public int scrollSpeed = 10;
+        @Expose @ConfigOption(name = "Invert Scroll", desc = "Invert the mouse wheel scrolling in the storage overlay.") @ConfigEditorBoolean public boolean inverseScroll = false;
+        @Expose @ConfigOption(name = "Padding", desc = "Padding inside of the storage overview.") @ConfigEditorSlider(minValue = 1, maxValue = 20, minStep = 1) public int padding = 5;
+        @Expose @ConfigOption(name = "Margin", desc = "Margin inside of the storage overview.") @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1) public int margin = 20;
+        @Expose @ConfigOption(name = "Block Scrolling on Items", desc = "Disables scrolling the storage overlay screen while you are hovering over an item. Useful if you have a tooltip scrolling mod.") @ConfigEditorBoolean public boolean itemsBlockScrolling = true;
+        @Expose @ConfigOption(name = "Highlight Search Results", desc = "Highlight the search results in the storage overlay.") @ConfigEditorBoolean public boolean highlightSearchResults = true;
+        @Expose @ConfigOption(name = "Highlight Search Colour", desc = "Change the colour of the highlighted search result.") @ConfigEditorColour public String highlightSearchResultsColour = "0:255:0:176:0";
     }
 
     public static final class MouseReset {

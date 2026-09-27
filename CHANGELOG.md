@@ -5,6 +5,8 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.3.1.5 — 2026-09-27
 
 ### Changed
+- Storage overlay is now Firmament's, ported from Firmament (GPL-3.0-or-later, textures CC-BY-4.0): one scrollable view of every Ender Chest page and backpack with your inventory, a search box (matching pages only, results highlighted) and "Edit Pages" for the normal Storage menu. The open page is the real menu, so clicking, dragging, shift-click and tooltips work as normal, and it stays open while Hypixel switches pages (no mouse jump). New settings under Misc > Storage Overlay Settings (columns, height, scroll, outline, highlight colours). New commands: /sb storage, /sb storageoverview, /sb storagename enderchest|backpack <page> [name]. Pages saved before still show.
+- SkyBalls is now licensed GPL-3.0-or-later (needed for the Firmament code).
 - Messages from Discord in SkyBalls chat start with the green [SB] like the rest, then a blue [Discord]: "[SB] [Discord] [name]: message".
 
 ### Fixed

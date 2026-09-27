@@ -72,7 +72,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         SkyBallsToggleCommands.init();
         com.epic60869.skyballs.features.misc.CopyChat.init();
         com.epic60869.skyballs.features.misc.SlotLocking.init();
-        com.epic60869.skyballs.features.misc.StorageOverlay.init();
+        com.epic60869.skyballs.features.misc.storage.StorageOverlay.init(configDir);
         com.epic60869.skyballs.features.misc.HypixelButton.init();
         com.epic60869.skyballs.features.misc.ScreenshotShare.init();
         com.epic60869.skyballs.features.misc.JoinCommands.init();
