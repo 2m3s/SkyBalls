@@ -2,6 +2,11 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.3
+
+### Changed
+- Update notifications are checked every minute while you play (was every 10 minutes), so a new release shows in chat within a minute. Checks that find nothing new don't count toward GitHub's limit.
+
 ## 1.3.2 — 2026-09-27
 
 ### Added

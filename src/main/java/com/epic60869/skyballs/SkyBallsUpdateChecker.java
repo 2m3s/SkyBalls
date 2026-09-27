@@ -22,13 +22,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tells you in chat when a newer SkyBalls is out: "New SkyBalls Mod Version 1.2.3 --> 1.2.5" (the newest release, even if
  * you're several versions behind), with a link to the download. Checked from GitHub's latest release (2m3s/SkyBalls)
- * when you join a server and every 10 minutes while you're in game, so a release made while you play shows up too.
+ * when you join a server and every minute while you're in game, so a release made while you play shows up within a
+ * minute. Repeat checks send the last answer's ETag, and GitHub's "not changed" (304) doesn't count toward its limit.
  * Each new version is only announced once per game session.
  */
 public final class SkyBallsUpdateChecker {
     private static final String LATEST_URL = "https://api.github.com/repos/2m3s/SkyBalls/releases/latest";
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("SkyBalls");
-    private static final long CHECK_EVERY_MS = 10 * 60_000L;
+    private static final long CHECK_EVERY_MS = 60_000L;
+    /** GitHub's ETag for the last answer: asking "changed since?" gets a 304 that doesn't count toward the rate limit. */
+    private static volatile String etag;
 
     private static long lastCheck;
     private static volatile boolean checking;
@@ -59,16 +62,19 @@ public final class SkyBallsUpdateChecker {
         if (!enabled() || checking || now - lastCheck < CHECK_EVERY_MS) return;
         lastCheck = now;
         checking = true;
-        HttpRequest request = HttpRequest.newBuilder(URI.create(LATEST_URL))
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(LATEST_URL))
             .timeout(Duration.ofSeconds(10))
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "SkyBalls/" + installed())
-            .GET().build();
+            .header("User-Agent", "SkyBalls/" + installed());
+        if (etag != null) builder.header("If-None-Match", etag);
+        HttpRequest request = builder.GET().build();
         HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build().sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(response -> {
+            if (response.statusCode() == 304) return; // no new release since the last check
             if (response.statusCode() != 200) {
                 LOGGER.info("[SkyBalls] Update check: GitHub answered HTTP {}", response.statusCode());
                 return;
             }
+            response.headers().firstValue("ETag").ifPresent(tag -> etag = tag);
             JsonObject release = JsonParser.parseString(response.body()).getAsJsonObject();
             String latest = release.get("tag_name").getAsString().replaceFirst("^[vV]", "").trim();
             String url = release.has("html_url") ? release.get("html_url").getAsString() : "https://github.com/2m3s/SkyBalls/releases/latest";
