@@ -899,6 +899,16 @@ public final class FeatureConfigs {
         public String items = "";
 
         @Expose
+        @ConfigOption(name = "Use Item Rarity Colour", desc = "Show each item's name in its own rarity colour on the RNG HUD. Turn off to use the Name Colour below.")
+        @ConfigEditorBoolean
+        public boolean rarityColour = true;
+
+        @Expose
+        @ConfigOption(name = "Name Colour", desc = "Colour of item names on the RNG HUD when Use Item Rarity Colour is off.")
+        @ConfigEditorColour
+        public String nameColour = "0:255:255:255:255";
+
+        @Expose
         @ConfigOption(name = "Check Sacks", desc = "Watch the [Sacks] messages for items on the list.")
         @ConfigEditorBoolean
         public boolean checkSacks = true;

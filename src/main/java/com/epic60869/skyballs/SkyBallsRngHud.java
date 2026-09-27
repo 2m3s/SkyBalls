@@ -38,9 +38,13 @@ public final class SkyBallsRngHud {
                 names.add(drop.name().toLowerCase(Locale.ROOT));
             }
         }
+        var notify = config == null ? null : config.misc.itemNotification;
+        boolean rarity = notify == null || notify.rarityColour;
+        int nameColour = colour(notify == null ? null : notify.nameColour, 0xFFFFFFFF);
         for (com.epic60869.skyballs.features.misc.ItemNotification.Row row : com.epic60869.skyballs.features.misc.ItemNotification.rows()) {
             if (names.contains(row.plain().toLowerCase(Locale.ROOT))) continue;
-            out.add(new Line(row.item(), 0xFFFFFFFF, row.price()));
+            String item = rarity ? row.item() : net.minecraft.ChatFormatting.stripFormatting(row.item());
+            out.add(new Line(item, rarity ? 0xFFFFFFFF : nameColour, row.price()));
         }
         return out;
     }
@@ -87,13 +91,21 @@ public final class SkyBallsRngHud {
         return PADDING + drops.size() * LINE_HEIGHT;
     }
 
-    /** Slug pets in their rarity colour (Epic purple, Legendary gold); everything else cyan. */
+    /** Slug pets in their rarity colour (Epic purple, Legendary gold) if turned on; everything else the Drop Colour. */
     private static int rarityColour(FarmingRngTracker.Drop drop) {
-        return switch (drop.rarity()) {
-            case "LEGENDARY" -> 0xFFFFAA00;
-            case "EPIC" -> 0xFFAA00AA;
-            default -> 0xFF55FFFF;
-        };
+        boolean pets = config == null || config.farming.rng.petRarityColours;
+        if (pets && drop.rarity().equals("LEGENDARY")) return 0xFFFFAA00;
+        if (pets && drop.rarity().equals("EPIC")) return 0xFFAA00AA;
+        return colour(config == null ? null : config.farming.rng.dropColour, 0xFF55FFFF);
+    }
+
+    private static int colour(String special, int fallback) {
+        if (special == null || special.isEmpty()) return fallback;
+        try {
+            return 0xFF000000 | io.github.notenoughupdates.moulconfig.ChromaColour.Companion.specialToChromaRGB(special);
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
     private static String itemText(FarmingRngTracker.Drop drop) {
@@ -171,7 +183,8 @@ public final class SkyBallsRngHud {
             // Notification) use the normal shadow so the codes don't tint the shadow.
             if (item.indexOf('\u00a7') >= 0) graphics.text(Minecraft.getInstance().font, item, PADDING, yOffset, drop.colour(), true);
             else drawShadowed(graphics, item, PADDING, yOffset, drop.colour(), true);
-            drawShadowed(graphics, price, w - PADDING - Minecraft.getInstance().font.width(price), yOffset, 0xFFB8B8B8, false);
+            drawShadowed(graphics, price, w - PADDING - Minecraft.getInstance().font.width(price), yOffset,
+                colour(config == null ? null : config.farming.rng.priceColour, 0xFFB8B8B8), false);
             yOffset += LINE_HEIGHT;
         }
 

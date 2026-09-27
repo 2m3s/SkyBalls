@@ -558,6 +558,21 @@ public final class SkyBallsConfig extends Config {
         public float scale = 1.0f;
 
         @Expose
+        @ConfigOption(name = "Drop Colour", desc = "Colour of RNG drop names on the RNG HUD.")
+        @ConfigEditorColour
+        public String dropColour = "0:255:85:255:255";
+
+        @Expose
+        @ConfigOption(name = "Pet Rarity Colours", desc = "Show slug pets in their rarity colour (Epic purple, Legendary gold) instead of the Drop Colour.")
+        @ConfigEditorBoolean
+        public boolean petRarityColours = true;
+
+        @Expose
+        @ConfigOption(name = "Price Colour", desc = "Colour of the prices on the RNG HUD (RNG drops and Item Notification).")
+        @ConfigEditorColour
+        public String priceColour = "0:255:184:184:184";
+
+        @Expose
         public int x = 8;
 
         @Expose
