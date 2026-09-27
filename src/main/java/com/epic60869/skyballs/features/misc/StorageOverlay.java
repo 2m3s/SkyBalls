@@ -273,17 +273,22 @@ public final class StorageOverlay {
         g.outline(invX, invY - 4, PANEL_W, 4 * CELL + 12, 0xFF3A3F48);
         drawCells(g, layout, mouseX, mouseY, false);
 
-        // Tooltip, and the item on the cursor.
-        for (Cell cell : layout.cells()) {
-            if (!cell.stack().isEmpty() && over(cell, mouseX, mouseY) && (!isPageCell(cell, layout) || (mouseY >= layout.viewTop() && mouseY < layout.viewBottom()))) {
-                g.setTooltipForNextFrame(mc.font, cell.stack(), mouseX, mouseY);
-                break;
-            }
-        }
+        // The item on the cursor, or else the tooltip of the item under the mouse (like vanilla).
         ItemStack carried = screen.getMenu().getCarried();
         if (!carried.isEmpty()) {
             g.item(carried, mouseX - 8, mouseY - 8);
             g.itemDecorations(mc.font, carried, mouseX - 8, mouseY - 8);
+            return;
+        }
+        for (Cell cell : layout.cells()) {
+            if (!cell.stack().isEmpty() && over(cell, mouseX, mouseY) && (!isPageCell(cell, layout) || (mouseY >= layout.viewTop() && mouseY < layout.viewBottom()))) {
+                g.setTooltipForNextFrame(mc.font, cell.stack(), mouseX, mouseY);
+                // The overlay is drawn after the screen has already drawn this frame's tooltips, so a tooltip set
+                // now was dropped (no item names on hover); draw it straight away.
+                g.nextStratum();
+                g.extractDeferredElements(mouseX, mouseY, 0f);
+                break;
+            }
         }
     }
 

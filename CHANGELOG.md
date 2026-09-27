@@ -5,6 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.3.1.5 — 2026-09-27
 
 ### Fixed
+- Storage overlay: hovering an item didn't show its name or tooltip (the overlay drew after the game had already drawn this frame's tooltips).
 - Collection Tracker went up by millions when you supercrafted (Enchanted Gold Blocks into your sacks were counted, the Gold Ingots taken out weren't). Each "[Sacks]" message is now counted per collection with what went in and what came out together.
 - Collection Tracker counted items taken out of your sacks as gathered: they landed in your inventory and looked like a pickup. When the "[Sacks]" message shows them coming out, that pickup is taken back.
 
