@@ -71,12 +71,6 @@ public final class ZealotCounter {
     private static int lastEyeKills = -1;
     private static long lastEyeTime;
     private static int sessionKills, sessionEyes;
-    /**
-     * When you were last in the End. Coming back after {@link #SESSION_GAP_MS} away starts a new session, so "This
-     * Session" is this grind, not everything since the game started; a lobby swap or quick warp keeps it.
-     */
-    private static long lastInEnd;
-    private static final long SESSION_GAP_MS = 5 * 60_000L;
     private static boolean showSession;
     private static Path file;
 
@@ -252,11 +246,6 @@ public final class ZealotCounter {
     private static void tick(Minecraft mc) {
         if (mc.player == null || mc.level == null || !inEnd()) return;
         long now = System.currentTimeMillis();
-        if (lastInEnd > 0 && now - lastInEnd > SESSION_GAP_MS) {
-            sessionKills = 0;
-            sessionEyes = 0;
-        }
-        lastInEnd = now;
 
         if (witherImpactTicks > 0) {
             witherImpactTicks--;
