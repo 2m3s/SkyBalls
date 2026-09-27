@@ -121,6 +121,21 @@ public final class CollectionTracker {
 
     /** Collection items in your inventory last tick, or null when there's nothing to compare against. */
     private static Map<String, Long> lastInventory;
+    /**
+     * The inventory level each collection is counted up to, and its last few ticks. A gain only counts once the level
+     * has stayed up for {@link #SETTLE_TICKS} ticks: a compactor can add the Enchanted Gold Ingot a tick before it
+     * removes the 160 Gold Ingots, which used to count as 160 gathered every time it compacted.
+     */
+    private static final Map<String, Long> counted = new HashMap<>();
+    private static final Map<String, java.util.ArrayDeque<Long>> recentLevels = new HashMap<>();
+    private static final int SETTLE_TICKS = 10;
+    /**
+     * Items that left your inventory recently (collection id -> when and how many). Items you picked up (already
+     * counted) that Hypixel then moves into your sacks show up again in the "[Sacks]" message; that part isn't
+     * counted a second time.
+     */
+    private static final Map<String, List<Pickup>> leftInventory = new HashMap<>();
+    private static final long LEFT_INVENTORY_MS = 60_000L;
     private static boolean boardsLoading;
     private static long boardsRetryAt;
     private static boolean profileLoading;
@@ -197,10 +212,42 @@ public final class CollectionTracker {
             if (compact != null) now.merge(compact.base(), compact.amount() * stack.getCount(), Long::sum);
             else if (isCompactCandidate(id)) resolveLater(id);
         }
-        if (lastInventory != null) {
-            for (Map.Entry<String, Long> e : now.entrySet()) {
-                long gained = e.getValue() - lastInventory.getOrDefault(e.getKey(), 0L);
-                if (gained > 0) gain(e.getKey(), gained);
+        if (lastInventory == null) {
+            // Start counting from what you have now. Anything that left while a menu was open (put into your sacks
+            // from the Sacks menu, say) is remembered so its "[Sacks]" message isn't counted again.
+            long at = System.currentTimeMillis();
+            for (Map.Entry<String, Long> e : counted.entrySet()) {
+                long left = e.getValue() - now.getOrDefault(e.getKey(), 0L);
+                if (left > 0) leftInventory.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).add(new Pickup(at, left));
+            }
+            counted.clear();
+            recentLevels.clear();
+            counted.putAll(now);
+        } else {
+            Set<String> ids = new HashSet<>(counted.keySet());
+            ids.addAll(now.keySet());
+            for (String id : ids) {
+                long level = now.getOrDefault(id, 0L);
+                java.util.ArrayDeque<Long> levels = recentLevels.computeIfAbsent(id, k -> new java.util.ArrayDeque<>());
+                levels.addLast(level);
+                while (levels.size() > SETTLE_TICKS) levels.removeFirst();
+                if (levels.size() < SETTLE_TICKS) continue;
+                long low = Long.MAX_VALUE;
+                long high = Long.MIN_VALUE;
+                for (long l : levels) {
+                    low = Math.min(low, l);
+                    high = Math.max(high, l);
+                }
+                long base = counted.getOrDefault(id, 0L);
+                if (low > base) {
+                    // Held more for the whole window: a real pickup.
+                    gain(id, low - base);
+                    counted.put(id, low);
+                } else if (high < base) {
+                    // Held less for the whole window (put in your sacks, sold, used): count up from there.
+                    leftInventory.computeIfAbsent(id, k -> new ArrayList<>()).add(new Pickup(System.currentTimeMillis(), base - high));
+                    counted.put(id, high);
+                }
             }
         }
         lastInventory = BOARDS.isEmpty() ? null : now;
@@ -220,10 +267,28 @@ public final class CollectionTracker {
                 if (id == null) continue;
                 long amount = Long.parseLong(m.group(1).replace(",", ""));
                 Compact compact = COMPACT.get(id);
-                if (compact != null) gain(compact.base(), amount * compact.amount());
-                else if (collectionOf(id) != null) gain(collectionOf(id), amount);
+                if (compact != null) sackGain(compact.base(), amount * compact.amount());
+                else if (collectionOf(id) != null) sackGain(collectionOf(id), amount);
             }
         }
+    }
+
+    /** A sack gain, less whatever of it just came out of your inventory (already counted when you picked it up). */
+    private static void sackGain(String id, long amount) {
+        List<Pickup> left = leftInventory.get(id);
+        if (left != null) {
+            long now = System.currentTimeMillis();
+            left.removeIf(p -> now - p.at > LEFT_INVENTORY_MS);
+            while (amount > 0 && !left.isEmpty()) {
+                Pickup first = left.get(0);
+                long used = Math.min(amount, first.amount);
+                first.amount -= used;
+                amount -= used;
+                if (first.amount <= 0) left.remove(0);
+            }
+            if (left.isEmpty()) leftInventory.remove(id);
+        }
+        if (amount > 0) gain(id, amount);
     }
 
     private static List<Component> flatten(Component component) {

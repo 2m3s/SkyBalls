@@ -21,6 +21,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Copy Chat could copy a line a couple of rows above the one under the mouse; it now uses where chat really drew each line.
 - Copy Chat's key set to right click (or another mouse button) did nothing.
 - /sb search, the Storage Search key and saving storage pages did nothing when your server address had a port (play.hypixel.net:25565) or until Hypixel said your Profile ID again; the profile is now remembered and any Hypixel address works. Pages saved before still show.
+- Collection Tracker counted too much: items picked up and then moved into your sacks were counted again from the "[Sacks]" message, and a compactor adding the enchanted item a tick before removing the 160 base items counted 160 each time. Gains now count once they've stayed for half a second, and a sack message only adds what didn't just come out of your inventory.
 - Item Notification could show the same drop twice (Hypixel swapping the stack out and back, or the drop also going into your sacks).
 
 ## 1.2.9 — 2026-09-26
