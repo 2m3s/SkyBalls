@@ -22,7 +22,12 @@ public final class SkyBallsLogin {
     private static final String CHALLENGE_URL = "https://tastyfish.org/mod-api/auth/challenge";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
 
+    /** How long to wait for the server to confirm a login it doesn't acknowledge (its Mojang check is done by then). */
+    private static final long CONFIRM_TIMEOUT_MS = 3_000L;
+
     private static Object loggedInConnection;
+    /** casinoAuth sent on this connection; waiting for the server to confirm it. */
+    private static Object pendingConnection;
     private static boolean loggingIn;
     private static String problem = "";
     private static final List<Runnable> WAITING = new ArrayList<>();
@@ -42,6 +47,26 @@ public final class SkyBallsLogin {
     /** The server forgot the login (it restarted, or answered "notLoggedIn"): log in again next time. */
     public static void forget() {
         loggedInConnection = null;
+    }
+
+    /**
+     * The server's answer to casinoAuth (authResult / casinoAuthResult, or the casino's casinoState / casinoError
+     * authFailed). Sending anything that needs the login before this arrives races the server's Mojang check.
+     */
+    public static void confirmed(boolean ok, String message) {
+        Object connection = pendingConnection;
+        if (connection == null) return;
+        pendingConnection = null;
+        loggingIn = false;
+        if (ok && connection == SkyBallsGlobalChat.currentConnection()) {
+            loggedInConnection = connection;
+            List<Runnable> ready = new ArrayList<>(WAITING);
+            WAITING.clear();
+            ready.forEach(Runnable::run);
+        } else {
+            problem = message == null || message.isEmpty() ? "The server couldn't verify your Minecraft login." : message;
+            WAITING.clear();
+        }
     }
 
     /** Runs {@code then} on the game thread once logged in (now, if already). Logs in if needed. */
@@ -87,10 +112,13 @@ public final class SkyBallsLogin {
                 WAITING.clear();
                 return;
             }
-            loggedInConnection = connection;
-            List<Runnable> ready = new ArrayList<>(WAITING);
-            WAITING.clear();
-            ready.forEach(Runnable::run);
+            // Logged in once the server says so; a server that doesn't answer has finished checking after a few seconds.
+            loggingIn = true;
+            pendingConnection = connection;
+            java.util.concurrent.CompletableFuture.delayedExecutor(CONFIRM_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .execute(() -> mc.execute(() -> {
+                    if (pendingConnection == connection) confirmed(true, "");
+                }));
         }));
     }
 }

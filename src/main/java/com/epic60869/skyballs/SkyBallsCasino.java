@@ -102,6 +102,7 @@ public final class SkyBallsCasino {
     static void handle(String type, JsonObject packet) {
         switch (type) {
             case "casinoState" -> {
+                SkyBallsLogin.confirmed(true, "");
                 waiting = false;
                 balance = getLong(packet, "balance", 0);
                 refillAt = getLong(packet, "refillAt", 0);
@@ -126,6 +127,7 @@ public final class SkyBallsCasino {
                 waiting = false;
                 error = getString(packet, "message");
                 errorAt = System.currentTimeMillis();
+                if ("authFailed".equals(getString(packet, "code"))) SkyBallsLogin.confirmed(false, error);
                 // The login didn't take (or the server restarted): log in again.
                 if ("notLoggedIn".equals(getString(packet, "code"))) {
                     SkyBallsLogin.forget();

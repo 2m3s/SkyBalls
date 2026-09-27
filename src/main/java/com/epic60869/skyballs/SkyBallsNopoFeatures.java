@@ -1,6 +1,8 @@
 package com.epic60869.skyballs;
 
 import com.epic60869.skyballs.mixin.SkyBallsPlayerTabOverlayAccessor;
+import com.epic60869.skyballs.sb.utils.Location;
+import com.epic60869.skyballs.sb.utils.Utils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -53,6 +55,9 @@ public final class SkyBallsNopoFeatures {
     private static final Map<String, SlayerData> SLAYERS = new LinkedHashMap<>();
     private static final Map<String, List<Long>> CROP_TIMES = new LinkedHashMap<>();
     private static String currentSlayer = null;
+    private static final List<PendingDrop> PENDING_SLAYER_DROPS = new ArrayList<>();
+    private static boolean slayerWorldChanged = false;
+    private static Object lastLevel = null;
 
     private static final Pattern SLAYER_START = Pattern.compile(" +(?<slayer>Wolf|Zombie|Blaze|Vampire|Spider|Enderman|Guardian) Slayer LVL \\d.*");
     private static final Pattern SLAYER_DROP = Pattern.compile("(?:VERY RARE|RARE|INSANE|CRAZY RARE) DROP! \\((?<amount>\\d+x )?(?<item>[^)]+)\\)(?: .+)?");
@@ -129,6 +134,7 @@ public final class SkyBallsNopoFeatures {
 
     public static void tick(Minecraft mc) {
         if (!initialized) return;
+        tickSlayerDrops(mc);
         if (petTick % 5 == 0) scanPetsMenu(mc);
         petTick++;
         if (petTick >= 10) {
@@ -540,23 +546,63 @@ public final class SkyBallsNopoFeatures {
         if (start.matches()) {
             currentSlayer = start.group("slayer");
             SLAYERS.computeIfAbsent(currentSlayer, k -> new SlayerData()).kills++;
+            slayerWorldChanged = false;
             saveJson();
             return;
         }
 
         Matcher drop = SLAYER_DROP.matcher(text);
-        if (!drop.matches() || currentSlayer == null) return;
+        if (!drop.matches()) return;
+        // Like NopoMod, wait a second before counting the drop: the drop line
+        // arrives before the "Slayer LVL" line that counts the boss kill.
+        PENDING_SLAYER_DROPS.add(new PendingDrop(message, drop.group("item").trim(), 20));
+    }
 
-        String item = drop.group("item").trim();
-        SlayerData data = SLAYERS.computeIfAbsent(currentSlayer, k -> new SlayerData());
-        int since = data.kills - data.lastDropKills.getOrDefault(item, data.kills);
-        data.lastDropKills.put(item, data.kills);
+    private static void tickSlayerDrops(Minecraft mc) {
+        if (mc.level != lastLevel) {
+            lastLevel = mc.level;
+            slayerWorldChanged = true;
+        }
+        Iterator<PendingDrop> it = PENDING_SLAYER_DROPS.iterator();
+        while (it.hasNext()) {
+            PendingDrop pending = it.next();
+            if (--pending.ticksLeft > 0) continue;
+            it.remove();
+            processSlayerDrop(mc, pending);
+        }
+    }
+
+    private static void processSlayerDrop(Minecraft mc, PendingDrop pending) {
+        String slayer = Utils.getLocation() == Location.THE_RIFT ? "Vampire" : currentSlayer;
+        if (slayer == null) return;
+        SlayerData data = SLAYERS.computeIfAbsent(slayer, k -> new SlayerData());
+        Integer lastDropped = data.lastDropKills.get(pending.item);
+        // After a world swap without a boss kill, only trust drops this boss
+        // type is already known to give; otherwise it's probably a mob drop.
+        if (slayerWorldChanged && lastDropped == null) return;
+
+        // lastDropKills stores which kill number last gave the drop, so a
+        // first-ever drop counts every boss since tracking began.
+        int since = data.kills - (lastDropped == null ? 0 : lastDropped);
+        data.lastDropKills.put(pending.item, data.kills);
         saveJson();
 
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.sendSystemMessage(Component.literal("§6SkyBalls §7| Took " + since
-                + (since == 1 ? " boss" : " bosses") + " to drop " + item));
+        if (mc.player == null) return;
+        Component itemName = findComponentText(pending.message, pending.item);
+        mc.player.sendSystemMessage(Component.literal("§6SkyBalls §7| Took " + since
+                + (since == 1 ? " boss" : " bosses") + " to drop ")
+            .append(itemName != null ? itemName : Component.literal(pending.item)));
+    }
+
+    private static final class PendingDrop {
+        final Component message;
+        final String item;
+        int ticksLeft;
+
+        PendingDrop(Component message, String item, int ticksLeft) {
+            this.message = message;
+            this.item = item;
+            this.ticksLeft = ticksLeft;
         }
     }
 

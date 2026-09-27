@@ -238,6 +238,9 @@ public final class SkyBallsLeaderboards {
     }
 
     /** One thing counted: sent once logged in (the server only trusts a checked Minecraft login). */
+    /** Reports sent and not answered yet, oldest first: a refused one is resent once after logging in again. */
+    private static final java.util.ArrayDeque<JsonObject> UNANSWERED = new java.util.ArrayDeque<>();
+
     private static void report(Board board, long amount, String detail, String message) {
         if (amount <= 0) return;
         JsonObject packet = new JsonObject();
@@ -246,7 +249,13 @@ public final class SkyBallsLeaderboards {
         packet.addProperty("amount", amount);
         packet.addProperty("detail", detail);
         packet.addProperty("message", message.length() > 256 ? message.substring(0, 256) : message);
-        Minecraft.getInstance().execute(() -> SkyBallsLogin.whenLoggedIn(() -> SkyBallsGlobalChat.send(packet)));
+        Minecraft.getInstance().execute(() -> SkyBallsLogin.whenLoggedIn(() -> sendReport(packet)));
+    }
+
+    private static void sendReport(JsonObject packet) {
+        if (!SkyBallsGlobalChat.send(packet)) return;
+        UNANSWERED.addLast(packet);
+        while (UNANSWERED.size() > 50) UNANSWERED.removeFirst();
     }
 
     private static long parse(String number) {
@@ -303,8 +312,17 @@ public final class SkyBallsLeaderboards {
             case "leaderboardProgressResult" -> {
                 boolean ok = packet.has("ok") && packet.get("ok").getAsBoolean();
                 String message = string(packet, "message");
+                JsonObject answered = UNANSWERED.pollFirst();
+                if (!ok && "notLoggedIn".equals(string(packet, "code"))) {
+                    SkyBallsLogin.forget();
+                    // Log in again and resend it once, so the drop isn't lost.
+                    if (answered != null && !answered.has("retried")) {
+                        answered.addProperty("retried", true);
+                        SkyBallsLogin.whenLoggedIn(() -> sendReport(answered));
+                        return;
+                    }
+                }
                 if (!message.isEmpty()) say(Component.literal(message).withStyle(ok ? ChatFormatting.GRAY : ChatFormatting.RED));
-                if (!ok && "notLoggedIn".equals(string(packet, "code"))) SkyBallsLogin.forget();
             }
             default -> {}
         }

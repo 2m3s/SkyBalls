@@ -2,6 +2,12 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.4.5 — 2026-09-27
+
+### Fixed
+- "Took N bosses to drop" said 0 bosses the first time you got a drop. It now counts every boss since tracking started, and waits a second before counting so the kill that gave the drop is included (as in NopoMod). Drops in the Rift count for Vampire slayer. After you change worlds, a drop only counts if that slayer has given it before, until you kill another boss.
+- Leaderboards and the casino wait for the server to confirm your Minecraft login before sending anything. A leaderboard drop the server refused because you weren't logged in is sent again once after logging back in, so it isn't lost.
+
 ## 1.3.4 — 2026-09-27
 
 ### Added

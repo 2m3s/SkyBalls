@@ -467,6 +467,13 @@ public final class SkyBallsGlobalChat {
                 JsonObject packet = JsonParser.parseString(raw).getAsJsonObject();
                 String type = packet.has("type") ? packet.get("type").getAsString() : "";
 
+                if ("authResult".equals(type) || "casinoAuthResult".equals(type)) {
+                    boolean ok = packet.has("ok") && packet.get("ok").getAsBoolean();
+                    String message = packet.has("message") ? packet.get("message").getAsString() : "";
+                    Minecraft.getInstance().execute(() -> SkyBallsLogin.confirmed(ok, message));
+                    return;
+                }
+
                 if (type.startsWith("leaderboard")) {
                     Minecraft.getInstance().execute(() -> SkyBallsLeaderboards.handle(type, packet));
                     return;

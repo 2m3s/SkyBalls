@@ -25,6 +25,8 @@ The SkyBalls feature implementation itself is a separate Java implementation and
 
 The pet display's overflow-level calculation from the tab list (adding the XP of the capped levels to the "+N XP" overflow line and recomputing the level on the legendary curve, and the progress line format) follows NopoMod's `features/pets/PetDisplay.kt` and `OverflowPetLevels.kt`, licensed under the GNU Lesser General Public License v2.1.
 
+The "Took N bosses to drop" slayer tracker (the kill and drop patterns, the one-second wait before counting a drop, counting Rift drops as Vampire slayer and skipping unknown drops after a world change) follows NopoMod's `features/slayer/BossesSinceDrop.kt`, licensed under the GNU Lesser General Public License v2.1.
+
 ## Skyblocker
 
 SkyBalls's /sj custom item and armor customization (the `com.epic60869.skyballs.custom` package and its mixins) is ported from Skyblocker:
