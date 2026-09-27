@@ -219,7 +219,7 @@ public final class ItemNotification {
     private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
 
     /**
-     * What one "[Sacks]" message added, per item name, net of what it took out. Hypixel puts the same hover on
+     * What one "[Sacks]" message added (positive) or took out (negative), per item name. Hypixel puts the same hover on
      * several parts of the message; each hover is read once (reading it twice counted everything double).
      */
     private static Map<String, Long> sackGains(Component component) {
@@ -236,7 +236,7 @@ public final class ItemNotification {
                 net.merge(m.group(3).trim(), m.group(1).equals("-") ? -amount : amount, Long::sum);
             }
         }
-        net.values().removeIf(v -> v <= 0);
+        net.values().removeIf(v -> v == 0);
         return net;
     }
 
@@ -278,6 +278,7 @@ public final class ItemNotification {
         FeatureConfigs.ItemNotification c = config();
         if (!enabled() || !c.checkSacks || !component.getString().contains("[Sacks]")) return;
         for (Map.Entry<String, Long> e : sackGains(component).entrySet()) {
+            if (e.getValue() <= 0) continue; // taken out of your sacks
             String name = e.getKey();
             String id = RepoItems.idByName(name);
             if (!listed(name, id == null ? "" : id)) continue;

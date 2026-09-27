@@ -128,6 +128,9 @@ public final class CollectionTracker {
     private static final Map<String, Long> counted = new HashMap<>();
     private static final Map<String, java.util.ArrayDeque<Long>> recentLevels = new HashMap<>();
     private static final int SETTLE_TICKS = 10;
+    /** Pickups counted from your inventory recently (a "[Sacks]" message covers about the last 30 seconds). */
+    private static final Map<String, List<Pickup>> inventoryGains = new HashMap<>();
+    private static final long INVENTORY_GAIN_MS = 45_000L;
     /**
      * Ticks to wait after a menu closes (or you change area) before counting again: Hypixel resends your inventory a
      * moment later, which looked like new items when you just opened and closed your sacks.
@@ -283,7 +286,10 @@ public final class CollectionTracker {
                 if (low > base) {
                     // Held more for the whole window: a real pickup (unless you just took it out of your sacks).
                     Long fromSacks = collectionFromSacksUntil.get(id);
-                    if (fromSacks == null || System.currentTimeMillis() > fromSacks) gain(id, low - base);
+                    if (fromSacks == null || System.currentTimeMillis() > fromSacks) {
+                        gain(id, low - base);
+                        inventoryGains.computeIfAbsent(id, k -> new ArrayList<>()).add(new Pickup(System.currentTimeMillis(), low - base));
+                    }
                     counted.put(id, low);
                 } else if (high < base) {
                     // Held less for the whole window (put in your sacks, sold, used): count up from there.
@@ -297,24 +303,72 @@ public final class CollectionTracker {
         if (!current.isEmpty()) refresh(current);
     }
 
-    /** "[Sacks] +1,234 items." — the hover lists each item that went into your sacks. */
+    /**
+     * "[Sacks] +1,234 items, -56 items." — the hover lists what went in and out of your sacks. Counted per collection
+     * in base items, in and out together: supercrafting takes 4,096,000 Gold Ingots out and puts 160 Enchanted Gold
+     * Blocks in, which is no change. What came out (into your inventory, already counted as a pickup) is taken back.
+     */
     private static void onSacksMessage(Component component) {
         if (!enabled() || !component.getString().contains("[Sacks]")) return;
+        Map<String, Long> perCollection = new HashMap<>();
         for (Map.Entry<String, Long> e : sackGains(component).entrySet()) {
             String id = NAMES.get(e.getKey().toLowerCase(Locale.ROOT));
-            if (id == null) continue;
+            if (id == null) {
+                String repoId = RepoItems.idByName(e.getKey());
+                if (repoId != null && isCompactCandidate(repoId) && !COMPACT.containsKey(repoId)) resolveLater(repoId);
+                continue;
+            }
             long amount = e.getValue();
             Compact compact = COMPACT.get(id);
-            if (compact != null) sackGain(compact.base(), amount * compact.amount());
-            else if (collectionOf(id) != null) sackGain(collectionOf(id), amount);
+            if (compact != null) perCollection.merge(compact.base(), amount * compact.amount(), Long::sum);
+            else if (collectionOf(id) != null) perCollection.merge(collectionOf(id), amount, Long::sum);
         }
+        for (Map.Entry<String, Long> e : perCollection.entrySet()) {
+            if (e.getValue() > 0) sackGain(e.getKey(), e.getValue());
+            else if (e.getValue() < 0) takeBack(e.getKey(), -e.getValue());
+        }
+    }
+
+    /**
+     * Items taken out of your sacks that landed in your inventory were counted as a pickup; take back up to what was
+     * counted from your inventory recently (items used straight from your sacks never were counted).
+     */
+    private static void takeBack(String id, long amount) {
+        List<Pickup> recent = inventoryGains.get(id);
+        if (recent == null) return;
+        long now = System.currentTimeMillis();
+        recent.removeIf(p -> now - p.at > INVENTORY_GAIN_MS);
+        long undo = 0;
+        while (amount > 0 && !recent.isEmpty()) {
+            Pickup last = recent.get(recent.size() - 1);
+            long used = Math.min(amount, last.amount);
+            last.amount -= used;
+            amount -= used;
+            undo += used;
+            if (last.amount <= 0) recent.remove(recent.size() - 1);
+        }
+        if (recent.isEmpty()) inventoryGains.remove(id);
+        if (undo <= 0) return;
+        List<Pickup> list = pending.get(id);
+        long left = undo;
+        while (list != null && left > 0 && !list.isEmpty()) {
+            Pickup last = list.get(list.size() - 1);
+            long used = Math.min(left, last.amount);
+            last.amount -= used;
+            left -= used;
+            if (last.amount <= 0) list.remove(list.size() - 1);
+        }
+        if (list != null && list.isEmpty()) pending.remove(id);
+        long undone = undo;
+        session.computeIfPresent(id, (k, v) -> Math.max(0, v - undone));
+        if (id.equals(current)) recentGain = Math.max(0, recentGain - undo);
     }
 
     /** One line of a "[Sacks]" hover: "+64 Gold Ingot (Mining Sack)" or "-64 Gold Ingot (Mining Sack)". */
     private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
 
     /**
-     * What one "[Sacks]" message added, per item name, net of what it took out. Hypixel puts the same hover on
+     * What one "[Sacks]" message added (positive) or took out (negative), per item name. Hypixel puts the same hover on
      * several parts of the message; each hover is read once (reading it twice counted everything double).
      */
     private static Map<String, Long> sackGains(Component component) {
@@ -331,7 +385,7 @@ public final class CollectionTracker {
                 net.merge(m.group(3).trim(), m.group(1).equals("-") ? -amount : amount, Long::sum);
             }
         }
-        net.values().removeIf(v -> v <= 0);
+        net.values().removeIf(v -> v == 0);
         return net;
     }
 
