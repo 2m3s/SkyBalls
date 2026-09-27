@@ -13,6 +13,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Platform Highlight (3x3) shows whenever you're on F7/M7 (it waited for Goldor's chat line and often didn't show).
 - Pickaxe Ability HUD and ready alert only show on the mining islands (Gold Mine, Deep Caverns, Dwarven Mines, Crystal Hollows, Mineshafts), not in the End or on the Crimson Isle.
 - Update notifications are checked every 10 minutes while you play (not only when you join, at most every 3 hours), so a new release shows in chat without restarting.
+- Zealot Tracker "This Session" starts over when you come back to the End after more than 5 minutes away (it only reset when the game restarted). A lobby swap or quick warp keeps the session.
 - One RNG HUD: Item Notification items now show in the Farming RNG HUD (renamed RNG HUD) instead of a HUD of their own, and an item already shown as an RNG drop isn't listed twice.
 - Collection Tracker: your inventory and sack messages are a live guess on top of the API number, and each API refresh only replaces what it covers, so the total no longer jumps back while the API catches up.
 - Storage overlay: pages listed in the Storage menu that aren't saved yet show as boxes you can click to open, and the normal menu shows until there's something to put on the overlay.
