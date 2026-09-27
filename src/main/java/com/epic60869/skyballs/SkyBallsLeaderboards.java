@@ -53,7 +53,7 @@ public final class SkyBallsLeaderboards {
     private SkyBallsLeaderboards() {}
 
     public static void init() {
-        com.epic60869.skyballs.features.core.SkyBallsChat.onChat(message -> onChat(message.text()));
+        com.epic60869.skyballs.features.core.SkyBallsChat.onChat(message -> onChat(message.text(), message.component()));
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : com.epic60869.skyballs.custom.util.Compat.COMMAND_ROOTS) {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("leaderboard")
@@ -69,15 +69,22 @@ public final class SkyBallsLeaderboards {
 
     // ---------------------------------------------------------------- counting
 
-    private static void onChat(String text) {
-        process(text, true);
+    /** A message counted less than this long ago is Hypixel (or a relay) sending it again, not a second drop. */
+    private static final long DUPLICATE_MS = 250L;
+    private static final java.util.Map<String, Long> RECENT = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Pattern ROMAN_LEVEL = Pattern.compile("\\s+[IVXLCDM]+$");
+
+    private static void onChat(String text, Component component) {
+        process(text, component, true, true);
     }
 
     /**
      * Counts a chat line for every running board (and local test board). Returns what it matched, as
      * "board: +amount detail"; reports them to the server when {@code send} is true (local boards never are).
+     * A line counts at most once per board, even when several of the board's trackers match it, and the same message
+     * arriving twice within {@link #DUPLICATE_MS} counts once ({@code dedupe}; debug runs skip it).
      */
-    private static List<String> process(String text, boolean send) {
+    private static List<String> process(String text, Component component, boolean send, boolean dedupe) {
         List<String> matched = new ArrayList<>();
         List<Board> running = new ArrayList<>(boards);
         running.addAll(LOCAL_BOARDS);
@@ -87,20 +94,28 @@ public final class SkyBallsLeaderboards {
         Matcher drop = DROP.matcher(line);
         String dropItem = drop.matches() ? drop.group("item").trim() : null;
         long dropAmount = dropItem != null && drop.group("amount") != null ? parse(drop.group("amount")) : 1;
+        // Enchanted books say only "(Enchanted Book)": the enchantment ("Chimera I") is in the hover.
+        List<String> hoverNames = dropItem != null && component != null ? hoverNames(component) : List.of();
+
+        if (dedupe && (dropItem != null || hasChatTracker(running))) {
+            String key = line + "|" + String.join("|", hoverNames);
+            Long seen = RECENT.put(key, now);
+            RECENT.values().removeIf(at -> now - at > 5_000L);
+            if (seen != null && now - seen < DUPLICATE_MS) return matched;
+        }
+
         for (Board board : running) {
             if (board.endsAt() > 0 && now > board.endsAt()) continue;
+            long amount = 0;
+            String detail = null;
             for (Tracker tracker : board.trackers()) {
-                long amount = 0;
-                String detail = null;
                 if ("drop".equals(tracker.kind()) && dropItem != null) {
-                    for (String item : tracker.items()) {
-                        if (item.equalsIgnoreCase(dropItem)) {
-                            amount = dropAmount;
-                            detail = dropItem;
-                            break;
-                        }
+                    String hit = matchDrop(tracker.items(), dropItem, hoverNames);
+                    if (hit != null && (detail == null || !hit.equalsIgnoreCase(dropItem))) {
+                        amount = dropAmount;
+                        detail = hit; // a hover name ("Chimera I") beats the plain "Enchanted Book"
                     }
-                } else if ("chat".equals(tracker.kind()) && tracker.pattern() != null) {
+                } else if ("chat".equals(tracker.kind()) && tracker.pattern() != null && detail == null) {
                     Matcher m = tracker.pattern().matcher(line);
                     if (m.find()) {
                         amount = 1;
@@ -112,12 +127,114 @@ public final class SkyBallsLeaderboards {
                         detail = m.group();
                     }
                 }
-                if (detail == null) continue;
-                matched.add(board.name() + ": +" + amount + " " + detail);
-                if (send && !board.id().startsWith(LOCAL_PREFIX)) report(board, amount, detail, line);
             }
+            if (detail == null) continue;
+            matched.add(board.name() + ": +" + amount + " " + detail);
+            if (send && !board.id().startsWith(LOCAL_PREFIX)) report(board, amount, detail, line);
         }
         return matched;
+    }
+
+    private static boolean hasChatTracker(List<Board> running) {
+        for (Board board : running) {
+            for (Tracker tracker : board.trackers()) if ("chat".equals(tracker.kind())) return true;
+        }
+        return false;
+    }
+
+    /**
+     * What a drop tracker counts this drop as, or null: the drop item itself, a hover name ("Chimera I"), or a hover
+     * name without its level (tracker "Chimera" matches "Chimera I" and "Chimera V"; "Chimera I" only level I).
+     */
+    private static String matchDrop(List<String> items, String dropItem, List<String> hoverNames) {
+        // Hover names other than the drop's own name first, so a board counting "Enchanted Book" and "Chimera"
+        // reports "Chimera I" rather than the book.
+        for (String item : items) {
+            for (String hover : hoverNames) {
+                if (hover.equalsIgnoreCase(dropItem)) continue;
+                if (item.equalsIgnoreCase(hover) || item.equalsIgnoreCase(ROMAN_LEVEL.matcher(hover).replaceFirst(""))) return hover;
+            }
+        }
+        for (String item : items) {
+            if (item.equalsIgnoreCase(dropItem)) return dropItem;
+        }
+        return null;
+    }
+
+    /**
+     * The names in a message's hovers: for an item, its name, lore lines, stored enchantments and SkyBlock
+     * enchantments (custom data "enchantments": {"ultimate_chimera": 1} becomes "Chimera I" and "Ultimate Chimera I");
+     * for hover text, each line. Colour codes removed, blank lines skipped.
+     */
+    static List<String> hoverNames(Component component) {
+        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
+        collectHovers(component, names, 0);
+        return new ArrayList<>(names);
+    }
+
+    private static void collectHovers(Component component, java.util.Set<String> names, int depth) {
+        if (depth > 16) return;
+        net.minecraft.network.chat.HoverEvent hover = component.getStyle().getHoverEvent();
+        if (hover instanceof net.minecraft.network.chat.HoverEvent.ShowItem(net.minecraft.world.item.ItemStackTemplate template)) {
+            try {
+                itemNames(template.create(), names);
+            } catch (Exception ignored) {}
+        } else if (hover instanceof net.minecraft.network.chat.HoverEvent.ShowText(Component text)) {
+            for (String line : text.getString().split("\n")) add(names, line);
+        }
+        for (Component sibling : component.getSiblings()) collectHovers(sibling, names, depth + 1);
+    }
+
+    private static void itemNames(net.minecraft.world.item.ItemStack stack, java.util.Set<String> names) {
+        add(names, stack.getHoverName().getString());
+        var lore = stack.get(net.minecraft.core.component.DataComponents.LORE);
+        if (lore != null) for (Component line : lore.lines()) add(names, line.getString());
+        var stored = stack.get(net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS);
+        if (stored != null) {
+            for (var entry : stored.entrySet()) {
+                add(names, net.minecraft.world.item.enchantment.Enchantment.getFullname(entry.getKey(), entry.getIntValue()).getString());
+            }
+        }
+        var data = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+        if (data != null && data.copyTag().get("enchantments") instanceof net.minecraft.nbt.CompoundTag enchantments) {
+            for (String key : enchantments.keySet()) {
+                int level = enchantments.getIntOr(key, 0);
+                String name = titleCase(key.replaceFirst("^ultimate_", ""));
+                String level_ = level > 0 ? " " + roman(level) : "";
+                add(names, name + level_);
+                if (key.startsWith("ultimate_")) add(names, "Ultimate " + name + level_);
+            }
+        }
+    }
+
+    private static void add(java.util.Set<String> names, String text) {
+        String clean = ChatFormatting.stripFormatting(text);
+        if (clean == null) return;
+        clean = clean.trim();
+        if (!clean.isEmpty()) names.add(clean);
+    }
+
+    private static String titleCase(String key) {
+        StringBuilder out = new StringBuilder();
+        for (String word : key.split("_")) {
+            if (word.isEmpty()) continue;
+            if (out.length() > 0) out.append(' ');
+            out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase(Locale.ROOT));
+        }
+        return out.toString();
+    }
+
+    private static String roman(int number) {
+        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] numerals = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < values.length && number > 0; i++) {
+            while (number >= values[i]) {
+                out.append(numerals[i]);
+                number -= values[i];
+            }
+        }
+        return out.toString();
     }
 
     /** One thing counted: sent once logged in (the server only trusts a checked Minecraft login). */
@@ -261,6 +378,12 @@ public final class SkyBallsLeaderboards {
                 .executes(c -> debugLine(StringArgumentType.getString(c, "line"), false))))
             .then(ClientCommands.literal("send").then(ClientCommands.argument("line", StringArgumentType.greedyString())
                 .executes(c -> debugLine(StringArgumentType.getString(c, "line"), true))))
+            .then(ClientCommands.literal("book").then(ClientCommands.literal("dry")
+                    .then(ClientCommands.argument("enchant", StringArgumentType.greedyString())
+                        .executes(c -> debugBook(StringArgumentType.getString(c, "enchant"), false))))
+                .then(ClientCommands.literal("send")
+                    .then(ClientCommands.argument("enchant", StringArgumentType.greedyString())
+                        .executes(c -> debugBook(StringArgumentType.getString(c, "enchant"), true)))))
             .then(ClientCommands.literal("addlocal").then(ClientCommands.argument("item", StringArgumentType.greedyString())
                 .executes(c -> debugAddLocal(StringArgumentType.getString(c, "item")))))
             .then(ClientCommands.literal("clearlocal").executes(c -> {
@@ -275,6 +398,7 @@ public final class SkyBallsLeaderboards {
             "/sb lbdebug status - connection, login and the boards the server sent",
             "/sb lbdebug dry <chat line> - what that line would count (nothing is sent)",
             "/sb lbdebug send <chat line> - count it and report it to the server for real",
+            "/sb lbdebug book dry|send <enchant> [level] - a book drop like Hypixel's, the enchantment only in the hover (e.g. book dry Chimera 1)",
             "/sb lbdebug addlocal <item> - a local drop board for testing matching (never reported)",
             "/sb lbdebug clearlocal - remove the local test boards",
             "Example: /sb lbdebug dry RARE DROP! Summoning Eye")) {
@@ -308,7 +432,7 @@ public final class SkyBallsLeaderboards {
     }
 
     private static int debugLine(String line, boolean send) {
-        List<String> matched = process(line, send);
+        List<String> matched = process(line, null, send, false);
         if (matched.isEmpty()) {
             say(Component.literal("No board counts that line.").withStyle(ChatFormatting.RED));
         } else {
@@ -316,6 +440,46 @@ public final class SkyBallsLeaderboards {
             if (send && !SkyBallsLogin.loggedIn()) {
                 say(Component.literal("Logging in first; the reports go out once that is done.").withStyle(ChatFormatting.GRAY));
             }
+        }
+        return 1;
+    }
+
+    /**
+     * "RARE DROP! (Enchanted Book) (+123% Magic Find)" with the book in the hover, like Hypixel sends it: the name
+     * "Enchanted Book", the lore line "Chimera I" and custom data {id: ENCHANTED_BOOK, enchantments: {ultimate_chimera: 1}}.
+     */
+    private static int debugBook(String input, boolean send) {
+        String text = input.trim();
+        int level = 1;
+        Matcher m = Pattern.compile("^(.+?)\\s+(\\d+)$").matcher(text);
+        if (m.matches()) {
+            text = m.group(1).trim();
+            level = Math.max(1, Integer.parseInt(m.group(2)));
+        }
+        String enchant = titleCase(text.replace(' ', '_'));
+        String key = (enchant.equalsIgnoreCase("Chimera") || enchant.startsWith("Ultimate ") ? "ultimate_" : "")
+            + text.toLowerCase(Locale.ROOT).replaceFirst("^ultimate ", "").replace(' ', '_');
+        net.minecraft.world.item.ItemStack book = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENCHANTED_BOOK);
+        book.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("Enchanted Book"));
+        book.set(net.minecraft.core.component.DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(
+            List.of(Component.literal(enchant + " " + roman(level)).withStyle(ChatFormatting.LIGHT_PURPLE))));
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putString("id", "ENCHANTED_BOOK");
+        net.minecraft.nbt.CompoundTag enchantments = new net.minecraft.nbt.CompoundTag();
+        enchantments.putInt(key, level);
+        data.put("enchantments", enchantments);
+        book.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(data));
+        Component message = Component.literal("RARE DROP! ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+            .append(Component.literal("(Enchanted Book)").withStyle(style -> style.withColor(ChatFormatting.WHITE).withBold(false)
+                .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowItem(net.minecraft.world.item.ItemStackTemplate.fromNonEmptyStack(book)))))
+            .append(Component.literal(" (+123% \u272f Magic Find)").withStyle(ChatFormatting.AQUA));
+        say(Component.literal("Test drop: ").withStyle(ChatFormatting.GRAY).append(message));
+        say(Component.literal("Hover names: " + hoverNames(message)).withStyle(ChatFormatting.DARK_GRAY));
+        List<String> matched = process(ChatFormatting.stripFormatting(message.getString()), message, send, false);
+        if (matched.isEmpty()) {
+            say(Component.literal("No board counts that drop.").withStyle(ChatFormatting.RED));
+        } else {
+            for (String line : matched) say(Component.literal((send ? "Sent " : "Would count ") + line).withStyle(ChatFormatting.GREEN));
         }
         return 1;
     }

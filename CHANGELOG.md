@@ -5,7 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## 1.3.4 — 2026-09-27
 
 ### Added
-- Discord leaderboards: leaderboards run from the SkyBalls Discord (for example "most Summoning Eyes this week") count your drops and other chat events through the mod automatically. /sb leaderboard lists the running ones; /sb leaderboard <name> shows the standings.
+- Discord leaderboards: leaderboards run from the SkyBalls Discord (for example "most Summoning Eyes this week") count your drops and other chat events through the mod automatically. Enchanted book drops count by their enchantment (a Chimera leaderboard counts Chimera books), and a drop counts once even if Hypixel sends it twice. /sb leaderboard lists the running ones; /sb leaderboard <name> shows the standings.
 
 ### Changed
 - The [SB] in front of SkyBalls messages is light purple instead of dark green.
