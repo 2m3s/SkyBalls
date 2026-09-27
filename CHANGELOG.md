@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.3.1.5 — 2026-09-27
+## 1.3.2 — 2026-09-27
 
 ### Added
 - /sb opens where you left it: the same category, scroll position and open sections, until you restart the game.
