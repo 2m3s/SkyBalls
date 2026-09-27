@@ -21,20 +21,27 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Tells you in chat when a newer SkyBalls is out: "New SkyBalls Mod Version 1.2.3 --> 1.2.5" (the newest release, even if
- * you're several versions behind), with a link to the download. Checked from GitHub's latest release when you join a
- * server, at most every few hours, and each new version is only announced once per game session.
+ * you're several versions behind), with a link to the download. Checked from GitHub's latest release (2m3s/SkyBalls)
+ * when you join a server and every 10 minutes while you're in game, so a release made while you play shows up too.
+ * Each new version is only announced once per game session.
  */
 public final class SkyBallsUpdateChecker {
     private static final String LATEST_URL = "https://api.github.com/repos/2m3s/SkyBalls/releases/latest";
-    private static final long CHECK_EVERY_MS = 3 * 60 * 60_000L;
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("SkyBalls");
+    private static final long CHECK_EVERY_MS = 10 * 60_000L;
 
     private static long lastCheck;
+    private static volatile boolean checking;
     private static String announced = "";
 
     private SkyBallsUpdateChecker() {}
 
     public static void init() {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> check());
+        // Keep checking while you play (every CHECK_EVERY_MS), not only when you join.
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player != null) check();
+        });
     }
 
     private static boolean enabled() {
@@ -49,24 +56,32 @@ public final class SkyBallsUpdateChecker {
 
     private static void check() {
         long now = System.currentTimeMillis();
-        if (!enabled() || now - lastCheck < CHECK_EVERY_MS) return;
+        if (!enabled() || checking || now - lastCheck < CHECK_EVERY_MS) return;
         lastCheck = now;
+        checking = true;
         HttpRequest request = HttpRequest.newBuilder(URI.create(LATEST_URL))
             .timeout(Duration.ofSeconds(10))
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "SkyBalls/" + installed())
             .GET().build();
         HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build().sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(response -> {
-            if (response.statusCode() != 200) return;
+            if (response.statusCode() != 200) {
+                LOGGER.info("[SkyBalls] Update check: GitHub answered HTTP {}", response.statusCode());
+                return;
+            }
             JsonObject release = JsonParser.parseString(response.body()).getAsJsonObject();
             String latest = release.get("tag_name").getAsString().replaceFirst("^[vV]", "").trim();
             String url = release.has("html_url") ? release.get("html_url").getAsString() : "https://github.com/2m3s/SkyBalls/releases/latest";
             String current = installed();
+            LOGGER.info("[SkyBalls] Update check: installed {}, latest {}", current, latest);
             if (current.isEmpty() || compare(latest, current) <= 0 || latest.equals(announced)) return;
             announced = latest;
             // Give the server's join messages a moment so this doesn't get buried.
             CompletableFuture.delayedExecutor(3, TimeUnit.SECONDS).execute(() -> announce(current, latest, url));
-        }).exceptionally(e -> null);
+        }).exceptionally(e -> {
+            LOGGER.info("[SkyBalls] Update check failed: {}", e.getMessage());
+            return null;
+        }).whenComplete((v, e) -> checking = false);
     }
 
     private static void announce(String current, String latest, String url) {
