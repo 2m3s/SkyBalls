@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.3.3
+## 1.3.2.5 — 2026-09-27
 
 ### Added
 - Hypixel item emojis in every chat (all, party, guild, private and SkyBalls chat; everyone with SkyBalls sees the icons), like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond: (any SkyBlock item id in lower case) show the item's real SkyBlock icon; hover it for the name. The icons are downloaded once from Coflnet and kept in config/skyballs/item-icons, so they don't need Hypixel's resource pack (without it the Summoning Eye is just paper). Chat > Hypixel Item Emojis.
