@@ -42,7 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Hypixel item emojis in SkyBalls chat, like the SkyHelper Discord: ":summoning_eye:" shows the Summoning Eye's icon.
+ * Hypixel item emojis in every chat (all, party, guild, private and SkyBalls chat), like the SkyHelper Discord: ":summoning_eye:" shows the Summoning Eye's icon.
  * Every SkyBlock item works by its id in lower case. Client side only: the message itself stays ":summoning_eye:".
  *
  * The icons are SkyBlock's real item pictures, not whatever the plain item looks like without Hypixel's resource pack
@@ -115,7 +115,7 @@ public final class ItemEmojis {
 
     // ---------------------------------------------------------------- chat
 
-    /** SkyBalls chat: ":summoning_eye:" becomes a gap the item's icon is drawn into. Nopo emojis are left to Nopo's renderer. */
+    /** Any chat message: ":summoning_eye:" becomes a gap the item's icon is drawn into. Nopo emojis are left to Nopo's renderer. */
     public static Component replace(Component message) {
         if (!itemEmojisEnabled() || ITEMS.isEmpty() || !message.getString().contains(":")) return message;
         MutableComponent result = Component.empty();

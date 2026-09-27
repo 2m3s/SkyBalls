@@ -75,7 +75,7 @@ public final class SkyBallsConfig extends Config {
         public boolean chatEmoji = true;
 
         @Expose
-        @ConfigOption(name = "Hypixel Item Emojis", desc = "In SkyBalls chat, :item_id: shows that SkyBlock item's icon, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: others see it with SkyBalls too. Hover the icon for the item's name.")
+        @ConfigOption(name = "Hypixel Item Emojis", desc = "In any chat (all, party, guild, private, SkyBalls), :item_id: shows that SkyBlock item's icon, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: everyone with SkyBalls sees the icon, others see the text. Hover the icon for the item's name.")
         @ConfigEditorBoolean
         public boolean itemEmojis = true;
 
