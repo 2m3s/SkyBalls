@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.3.2
+## 1.3.1.5 — 2026-09-27
 
 ### Fixed
 - Collection Tracker went up by millions when you supercrafted (Enchanted Gold Blocks into your sacks were counted, the Gold Ingots taken out weren't). Each "[Sacks]" message is now counted per collection with what went in and what came out together.
