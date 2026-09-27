@@ -551,10 +551,13 @@ public final class SkyBallsGlobalChat {
                     shownName = SkyBallsNick.displayName(displayName);
                 }
                 Component messageComponent = SkyBallsNopoFeatures.replaceChatEmojis(Component.literal(message));
-                // [SB] in dark green, like Hypixel's "Guild >".
+                // [SB] in dark green, like Hypixel's "Guild >"; messages from Discord add a blue [Discord] after it.
                 MutableComponent line = Component.empty()
-                    .append(Component.literal(prefix).withStyle("[SB]".equals(prefix) ? net.minecraft.ChatFormatting.DARK_GREEN : net.minecraft.ChatFormatting.BLUE))
+                    .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.DARK_GREEN))
                     .append(Component.literal(" "));
+                if (!"[SB]".equals(prefix)) {
+                    line.append(Component.literal(prefix).withStyle(net.minecraft.ChatFormatting.BLUE)).append(Component.literal(" "));
+                }
                 // Rank prefix, by account UUID, only for messages sent from the mod (not Discord), if turned on.
                 SkyBallsConfig rankConfig = SkyBallsConfig.current();
                 boolean showRanks = rankConfig == null || rankConfig.chat.customChat.showRanks;

@@ -4,6 +4,9 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ## 1.3.1.5 — 2026-09-27
 
+### Changed
+- Messages from Discord in SkyBalls chat start with the green [SB] like the rest, then a blue [Discord]: "[SB] [Discord] [name]: message".
+
 ### Fixed
 - Storage overlay: hovering an item didn't show its name or tooltip (the overlay drew after the game had already drawn this frame's tooltips).
 - Collection Tracker went up by millions when you supercrafted (Enchanted Gold Blocks into your sacks were counted, the Gold Ingots taken out weren't). Each "[Sacks]" message is now counted per collection with what went in and what came out together.
