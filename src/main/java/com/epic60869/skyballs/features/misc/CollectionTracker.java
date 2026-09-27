@@ -74,7 +74,6 @@ import java.util.regex.Pattern;
  */
 public final class CollectionTracker {
     private static final String API = "https://api.elitebot.dev";
-    private static final Pattern SACK_LINE = Pattern.compile("^\\s*\\+([\\d,]+) (.+?) \\(.+\\)$");
     private static final long PROFILE_REFRESH_MS = 10 * 60_000L;
     private static final long RANK_REFRESH_MS = 5 * 60_000L;
     private static final long IDLE_HIDE_MS = 90_000L;
@@ -301,20 +300,41 @@ public final class CollectionTracker {
     /** "[Sacks] +1,234 items." — the hover lists each item that went into your sacks. */
     private static void onSacksMessage(Component component) {
         if (!enabled() || !component.getString().contains("[Sacks]")) return;
-        for (Component part : flatten(component)) {
-            if (!(part.getStyle().getHoverEvent() instanceof HoverEvent.ShowText(Component hover))) continue;
-            for (String line : ChatFormatting.stripFormatting(hover.getString()).split("\n")) {
-                Matcher m = SACK_LINE.matcher(line);
-                if (!m.matches()) continue;
-                String id = NAMES.get(m.group(2).trim().toLowerCase(Locale.ROOT));
-                if (id == null) continue;
-                long amount = Long.parseLong(m.group(1).replace(",", ""));
-                Compact compact = COMPACT.get(id);
-                if (compact != null) sackGain(compact.base(), amount * compact.amount());
-                else if (collectionOf(id) != null) sackGain(collectionOf(id), amount);
-            }
+        for (Map.Entry<String, Long> e : sackGains(component).entrySet()) {
+            String id = NAMES.get(e.getKey().toLowerCase(Locale.ROOT));
+            if (id == null) continue;
+            long amount = e.getValue();
+            Compact compact = COMPACT.get(id);
+            if (compact != null) sackGain(compact.base(), amount * compact.amount());
+            else if (collectionOf(id) != null) sackGain(collectionOf(id), amount);
         }
     }
+
+    /** One line of a "[Sacks]" hover: "+64 Gold Ingot (Mining Sack)" or "-64 Gold Ingot (Mining Sack)". */
+    private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
+
+    /**
+     * What one "[Sacks]" message added, per item name, net of what it took out. Hypixel puts the same hover on
+     * several parts of the message; each hover is read once (reading it twice counted everything double).
+     */
+    private static Map<String, Long> sackGains(Component component) {
+        Map<String, Long> net = new java.util.LinkedHashMap<>();
+        Set<String> seen = new java.util.HashSet<>();
+        for (Component part : flatten(component)) {
+            if (!(part.getStyle().getHoverEvent() instanceof HoverEvent.ShowText(Component hover))) continue;
+            String text = ChatFormatting.stripFormatting(hover.getString());
+            if (!seen.add(text)) continue;
+            for (String line : text.split("\n")) {
+                Matcher m = SACK_CHANGE.matcher(line);
+                if (!m.matches()) continue;
+                long amount = Long.parseLong(m.group(2).replace(",", ""));
+                net.merge(m.group(3).trim(), m.group(1).equals("-") ? -amount : amount, Long::sum);
+            }
+        }
+        net.values().removeIf(v -> v <= 0);
+        return net;
+    }
+
 
     /** A sack gain, less whatever of it just came out of your inventory (already counted when you picked it up). */
     private static void sackGain(String id, long amount) {

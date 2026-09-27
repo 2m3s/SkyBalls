@@ -22,6 +22,8 @@ public final class SkyBallsMouseReset {
     private static double lastCursorX;
     private static double lastCursorY;
     private static boolean haveCursorPosition;
+    /** When a storage menu was last open; Hypixel closes it for a moment between pages, which isn't leaving. */
+    private static long lastStorageOpen;
 
     private SkyBallsMouseReset() {}
 
@@ -34,7 +36,7 @@ public final class SkyBallsMouseReset {
 
         Screen screen = mc.gui.screen();
         if (screen == null) {
-            resetState();
+            if (System.currentTimeMillis() - lastStorageOpen > 1000) resetState();
             return;
         }
 
@@ -81,6 +83,7 @@ public final class SkyBallsMouseReset {
 
         storageGuiOpen = true;
         lastStorageScreen = screen;
+        lastStorageOpen = System.currentTimeMillis();
 
         // Remember the position after handling the screen transition so the
         // next storage screen can restore exactly this position.

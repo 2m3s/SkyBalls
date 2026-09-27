@@ -38,7 +38,9 @@ import java.util.regex.Pattern;
  * or with /sj itemnotify add|remove|list.
  */
 public final class ItemNotification {
-    private static final Pattern SACK_LINE = Pattern.compile("^\\s*\\+([\\d,]+) (.+?) \\(.+\\)$");
+    /** Recent inventory counts per item id (time, count), to tell items put back into your sacks from new drops. */
+    private static final Map<String, java.util.ArrayDeque<long[]>> history = new HashMap<>();
+    private static final long HISTORY_MS = 60_000L;
     private static final int PADDING = 4;
     private static final int LINE_HEIGHT = 14;
 
@@ -209,26 +211,83 @@ public final class ItemNotification {
             }
         }
         lastInventory = nowCounts;
+        remember(nowCounts, now);
+    }
+
+
+    /** One line of a "[Sacks]" hover: "+64 Gold Ingot (Mining Sack)" or "-64 Gold Ingot (Mining Sack)". */
+    private static final Pattern SACK_CHANGE = Pattern.compile("^ *([+-])([0-9,]+) (.+?) [(].*[)] *$");
+
+    /**
+     * What one "[Sacks]" message added, per item name, net of what it took out. Hypixel puts the same hover on
+     * several parts of the message; each hover is read once (reading it twice counted everything double).
+     */
+    private static Map<String, Long> sackGains(Component component) {
+        Map<String, Long> net = new java.util.LinkedHashMap<>();
+        Set<String> seen = new java.util.HashSet<>();
+        for (Component part : flatten(component)) {
+            if (!(part.getStyle().getHoverEvent() instanceof HoverEvent.ShowText(Component hover))) continue;
+            String text = ChatFormatting.stripFormatting(hover.getString());
+            if (!seen.add(text)) continue;
+            for (String line : text.split("\n")) {
+                Matcher m = SACK_CHANGE.matcher(line);
+                if (!m.matches()) continue;
+                long amount = Long.parseLong(m.group(2).replace(",", ""));
+                net.merge(m.group(3).trim(), m.group(1).equals("-") ? -amount : amount, Long::sum);
+            }
+        }
+        net.values().removeIf(v -> v <= 0);
+        return net;
+    }
+
+    /** Remembers this tick's counts (only when they change), keeping the last minute. */
+    private static void remember(Map<String, Integer> counts, long now) {
+        Set<String> ids = new java.util.HashSet<>(history.keySet());
+        ids.addAll(counts.keySet());
+        for (String id : ids) {
+            java.util.ArrayDeque<long[]> list = history.computeIfAbsent(id, k -> new java.util.ArrayDeque<>());
+            long count = counts.getOrDefault(id, 0);
+            if (list.isEmpty() || list.peekLast()[1] != count) list.addLast(new long[]{now, count});
+            // Keep one entry from before the window: it's the count at the window's start.
+            while (list.size() > 1) {
+                long[] second = (long[]) list.toArray()[1];
+                if (now - second[0] <= HISTORY_MS) break;
+                list.removeFirst();
+            }
+        }
+    }
+
+    /**
+     * How many of an item left your inventory in the last minute (most you had minus what you have now). Those went
+     * into your sacks rather than being a drop; once used they aren't used again.
+     */
+    private static long leftInventory(String id) {
+        java.util.ArrayDeque<long[]> list = history.get(id);
+        if (list == null || list.isEmpty()) return 0;
+        long most = 0;
+        for (long[] e : list) most = Math.max(most, e[1]);
+        long left = most - list.peekLast()[1];
+        long[] last = list.peekLast();
+        list.clear();
+        list.addLast(last);
+        return Math.max(0, left);
     }
 
     /** "[Sacks] +1,234 items." — the hover lists each item that went into your sacks. */
     private static void onSacksMessage(Component component) {
         FeatureConfigs.ItemNotification c = config();
         if (!enabled() || !c.checkSacks || !component.getString().contains("[Sacks]")) return;
-        for (Component part : flatten(component)) {
-            if (!(part.getStyle().getHoverEvent() instanceof HoverEvent.ShowText(Component hover))) continue;
-            for (String line : ChatFormatting.stripFormatting(hover.getString()).split("\n")) {
-                Matcher m = SACK_LINE.matcher(line);
-                if (!m.matches()) continue;
-                String name = m.group(2).trim();
-                String id = RepoItems.idByName(name);
-                if (!listed(name, id == null ? "" : id)) continue;
-                String shownName = id != null && RepoItems.displayName(id) != null ? RepoItems.displayName(id) : name;
-                // Already shown from your inventory a moment ago (the same drop, then put into your sacks).
-                Long gainedAt = inventoryGainAt.get((id == null ? name : id).toLowerCase(Locale.ROOT));
-                if (gainedAt != null && System.currentTimeMillis() - gainedAt < 3_000L) continue;
-                show(id == null ? name : id, shownName, Long.parseLong(m.group(1).replace(",", "")));
-            }
+        for (Map.Entry<String, Long> e : sackGains(component).entrySet()) {
+            String name = e.getKey();
+            String id = RepoItems.idByName(name);
+            if (!listed(name, id == null ? "" : id)) continue;
+            String shownName = id != null && RepoItems.displayName(id) != null ? RepoItems.displayName(id) : name;
+            // Already shown from your inventory a moment ago (the same drop, then put into your sacks).
+            Long gainedAt = inventoryGainAt.get((id == null ? name : id).toLowerCase(Locale.ROOT));
+            if (gainedAt != null && System.currentTimeMillis() - gainedAt < 3_000L) continue;
+            // Put back into your sacks from your inventory: not a drop.
+            long amount = e.getValue() - (id == null ? 0 : leftInventory(id));
+            if (amount > 0) show(id == null ? name : id, shownName, amount);
         }
     }
 

@@ -119,7 +119,29 @@ public final class StorageOverlay {
         return out;
     }
 
+    /** Until when a page switch is under way (Hypixel may close the menu for a moment before the next page opens). */
+    private static long switchingUntil;
+
+    /** Whether the overlay just asked for another page: the game shouldn't grab (and centre) the mouse meanwhile. */
+    public static boolean switchingPage() {
+        return System.currentTimeMillis() < switchingUntil;
+    }
+
+    private static void openPage(SkyBallsStorageSearch.StoragePage page) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        switchingUntil = System.currentTimeMillis() + 1500;
+        mc.player.connection.sendCommand((page.type().equals("ENDER_CHEST") ? "ec " : "bp ") + page.number());
+    }
+
     public static void init() {
+        // If no page opened after all, give the game its mouse back.
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (switchingUntil != 0 && !switchingPage()) {
+                switchingUntil = 0;
+                if (mc.gui.screen() == null && !mc.mouseHandler.isMouseGrabbed()) mc.mouseHandler.grabMouse();
+            }
+        });
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
             ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> {
@@ -127,6 +149,10 @@ public final class StorageOverlay {
             });
             ScreenMouseEvents.allowMouseClick(screen).register((s, event) ->
                 !applies(container) || !click(container, event.x(), event.y(), event.button()));
+            // The release and drag must not reach the hidden menu either: releasing with an item on the cursor
+            // "outside" it threw the item.
+            ScreenMouseEvents.allowMouseRelease(screen).register((s, event) -> !applies(container));
+            ScreenMouseEvents.allowMouseDrag(screen).register((s, event, dx, dy) -> !applies(container));
             ScreenMouseEvents.allowMouseScroll(screen).register((s, mouseX, mouseY, horizontal, vertical) -> {
                 if (!applies(container)) return true;
                 scroll -= vertical * 24;
@@ -297,8 +323,7 @@ public final class StorageOverlay {
         for (Header header : layout.headers()) {
             if (mouseX >= header.x() && mouseX < header.x() + header.w() && mouseY >= header.y() && mouseY < header.y() + HEADER
                 && mouseY >= layout.viewTop() && mouseY < layout.viewBottom()) {
-                SkyBallsStorageSearch.StoragePage page = header.page();
-                if (mc.player != null) mc.player.connection.sendCommand((page.type().equals("ENDER_CHEST") ? "ec " : "bp ") + page.number());
+                openPage(header.page());
                 return true;
             }
         }
@@ -309,8 +334,7 @@ public final class StorageOverlay {
             for (Header header : layout.headers()) {
                 int rows = rows(header.page().items());
                 if (mouseX >= header.x() && mouseX < header.x() + header.w() && mouseY >= header.y() && mouseY < header.y() + HEADER + rows * CELL + 6) {
-                    SkyBallsStorageSearch.StoragePage page = header.page();
-                    if (mc.player != null) mc.player.connection.sendCommand((page.type().equals("ENDER_CHEST") ? "ec " : "bp ") + page.number());
+                    openPage(header.page());
                     break;
                 }
             }
