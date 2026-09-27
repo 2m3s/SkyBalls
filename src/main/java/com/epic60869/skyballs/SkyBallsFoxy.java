@@ -27,19 +27,19 @@ public final class SkyBallsFoxy {
     public static void tick(Minecraft mc) {
         tickCounter++;
 
-        // One independent 1/10,000 roll every second, matching the linked datapack's default.
+        // One independent 1/100,000 roll every second (10x rarer than the linked datapack's 1/10,000).
         if (tickCounter < 20) return;
         tickCounter = 0;
 
-        if (mc.gui.screen() instanceof SkyBallsFoxyScreen) return;
-        // Never in dungeons or Kuudra, where a surprise screen would ruin a run.
+        if (SkyBallsFoxyScare.isPlaying()) return;
+        // Never in dungeons or Kuudra, where a surprise scare would ruin a run.
         if (inInstance()) return;
 
-        if (RANDOM.nextInt(10_000) == 0) {
+        if (RANDOM.nextInt(100_000) == 0) {
             mc.getSoundManager().play(
                 SimpleSoundInstance.forUI(SoundEvents.GHAST_SCREAM, 1.5F, 0.72F)
             );
-            mc.gui.setScreen(new SkyBallsFoxyScreen(mc.gui.screen()));
+            SkyBallsFoxyScare.start();
         }
     }
 }

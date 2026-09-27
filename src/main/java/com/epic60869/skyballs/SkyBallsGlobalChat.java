@@ -1,6 +1,7 @@
 package com.epic60869.skyballs;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
@@ -40,9 +41,6 @@ public final class SkyBallsGlobalChat {
     private static volatile int relayIndex = 0;
     private static final Queue<String> PENDING_MESSAGES = new ArrayDeque<>();
     private static volatile boolean inSkyBallsChannel = false;
-    private static volatile long lastNicknameSync = 0L;
-    private static volatile boolean nicknameUpdatePending = false;
-    private static final long NICKNAME_SYNC_INTERVAL_MS = 5000L;
 
     public static boolean isInSkyBallsChannel() { return inSkyBallsChannel; }
 
@@ -166,11 +164,6 @@ public final class SkyBallsGlobalChat {
         packet.addProperty("type", "message");
         packet.addProperty("username", username);
         packet.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
-        packet.addProperty("nickname", SkyBallsNick.outgoingName());
-        packet.addProperty("nicknameEnabled", SkyBallsNick.enabled());
-        packet.addProperty("nicknameMode", SkyBallsNick.mode());
-        packet.addProperty("nicknameHex", SkyBallsNick.customHex());
-        packet.addProperty("nicknameFont", SkyBallsNick.font());
         packet.addProperty("message", clean.substring(0, Math.min(clean.length(), 500)));
         int[] level = ownLevel();
         if (level != null) {
@@ -213,28 +206,6 @@ public final class SkyBallsGlobalChat {
                 sendNow(ws, PENDING_MESSAGES.poll());
             }
         }
-    }
-
-    public static void sendNicknameUpdate() {
-        WebSocket ws = socket;
-        if (ws == null || ws.isInputClosed() || ws.isOutputClosed()) {
-            // Keep the newest saved nickname until the relay is connected again.
-            nicknameUpdatePending = true;
-            connect();
-            return;
-        }
-
-        JsonObject packet = new JsonObject();
-        packet.addProperty("type", "nickname");
-        packet.addProperty("username", Minecraft.getInstance().getUser().getName());
-        packet.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
-        packet.addProperty("enabled", SkyBallsNick.enabled());
-        packet.addProperty("name", SkyBallsNick.outgoingName());
-        packet.addProperty("mode", SkyBallsNick.mode());
-        packet.addProperty("customHex", SkyBallsNick.customHex());
-        packet.addProperty("font", SkyBallsNick.font());
-        ws.sendText(GSON.toJson(packet), true);
-        nicknameUpdatePending = false;
     }
 
     public static void requestDiscord(String action, JsonObject data) {
@@ -286,6 +257,27 @@ public final class SkyBallsGlobalChat {
         ws.sendText(GSON.toJson(packet), true);
     }
 
+    /** The open connection, or null; identifies it (a reconnect is a new one, needing a new casino login). */
+    public static Object currentConnection() {
+        WebSocket ws = socket;
+        return ws == null || ws.isInputClosed() || ws.isOutputClosed() ? null : ws;
+    }
+
+    public static void ensureConnected() {
+        if (currentConnection() == null) connect();
+    }
+
+    /** Sends a packet if connected (returns false and starts connecting otherwise). */
+    public static boolean send(JsonObject packet) {
+        WebSocket ws = socket;
+        if (ws == null || ws.isInputClosed() || ws.isOutputClosed()) {
+            connect();
+            return false;
+        }
+        ws.sendText(GSON.toJson(packet), true);
+        return true;
+    }
+
     private static void connect() {
         if (!CONNECTING.compareAndSet(false, true)) return;
 
@@ -314,22 +306,15 @@ public final class SkyBallsGlobalChat {
                 JsonObject hello = new JsonObject();
                 hello.addProperty("type", "hello");
                 hello.addProperty("username", username);
+                // Packets this mod understands; without "rankAnnounce" the server sends a plain bot message instead.
+                JsonArray features = new JsonArray();
+                features.add("rankAnnounce");
+                hello.add("features", features);
                 hello.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
                 hello.addProperty("modVersion", net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("skyballs")
                     .map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse("dev"));
-                hello.addProperty("nicknameEnabled", SkyBallsNick.enabled());
-                hello.addProperty("nickname", SkyBallsNick.outgoingName());
-                hello.addProperty("nicknameMode", SkyBallsNick.mode());
-                hello.addProperty("nicknameHex", SkyBallsNick.customHex());
-                hello.addProperty("nicknameFont", SkyBallsNick.font());
                 ws.sendText(GSON.toJson(hello), true);
                 flushPending(ws);
-                // Always publish the current nickname state after a connection
-                // is established. This makes the relay authoritative for both
-                // newly joined clients and clients reconnecting after a drop.
-                nicknameUpdatePending = false;
-                lastNicknameSync = System.currentTimeMillis();
-                sendNicknameUpdate();
             });
     }
 
@@ -349,11 +334,6 @@ public final class SkyBallsGlobalChat {
         if (socket == null && reconnectAt > 0 && now >= reconnectAt) {
             reconnectAt = 0;
             connect();
-        }
-        if (socket != null && !socket.isInputClosed() && !socket.isOutputClosed()
-            && now - lastNicknameSync >= NICKNAME_SYNC_INTERVAL_MS) {
-            lastNicknameSync = now;
-            sendNicknameUpdate();
         }
     }
 
@@ -394,6 +374,48 @@ public final class SkyBallsGlobalChat {
         }, Style.EMPTY);
 
         return result;
+    }
+
+    /**
+     * "[SB] Steve Has Been Granted [VIP] By Console" or "[SB] Steve's [VIP] Prefix Has Been Removed By Console",
+     * with the prefix in its exact hex colour.
+     */
+    private static Component rankAnnouncement(JsonObject packet) {
+        String name = packetString(packet, "username").replace("§", "").replaceAll("[^A-Za-z0-9_]", "");
+        if (name.isBlank()) name = "Unknown";
+        String prefix = packetString(packet, "prefix").replace("§", "");
+        String by = packetString(packet, "by").replace("§", "");
+        boolean removed = "removed".equals(packetString(packet, "action"));
+        int colour = 0xFFAA00;
+        String hex = packetString(packet, "color");
+        if (hex.matches("#[0-9a-fA-F]{6}")) colour = Integer.parseInt(hex.substring(1), 16);
+        boolean bold = packet.has("bold") && packet.get("bold").getAsBoolean();
+
+        Style gray = Style.EMPTY.withColor(0xAAAAAA);
+        // Hovering the name shows the real Minecraft name, like normal SBC messages.
+        Component user = Component.literal(name).withStyle(Style.EMPTY.withColor(0xFFFFFF)
+            .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
+                Component.literal("Real name: ").withStyle(gray)
+                    .append(Component.literal(name).withStyle(Style.EMPTY.withColor(0xFFFFFF))))));
+        Component rank = Component.literal("[" + prefix + "]").withStyle(Style.EMPTY.withColor(colour).withBold(bold));
+        MutableComponent line = Component.empty()
+            .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.DARK_GREEN))
+            .append(Component.literal(" "))
+            .append(user);
+        if (removed) {
+            line.append(Component.literal("'s ").withStyle(gray))
+                .append(rank)
+                .append(Component.literal(" Prefix Has Been Removed By " + by).withStyle(gray));
+        } else {
+            line.append(Component.literal(" Has Been Granted ").withStyle(gray))
+                .append(rank)
+                .append(Component.literal(" By " + by).withStyle(gray));
+        }
+        return line;
+    }
+
+    private static String packetString(JsonObject packet, String key) {
+        return packet.has(key) && !packet.get(key).isJsonNull() ? packet.get(key).getAsString() : "";
     }
 
     private static void mcMessage(Component message) {
@@ -443,6 +465,16 @@ public final class SkyBallsGlobalChat {
             try {
                 JsonObject packet = JsonParser.parseString(raw).getAsJsonObject();
                 String type = packet.has("type") ? packet.get("type").getAsString() : "";
+
+                if ("accountStatus".equals(type) || "nickResult".equals(type)) {
+                    Minecraft.getInstance().execute(() -> SkyBallsNickCommand.handle(type, packet));
+                    return;
+                }
+
+                if (type.startsWith("casino")) {
+                    Minecraft.getInstance().execute(() -> SkyBallsCasino.handle(type, packet));
+                    return;
+                }
 
                 // The website changed someone's rank: reload them now instead of waiting for the next check.
                 if ("ranksUpdated".equals(type) || "ranks".equals(type)) {
@@ -498,6 +530,13 @@ public final class SkyBallsGlobalChat {
                         mcMessage(Component.literal("[SB] Discord DM failed: " + detail)
                             .withStyle(Style.EMPTY.withColor(0xFF5555)));
                     }
+                    return;
+                }
+
+                if ("rankAnnounce".equals(type)) {
+                    SkyBallsConfig announceConfig = SkyBallsConfig.current();
+                    if (announceConfig != null && !announceConfig.chat.customChat.showSjChat) return;
+                    mcMessage(rankAnnouncement(packet));
                     return;
                 }
 

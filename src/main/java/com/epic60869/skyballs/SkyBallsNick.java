@@ -25,116 +25,11 @@ public final class SkyBallsNick {
         Map.entry("white", 0xFFFFFF)
     );
 
-    private static final String[] STYLES = {
-        "Plain", "Black", "Dark Blue", "Dark Green", "Dark Aqua", "Dark Red",
-        "Dark Purple", "Gold", "Gray", "Dark Gray", "Blue", "Green", "Aqua",
-        "Red", "Light Purple", "Yellow", "White", "Rainbow"
-    };
-
     private static final Map<UUID, RemoteNick> REMOTE_NICKS = new ConcurrentHashMap<>();
-    private static SkyBallsConfig config;
 
     private SkyBallsNick() {}
 
-    public static void init(SkyBallsConfig loadedConfig) {
-        config = loadedConfig;
-    }
-
-    public static void set(String input) {
-        String value = input == null ? "" : input.trim();
-
-        if (value.isEmpty() || value.equalsIgnoreCase("off") || value.equalsIgnoreCase("reset")) {
-            config().misc.nickname.enabled = false;
-            config().misc.nickname.name = "";
-            config().misc.nickname.style = "Plain";
-            config().misc.nickname.customHex = "";
-            config().misc.nickname.font = "Default";
-            save();
-            SkyBallsGlobalChat.sendNicknameUpdate();
-            message("Nickname disabled.", 0x55FF55);
-            return;
-        }
-
-        String name = value;
-        String style = "Plain";
-        String customHex = "";
-
-        String[] parts = value.split("\\s+", 3);
-        if (parts.length >= 2) {
-            String first = parts[0].toLowerCase(Locale.ROOT);
-            if (first.equals("rainbow")) {
-                style = "Rainbow";
-                name = value.substring(parts[0].length()).trim();
-            } else if (COLORS.containsKey(first)) {
-                style = displayStyle(first);
-                name = value.substring(parts[0].length()).trim();
-            } else if (first.matches("#[0-9a-fA-F]{6}")) {
-                style = "Plain";
-                customHex = first;
-                name = value.substring(parts[0].length()).trim();
-            }
-        }
-
-        if (name.isBlank()) {
-            message("Usage: /sb nick <name> | /sb nick <color> <name> | /sb nick rainbow <name> | /sb nick off", 0xFFFF55);
-            return;
-        }
-
-        name = clean(name);
-        if (SkyBallsNickFilter.isBlocked(name, Minecraft.getInstance().getUser().getProfileId())) {
-            message("That nickname isn't allowed.", 0xFF5555);
-            return;
-        }
-        config().misc.nickname.enabled = true;
-        config().misc.nickname.name = name;
-        config().misc.nickname.style = style;
-        config().misc.nickname.customHex = customHex;
-        save();
-        SkyBallsGlobalChat.sendNicknameUpdate();
-
-        message("Nickname set to " + name + ("Rainbow".equals(style) ? " (rainbow)" : ""), 0x55FF55);
-    }
-
-    public static boolean enabled() {
-        return config() != null && config().misc.nickname.enabled
-            && config().misc.nickname.name != null && !config().misc.nickname.name.isBlank();
-    }
-
-    public static String mode() {
-        return config().misc.nickname.style == null ? "Plain" : config().misc.nickname.style;
-    }
-
-    public static String customHex() {
-        return config().misc.nickname.customHex == null ? "" : config().misc.nickname.customHex;
-    }
-
-    /** The nickname font's name, e.g. "Script" or "Bold". */
-    public static String font() {
-        return font(config());
-    }
-
-    private static String font(SkyBallsConfig c) {
-        return c == null ? "Default" : SkyBallsNickFonts.parse(c.misc.nickname.font).label;
-    }
-
-    public static void applyGuiName(String name) {
-        String value = clean(name);
-        if (SkyBallsNickFilter.isBlocked(value, Minecraft.getInstance().getUser().getProfileId())) {
-            message("That nickname isn't allowed.", 0xFF5555);
-            return;
-        }
-        config().misc.nickname.name = value;
-        config().misc.nickname.enabled = !value.isBlank();
-        save();
-        SkyBallsGlobalChat.sendNicknameUpdate();
-    }
-
-    public static String outgoingName() {
-        if (!config().misc.nickname.enabled || config().misc.nickname.name == null || config().misc.nickname.name.isBlank()) {
-            return Minecraft.getInstance().getUser().getName();
-        }
-        return SkyBallsNickFonts.letters(config().misc.nickname.name, SkyBallsNickFonts.parse(font()));
-    }
+    public static void init(SkyBallsConfig loadedConfig) {}
 
     public static Component tabDisplayName(Component original, UUID uuid, String actualName) {
         if (original == null || uuid == null || actualName == null || actualName.isBlank()) return original;
@@ -143,57 +38,25 @@ public final class SkyBallsNick {
         boolean local = uuid.equals(mc.getUser().getProfileId())
             || (mc.player != null && uuid.equals(mc.player.getUUID()))
             || actualName.equals(mc.getUser().getName());
-        // A local setting is authoritative for our own TAB entry; do not let a
-        // delayed relay packet overwrite the local nickname/style.
-        RemoteNick remote = local ? null : REMOTE_NICKS.get(uuid);
+        // Your own nickname comes from the server like everyone else's.
+        RemoteNick remote = local ? localNick() : shownNick(uuid);
 
-        String nickName = null;
-        String nickMode = null;
-        String nickHex = null;
-        String nickFont = null;
-
-        if (remote != null && remote.shown() && !remote.name.isBlank()) {
-            nickName = remote.name;
-            nickMode = remote.mode;
-            nickHex = remote.customHex;
-            nickFont = remote.font;
-        } else if (local
-                && config().misc.nickname.enabled
-                && config().misc.nickname.name != null
-                && !config().misc.nickname.name.isBlank()) {
-            nickName = config().misc.nickname.name;
-            nickMode = config().misc.nickname.style;
-            nickHex = config().misc.nickname.customHex;
-            nickFont = font();
-        }
-
-        if (nickName == null) {
+        if (remote == null) {
             // Hypixel tab entries are fake profiles, so match usernames in the text instead.
             // Only the name is replaced; the level, rank and colours around it are kept.
-            if (local || config() == null) return original;
+            if (local) return original;
             Component result = original;
-            if (localNickActive()) {
-                result = replaceExactName(result, mc.getUser().getName(),
-                    styled(config().misc.nickname.name, config().misc.nickname.style, config().misc.nickname.customHex, font()));
-            }
-            if (config().misc.nickname.seeOtherNicks) {
-                for (RemoteNick r : REMOTE_NICKS.values()) {
-                    if (!r.shown() || r.name.isBlank() || r.username.isBlank() || isLocalUuid(r.uuid)) continue;
-                    result = replaceExactName(result, r.username, styled(r.name, r.mode, r.customHex, r.font));
-                }
+            RemoteNick self = localNick();
+            if (self != null) result = replaceExactName(result, mc.getUser().getName(), styled(self));
+            for (RemoteNick r : REMOTE_NICKS.values()) {
+                if (!r.shown() || r.name.isBlank() || r.username.isBlank() || isLocalUuid(r.uuid)) continue;
+                result = replaceExactName(result, r.username, styled(r));
             }
             return result;
         }
 
-        final String finalNickName = nickName;
-        final String finalNickMode = nickMode;
-        final String finalNickHex = nickHex;
-
-        Component replacement = styled(finalNickName, finalNickMode, finalNickHex, nickFont);
-        Component result = replaceExactName(original, actualName, replacement);
-
         // If the name is not in the text, leave the entry alone rather than replacing its formatting.
-        return result;
+        return replaceExactName(original, actualName, styled(remote));
     }
 
     /**
@@ -201,16 +64,10 @@ public final class SkyBallsNick {
      * keeping any team prefix, rank and colours.
      */
     public static Component nameTag(Component original, UUID uuid, String actualName) {
-        if (original == null || uuid == null || actualName == null || config() == null) return original;
-        if (isLocalUuid(uuid)) {
-            if (!localNickActive()) return original;
-            return replaceExactName(original, actualName,
-                styled(config().misc.nickname.name, config().misc.nickname.style, config().misc.nickname.customHex, font()));
-        }
-        if (!config().misc.nickname.seeOtherNicks) return original;
-        RemoteNick remote = REMOTE_NICKS.get(uuid);
-        if (remote == null || !remote.shown() || remote.name.isBlank()) return original;
-        return replaceExactName(original, actualName, styled(remote.name, remote.mode, remote.customHex, remote.font));
+        if (original == null || uuid == null || actualName == null) return original;
+        RemoteNick remote = isLocalUuid(uuid) ? localNick() : shownNick(uuid);
+        if (remote == null) return original;
+        return replaceExactName(original, actualName, styled(remote));
     }
 
     /**
@@ -218,29 +75,34 @@ public final class SkyBallsNick {
      * entity nametags, Hypixel's armor-stand name lines and text displays.
      */
     public static Component worldText(Component original) {
-        if (original == null || config() == null) return original;
+        if (original == null) return original;
         String plain = original.getString();
         Component result = original;
         Minecraft mc = Minecraft.getInstance();
-        if (localNickActive() && mc.player != null) {
+        RemoteNick local = localNick();
+        if (local != null && mc.player != null) {
             String self = mc.player.getGameProfile().name();
-            if (plain.contains(self)) {
-                result = replaceExactName(result, self,
-                    styled(config().misc.nickname.name, config().misc.nickname.style, config().misc.nickname.customHex, font()));
-            }
+            if (plain.contains(self)) result = replaceExactName(result, self, styled(local));
         }
-        if (config().misc.nickname.seeOtherNicks) {
-            for (RemoteNick remote : REMOTE_NICKS.values()) {
-                if (!remote.shown() || remote.name.isBlank() || remote.username.isBlank() || isLocalUuid(remote.uuid)) continue;
-                if (plain.contains(remote.username)) result = replaceExactName(result, remote.username, styled(remote.name, remote.mode, remote.customHex, remote.font));
-            }
+        for (RemoteNick remote : REMOTE_NICKS.values()) {
+            if (!remote.shown() || remote.name.isBlank() || remote.username.isBlank() || isLocalUuid(remote.uuid)) continue;
+            if (plain.contains(remote.username)) result = replaceExactName(result, remote.username, styled(remote));
         }
         return result;
     }
 
-    private static boolean localNickActive() {
-        return config() != null && config().misc.nickname.enabled
-            && config().misc.nickname.name != null && !config().misc.nickname.name.isBlank();
+    /** Your own nickname, from the server (set on shadowisabot.com), or null without one. */
+    private static RemoteNick localNick() {
+        return shownNick(Minecraft.getInstance().getUser().getProfileId());
+    }
+
+    private static RemoteNick shownNick(UUID uuid) {
+        RemoteNick nick = uuid == null ? null : REMOTE_NICKS.get(uuid);
+        return nick != null && nick.shown() && !nick.name.isBlank() ? nick : null;
+    }
+
+    private static Component styled(RemoteNick nick) {
+        return styled(nick.name, nick.mode, nick.customHex, nick.font);
     }
 
     /**
@@ -250,12 +112,12 @@ public final class SkyBallsNick {
      */
 
     /**
-     * Replaces the local player's name in normal Minecraft chat so /sj nick
+     * Replaces the local player's name in normal Minecraft chat so your nickname
      * is not limited to SkyBalls's separate global-chat channel.
      */
     /** Replaces synced nicknames for other SkyBalls users in normal Hypixel chat. */
     public static Component replaceOtherNamesInChat(Component message) {
-        if (message == null || config() == null || !config().misc.nickname.seeOtherNicks) return message;
+        if (message == null) return message;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.getConnection() == null) return message;
@@ -398,36 +260,26 @@ public final class SkyBallsNick {
     }
 
     public static Component replaceOwnNameInChat(Component message) {
-        if (message == null || config() == null || !config().misc.nickname.enabled
-            || config().misc.nickname.name == null || config().misc.nickname.name.isBlank()) {
-            return message;
-        }
+        RemoteNick local = localNick();
+        if (message == null || local == null) return message;
 
         String actualName = Minecraft.getInstance().getUser().getName();
         if (actualName == null || actualName.isBlank()) return message;
 
-        return replaceExactName(message, actualName,
-            styled(config().misc.nickname.name, mode(), customHex(), font()));
+        return replaceExactName(message, actualName, styled(local));
     }
 
     public static Component displayName(String actualName) {
-        if (!config().misc.nickname.enabled
-            || !actualName.equals(Minecraft.getInstance().getUser().getName())
-            || config().misc.nickname.name == null
-            || config().misc.nickname.name.isBlank()) {
+        RemoteNick local = localNick();
+        if (local == null || !actualName.equals(Minecraft.getInstance().getUser().getName())) {
             return Component.literal(actualName);
         }
-        return styled(config().misc.nickname.name, mode(), customHex(), font());
+        return styled(local);
     }
 
     public static Component displayName(UUID uuid, String actualName) {
-        if (uuid != null) {
-            RemoteNick remote = REMOTE_NICKS.get(uuid);
-            if (remote != null && remote.shown() && !remote.name.isBlank()) {
-                return styled(remote.name, remote.mode, remote.customHex, remote.font);
-            }
-        }
-        return displayName(actualName);
+        RemoteNick remote = shownNick(uuid);
+        return remote != null ? styled(remote) : displayName(actualName);
     }
 
     public static void updateRemote(UUID uuid, boolean enabled, String name, String mode, String customHex) {
@@ -467,10 +319,6 @@ public final class SkyBallsNick {
 
     public static void clearRemote() {
         REMOTE_NICKS.clear();
-    }
-
-    public static Component styled(String text) {
-        return styled(text, mode(), customHex(), font());
     }
 
     public static Component styled(String text, String style, String customHex) {
@@ -523,29 +371,6 @@ public final class SkyBallsNick {
         return value != null && value.matches("#[0-9a-fA-F]{6}") ? value.toUpperCase(Locale.ROOT) : "";
     }
 
-    private static String displayStyle(String key) {
-        for (String style : STYLES) {
-            if (style.toLowerCase(Locale.ROOT).replace(' ', '_').equals(key)) return style;
-        }
-        return "Plain";
-    }
-
-    private static SkyBallsConfig config() {
-        return config;
-    }
-
-    private static void save() {
-        SkyBallsConfig.saveCurrent(config());
-    }
-
-    private static void message(String text, int color) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.sendSystemMessage(Component.literal("[SB] " + text)
-                .setStyle(Style.EMPTY.withColor(color)));
-        }
-    }
-
     private static boolean isLocalUuid(UUID uuid) {
         Minecraft mc = Minecraft.getInstance();
         return uuid != null && (uuid.equals(mc.getUser().getProfileId())
@@ -564,44 +389,8 @@ public final class SkyBallsNick {
             return new RemoteNick(uuid, value, name, mode, customHex, font, enabled);
         }
 
-        /** On, and not hidden with /sb togglenick. */
         private boolean shown() {
-            return enabled && !isHidden(username);
+            return enabled;
         }
-    }
-
-    // ---------------------------------------------------------------- /sb togglenick
-
-    /** Players whose nickname you turned off with /sb togglenick (their real name shows instead). */
-    private static boolean isHidden(String username) {
-        if (username == null || username.isBlank() || config() == null) return false;
-        for (String name : config().misc.nickname.hiddenNicks) if (name.equalsIgnoreCase(username)) return true;
-        return false;
-    }
-
-    /** /sb togglenick <player>: turns that player's nickname off or back on for you; your own name toggles your nickname. */
-    public static void toggleFor(String player) {
-        if (config() == null) return;
-        String self = Minecraft.getInstance().getUser().getName();
-        if (player.equalsIgnoreCase(self)) {
-            config().misc.nickname.enabled = !config().misc.nickname.enabled;
-            save();
-            SkyBallsGlobalChat.sendNicknameUpdate();
-            message("Your nickname is now " + (config().misc.nickname.enabled ? "on." : "off."), 0x55FF55);
-            return;
-        }
-        java.util.List<String> hidden = config().misc.nickname.hiddenNicks;
-        boolean removed = hidden.removeIf(name -> name.equalsIgnoreCase(player));
-        if (!removed) hidden.add(player);
-        save();
-        message(removed ? "Showing " + player + "'s nickname again." : "Hiding " + player + "'s nickname; you'll see their real name.", 0x55FF55);
-    }
-
-    /** Usernames of other SkyBalls players with a nickname, for suggestions. */
-    public static java.util.List<String> nickedPlayers() {
-        java.util.List<String> out = new java.util.ArrayList<>();
-        for (RemoteNick r : REMOTE_NICKS.values()) if (!r.username.isBlank()) out.add(r.username);
-        if (config() != null) out.addAll(config().misc.nickname.hiddenNicks);
-        return out;
     }
 }

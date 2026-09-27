@@ -150,7 +150,7 @@ public class StorageOverlayCustom extends CustomGui {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         Slot hovered = ((SkyBallsContainerScreenAccessor) screen).skyballs$getHoveredSlot();
-        if (hovered != null && hovered.hasItem() && StorageOverlay.config().itemsBlockScrolling) return false;
+        if (hovered != null && hovered.hasItem() && StorageOverlay.config().itemsBlockScroll) return false;
         return overview.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 }

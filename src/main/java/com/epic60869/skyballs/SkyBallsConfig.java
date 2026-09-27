@@ -187,13 +187,13 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Held Item Model", desc = "Move, rotate and scale the item in your hand and change your swing speed, like Skysoft. /sb helditem save stores the settings for the held item only.")
-        public HeldItemModel heldItemModel = new HeldItemModel();
+        @ConfigOption(name = "Held Item", desc = "Move, rotate and scale the item in your hand, change its swing speed and style, and show vanilla textures, globally or per item, ported from Skysoft. Open the editor with /sb helditem.")
+        public com.epic60869.skyballs.features.helditem.HeldItemConfig heldItem = new com.epic60869.skyballs.features.helditem.HeldItemConfig();
 
+        /** The old Held Item Model settings, only read to copy them into Held Item once. */
         @Expose
-        @Accordion
-        @ConfigOption(name = "Nickname", desc = "Click to expand nickname settings.")
-        public Nickname nickname = new Nickname();
+        public LegacyHeldItemModel heldItemModel = null;
+
 
         @Expose
         @Accordion
@@ -708,31 +708,18 @@ public final class SkyBallsConfig extends Config {
         @Expose @ConfigOption(name = "Others Depth", desc = "Z scale (1 = normal).") @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.05f) public float othersZ = 0.6f;
     }
 
-    public static final class HeldItemModel {
-        @Expose
-        @ConfigOption(name = "Enabled", desc = "Apply these settings to the item in your hand (first person).")
-        @ConfigEditorBoolean
-        public boolean enabled = false;
-
-        @Expose @ConfigOption(name = "X", desc = "Left / right.") @ConfigEditorSlider(minValue = -1.5f, maxValue = 1.5f, minStep = 0.01f) public float x = 0f;
-        @Expose @ConfigOption(name = "Y", desc = "Down / up.") @ConfigEditorSlider(minValue = -1.5f, maxValue = 1.5f, minStep = 0.01f) public float y = 0f;
-        @Expose @ConfigOption(name = "Z", desc = "Towards / away from you.") @ConfigEditorSlider(minValue = -1.5f, maxValue = 1.5f, minStep = 0.01f) public float z = 0f;
-        @Expose @ConfigOption(name = "Scale", desc = "Item size (1 = vanilla).") @ConfigEditorSlider(minValue = 0.05f, maxValue = 2f, minStep = 0.01f) public float scale = 1f;
-        @Expose @ConfigOption(name = "Rotation X", desc = "Pitch in degrees.") @ConfigEditorSlider(minValue = -180, maxValue = 180, minStep = 1) public float rotationX = 0f;
-        @Expose @ConfigOption(name = "Rotation Y", desc = "Yaw in degrees.") @ConfigEditorSlider(minValue = -180, maxValue = 180, minStep = 1) public float rotationY = 0f;
-        @Expose @ConfigOption(name = "Rotation Z", desc = "Roll in degrees.") @ConfigEditorSlider(minValue = -180, maxValue = 180, minStep = 1) public float rotationZ = 0f;
-        @Expose @ConfigOption(name = "Swing Speed", desc = "Arm swing speed (1 = vanilla, 2 = twice as fast, 0.5 = half speed).") @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.05f) public float swingSpeed = 1f;
-        @Expose @ConfigOption(name = "No Swing Animation", desc = "Your hand and held item don't swing when you click, like NoFrills. Works even with Held Item Model off. Off by default.") @ConfigEditorBoolean public boolean noSwing = false;
-        @Expose @ConfigOption(name = "No Re-equip Animation", desc = "The held item doesn't dip down and come back up when Hypixel updates it (ability cooldowns, lore changes) or when you switch items, like NoFrills' No Equip Animation. Without it the item can roll across the screen even with Swing X, Y and Z at 0.") @ConfigEditorBoolean public boolean noEquipAnimation = true;
-        @Expose @ConfigOption(name = "Swing X", desc = "How far the item moves sideways when you swing (1 = vanilla, 0 = none). With X, Y and Z at 0 the item stays in place but still tilts forward as it swings; Swing Rotation changes that tilt.") @ConfigEditorSlider(minValue = 0f, maxValue = 2f, minStep = 0.05f) public float swingX = 1f;
-        @Expose @ConfigOption(name = "Swing Y", desc = "How far the item moves up and down when you swing (1 = vanilla, 0 = none).") @ConfigEditorSlider(minValue = 0f, maxValue = 2f, minStep = 0.05f) public float swingY = 1f;
-        @Expose @ConfigOption(name = "Swing Z", desc = "How far the item moves forward when you swing (1 = vanilla, 0 = none).") @ConfigEditorSlider(minValue = 0f, maxValue = 2f, minStep = 0.05f) public float swingZ = 1f;
-        @Expose @ConfigOption(name = "Swing Rotation", desc = "How far the item tilts and rolls when you swing (1 = vanilla, 0.5 = half, 0 = it doesn't turn). With Swing X, Y and Z at 0, lower this to make the item swing in place without the big roll.") @ConfigEditorSlider(minValue = 0f, maxValue = 2f, minStep = 0.05f) public float swingRotation = 1f;
-
-        @Expose
-        @ConfigOption(name = "Ignore Mining Effects", desc = "Swing at the normal speed even with Haste or Mining Fatigue.")
-        @ConfigEditorBoolean
-        public boolean ignoreMiningEffects = false;
+    /** The settings of the old Held Item Model (replaced by Skysoft's Held Item). */
+    public static final class LegacyHeldItemModel {
+        @Expose public boolean enabled = false;
+        @Expose public float x = 0f;
+        @Expose public float y = 0f;
+        @Expose public float z = 0f;
+        @Expose public float scale = 1f;
+        @Expose public float rotationX = 0f;
+        @Expose public float rotationY = 0f;
+        @Expose public float rotationZ = 0f;
+        @Expose public float swingSpeed = 1f;
+        @Expose public boolean ignoreMiningEffects = false;
     }
 
     public static final class Random {
@@ -766,7 +753,7 @@ public final class SkyBallsConfig extends Config {
         @Expose @ConfigOption(name = "Invert Scroll", desc = "Invert the mouse wheel scrolling in the storage overlay.") @ConfigEditorBoolean public boolean inverseScroll = false;
         @Expose @ConfigOption(name = "Padding", desc = "Padding inside of the storage overview.") @ConfigEditorSlider(minValue = 1, maxValue = 20, minStep = 1) public int padding = 5;
         @Expose @ConfigOption(name = "Margin", desc = "Margin inside of the storage overview.") @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1) public int margin = 20;
-        @Expose @ConfigOption(name = "Block Scrolling on Items", desc = "Disables scrolling the storage overlay screen while you are hovering over an item. Useful if you have a tooltip scrolling mod.") @ConfigEditorBoolean public boolean itemsBlockScrolling = true;
+        @Expose @ConfigOption(name = "Block Scrolling on Items", desc = "Disables scrolling the storage overlay screen while you are hovering over an item. Useful if you have a tooltip scrolling mod.") @ConfigEditorBoolean public boolean itemsBlockScroll = false;
         @Expose @ConfigOption(name = "Highlight Search Results", desc = "Highlight the search results in the storage overlay.") @ConfigEditorBoolean public boolean highlightSearchResults = true;
         @Expose @ConfigOption(name = "Highlight Search Colour", desc = "Change the colour of the highlighted search result.") @ConfigEditorColour public String highlightSearchResultsColour = "0:255:0:176:0";
     }
@@ -791,38 +778,6 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Backpack", desc = "Reset the cursor when a Backpack opens.")
         @ConfigEditorBoolean
         public boolean backpack = true;
-    }
-
-    public static final class Nickname {
-        @Expose
-        @ConfigOption(name = "Nickname Enabled", desc = "Use your SkyBalls nickname in SkyBlock TAB and chat.")
-        @ConfigEditorBoolean
-        public boolean enabled = false;
-
-        @Expose
-        @ConfigOption(name = "See Other Nicks", desc = "Replace the real usernames of other SkyBalls users with their synced nicknames in Hypixel chat, including normal, guild and private messages.")
-        @ConfigEditorBoolean
-        public boolean seeOtherNicks = true;
-
-        @ConfigOption(name = "Open Nickname Menu", desc = "Open the dedicated /sb nick editor.")
-        @ConfigEditorButton(buttonText = "OPEN")
-        public Runnable openMenu = () -> openNick();
-
-        @Expose
-        public String name = "";
-
-        @Expose
-        public String style = "Plain";
-
-        @Expose
-        public String customHex = "";
-
-        @Expose
-        public String font = "Default";
-
-        /** Players whose nickname you turned off with /sb togglenick. */
-        @Expose
-        public java.util.List<String> hiddenNicks = new java.util.ArrayList<>();
     }
 
     public static final class Discord {
@@ -857,10 +812,6 @@ public final class SkyBallsConfig extends Config {
         mc.execute(() -> mc.gui.setScreen(new SkyBallsHudEditorScreen(mc.gui.screen())));
     }
 
-    private static void openNick() {
-        Minecraft mc = Minecraft.getInstance();
-        mc.execute(() -> mc.gui.setScreen(new SkyBallsNickScreen(mc.gui.screen())));
-    }
 
     private static void openDiscord() {
         Minecraft mc = Minecraft.getInstance();
@@ -996,10 +947,6 @@ public final class SkyBallsConfig extends Config {
         if (old.has("mouseLockEnabled")) migrated.farming.mouseLock.enabled = old.get("mouseLockEnabled").getAsBoolean();
         if (old.has("mouseLockGroundOnly")) migrated.farming.mouseLock.groundOnly = old.get("mouseLockGroundOnly").getAsBoolean();
 
-        if (old.has("nickEnabled")) migrated.misc.nickname.enabled = old.get("nickEnabled").getAsBoolean();
-        if (old.has("nickName")) migrated.misc.nickname.name = old.get("nickName").getAsString();
-        if (old.has("nickMode")) migrated.misc.nickname.style = legacyStyle(old.get("nickMode").getAsString());
-        if (old.has("nickColor")) migrated.misc.nickname.customHex = old.get("nickColor").getAsString();
 
         Path backup = path.resolveSibling(path.getFileName() + ".legacy-backup");
         Files.move(path, backup, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -1072,21 +1019,6 @@ public final class SkyBallsConfig extends Config {
         }
 
         if (changed) Files.writeString(path, LEGACY_GSON.toJson(root), StandardCharsets.UTF_8);
-    }
-
-    private static String legacyStyle(String style) {
-        if (style == null || style.isBlank() || style.equals("plain")) return "Plain";
-        if (style.equalsIgnoreCase("rainbow")) return "Rainbow";
-        return switch (style.toLowerCase()) {
-            case "dark_blue" -> "Dark Blue";
-            case "dark_green" -> "Dark Green";
-            case "dark_aqua" -> "Dark Aqua";
-            case "dark_red" -> "Dark Red";
-            case "dark_purple" -> "Dark Purple";
-            case "light_purple" -> "Light Purple";
-            case "dark_gray" -> "Dark Gray";
-            default -> Character.toUpperCase(style.charAt(0)) + style.substring(1);
-        };
     }
 
     private static final class FileHolder {

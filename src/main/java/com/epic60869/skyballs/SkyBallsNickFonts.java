@@ -8,7 +8,7 @@ import java.text.Normalizer;
 import java.util.Locale;
 
 /**
- * Nickname fonts for /sj nick.
+ * Nickname fonts (the font is chosen on shadowisabot.com).
  *
  * Letter fonts (Small Caps, Script, Bubble, Enchanting Runes, ...) swap the letters for their Unicode look-alikes, so they are part of
  * the nickname text itself and every SkyBalls user sees them. Style fonts (Bold, Italic, ...) and Minecraft's own

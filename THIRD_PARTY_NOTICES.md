@@ -40,6 +40,8 @@ Each ported source file keeps a Skyblocker attribution line. SkyBalls replaces S
 
 SkyBalls's Item Price Tooltip follows Skyblocker's AvgBinTooltip, LBinTooltip and NpcPriceTooltip (src/main/java/de/hysky/skyblocker/skyblock/item/tooltip/adders/) and reads auction prices from the same API (hysky.de). The container menu mixin that notifies slot listeners (used by the Chronomatron solver) follows Skyblocker's AbstractContainerMenuMixin.
 
+Mouse Lock (`SkyBallsMouseLock`) follows Skyblocker's garden mouse lock (src/main/java/de/hysky/skyblocker/skyblock/garden/LowerSensitivity.java): its farming tool list (FarmingHudWidget.FARMING_TOOLS) and the barn area where the lock pauses.
+
 ## CommandKeys
 
 SkyBalls's /sj keys GUI and macro system is a port of TerminalMC/CommandKeys (the `com.epic60869.skyballs.commandkeys` package, its mixins, the `skyballs_commandkeys` assets and translations, and the MultiLineEditBox entry in `skyballs.classtweaker`).
@@ -82,6 +84,8 @@ SkyBalls's search-keybind and recipe-command workflows are adapted from the corr
 - Item search: src/main/kotlin/me/owdding/skyocean/features/item/search/ItemSearch.kt
 - Recipe command: src/main/kotlin/me/owdding/skyocean/commands/CraftHelperCommand.kt
 - Recipe autocomplete: src/main/kotlin/me/owdding/skyocean/utils/suggestions/RecipeNameSuggestionProvider.kt
+
+SkyBalls's /sb search (SkyBallsStorageSearchScreen and the island chest, museum and highlight code in SkyBallsStorageSearch) is a Java port of SkyOcean's item search: features/item/search/screen/ItemSearchScreen.kt, SearchCategory.kt and SortModes.kt, features/item/search/matcher/ItemMatcher.kt, features/item/search/search/ReferenceItemFilter.kt, features/item/search/highlight/ItemHighlighter.kt, features/misc/ChestTracker.kt, data/profile/IslandChestStorage.kt and features/item/sources/. Its museum reading follows SkyblockAPI's MuseumAPI (https://github.com/SkyblockAPI/SkyblockAPI, src/main/kotlin/tech/thatgravyboat/skyblockapi/api/profile/items/museum/MuseumAPI.kt, MIT License, Copyright (c) ThatGravyBoat). SkyOcean's Olympus UI widgets are drawn with vanilla GUI calls.
 
 SkyBalls's /sj recipe craft helper is a Java port of SkyOcean's craft helper (src/main/kotlin/me/owdding/skyocean/features/recipe/crafthelper/ and commands/CraftHelperCommand.kt): the recipe tree with leftover carry-over, the have/need evaluation, and the tree display. SkyOcean's code is licensed under the MIT License (SkyOcean License v1, section 1); SkyBalls reads recipes from the NEU repository instead of SkyOcean's repo library.
 
@@ -147,6 +151,12 @@ SkyBalls's dungeon map ("NoammAddons (Legit)" style) and dungeon score calculato
 - Relevant source: `features/impl/dungeon/map/MapRenderer.kt`, `MapConfig.kt`, `utils/dungeons/map/handlers/HotbarMapColorParser.kt`, `MapUpdater.kt`, `ScoreCalculation.kt`, `utils/dungeons/map/utils/MapUtils.kt`, `utils/dungeons/map/core/`, `features/impl/dungeon/ScoreCalculator.kt`, and the checkmark and marker textures in `textures/gui/dungeonmap/` (copied to `assets/skyballs/textures/gui/dungeonmap/`)
 
 Ported to Java in `features/dungeons/NoammMap.java` and `features/dungeons/ScoreCalculator.java`. NoammAddons is dedicated to the public domain under CC0 1.0 Universal.
+
+## Skysoft Held Item
+
+SkyBalls's Held Item (the `com.epic60869.skyballs.features.helditem` package and the SkyBallsHeldItemMixin, SkyBallsSwingSpeedMixin, SkyBallsHeldItemTextureMixin and SkyBallsHeldItemMiningMixin mixins) is a Java port of Skysoft's Held Item feature (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): src/main/kotlin/com/skysoft/features/helditem/, config/HeldItemConfig.kt, the Held Item Update Fix from config/FixesConfig.kt, the ItemInHandRenderer, ItemModelResolver, LivingEntity swing and MultiPlayerGameMode mixins, and the pixel controls it draws with (utils/gui/PixelButtonRenderer.kt, PixelControlRenderer.kt, OverlayPanelStyle.kt, TextElision.kt, utils/SnapshotHistory.kt).
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
 
 ## Skysoft Tooltip Scroll
 

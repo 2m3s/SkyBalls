@@ -2,6 +2,27 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.3 — 2026-09-27
+
+### Added
+- /sb search is now a port of SkyOcean's item search (MIT): category buttons (All, Storage, Island, Museum, Inventory), sorting by Amount, Price or Rarity (up or down), a $ button with the total value of what's listed, and copies of the same item shown as one entry with the total count. The tooltip lists where each copy is. Clicking an item opens its Ender Chest page or backpack, warps to your island and draws a rainbow box around its chest, or warps to the museum; the item then stays highlighted in menus for a minute (it used to flash for one frame).
+- /sb search remembers the chests on your private island: open a chest and its items are saved (per profile, like your storage). Breaking the chest or turning it into a Minion Chest forgets it.
+- /sb search remembers what's in your museum: browse the museum's category menus in the Hub and the items kept there are saved. Items shown as not donated or taken out are forgotten. Museum items don't count for the craft helper or the portfolio.
+- Nicknames now live on shadowisabot.com (run /website in the SkyBalls Discord to get a login code) and show for your own name and everyone else's. Once your account is linked there, /sb nick sets it in game too: /sb nick <name>, /sb nick <colour> <name>, /sb nick rainbow <name>, /sb nick #hex <name> or /sb nick off. Without a linked account /sb nick doesn't show. /sb togglenick, the nickname editor and the Nickname settings are removed, and everyone's nickname always shows.
+- /sb discord: the link to the SkyBalls Discord.
+- /sb casino: blackjack with play money. Everyone starts with $100; bet, then Hit, Stand or Double (blackjack pays 3:2, the dealer stands on 17). If you go broke you get $100 again a day later. A leaderboard beside the table ranks everyone with the mod by most money. The SBC chat server holds the balances and deals the cards, and your Minecraft login is checked, so nobody can edit their money.
+- Held Item Model is replaced by a port of Skysoft's Held Item (Misc > Held Item, or /sb helditem): an editor over the game where you drag the item to move it (right-drag for depth), scroll to resize it, and use sliders for position, scale, swing speed and rotation, for every item (Global) or just the one in your hand (This Item), with undo and redo. New: an Item Only swing style (the item swings, not your arm), switching an item to its vanilla texture instead of Hypixel's, and the Held Item Update Fix (on by default: the item doesn't dip when Hypixel updates it, and mining isn't interrupted). Your old settings and items saved with /sb helditem save are copied over; check them in the editor, since positions are measured differently. Swing X/Y/Z, Swing Rotation, No Swing Animation and No Re-equip Animation are gone.
+- SBC chat rank announcements: when someone is given a rank prefix or has it removed, SBC chat shows "Steve Has Been Granted [VIP] By Console" (or "Steve's [VIP] Prefix Has Been Removed By Console") with the prefix in its exact colour. Hidden when SBC chat is hidden.
+
+### Fixed
+- Mouse Lock now works like Skyblocker's: it locks with every farming tool (all Theoretical Hoe tiers including Sunflower and Wild Rose, Fungi Cutter, Cactus Knife, Melon and Pumpkin Dicers, Coco Chopper, Gardening Hoes and Axes, Binghoe), goes by the SkyBlock id so renamed tools still lock, and pauses in the Garden's barn. Before, it never locked with Theoretical Hoes (it looked for the tool's id in the item's name) or renamed tools.
+- Storage overlay: pages opened after you searched (like /ec 8) didn't show, and searching could hide Ender Chest pages until the search changed.
+- Storage overlay: searching left the open page's items in the top left corner, over the other pages.
+- Storage overlay: the mouse wheel didn't scroll while over an item. Block Scrolling on Items is now off by default, and Tooltip Scroll no longer takes the wheel from it.
+- Storage overlay: the scroll bar keeps the knob under the mouse when clicked or dragged, and reaches the top and bottom.
+- Tooltip Scroll took the mouse wheel whenever any tooltip showed (settings, lists, menus). It now only moves tooltips too big to fit on screen.
+- /sb search did nothing off Hypixel, and could be closed again by the chat closing.
+
 ## 1.3.2.5 — 2026-09-27
 
 ### Added

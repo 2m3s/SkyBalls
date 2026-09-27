@@ -85,8 +85,16 @@ public final class StorageData {
         markDirty();
     }
 
+    /** Bumped on every change, so views built from the data (the overlay's search filter) know to rebuild. */
+    private static int version;
+
+    public static int version() {
+        return version;
+    }
+
     public static void markDirty() {
         dirty = true;
+        version++;
     }
 
     /** Saves now and then (and when leaving), not on every change. */

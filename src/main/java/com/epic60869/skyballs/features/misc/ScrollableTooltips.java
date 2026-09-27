@@ -70,6 +70,9 @@ public final class ScrollableTooltips {
     public static boolean didHandleMouseScroll(double horizontal, double vertical) {
         SkyBallsConfig.TooltipScroll settings = config();
         if (!enabled(settings) || !settings.enableScrollWheel || !hasVisibleSession()) return false;
+        // A tooltip that fits on screen has nothing to pan to: leave the wheel to the screen (lists, settings, the
+        // storage overlay), which almost always has something with a tooltip under the mouse.
+        if (!session.frame.overflows()) return false;
         boolean sideways = horizontal != 0 || isHorizontalModifierDown(settings);
         double x = horizontal * settings.mouseScrollingSpeed;
         double y = 0;
@@ -190,6 +193,10 @@ public final class ScrollableTooltips {
 
         double clampY(double value) {
             return clamp(value, EDGE_GAP - height - y, viewportHeight - EDGE_GAP - y);
+        }
+
+        boolean overflows() {
+            return width + 2 * EDGE_GAP > viewportWidth || height + 2 * EDGE_GAP > viewportHeight;
         }
 
         private static double clamp(double value, int min, int max) {

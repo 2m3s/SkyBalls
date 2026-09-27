@@ -25,7 +25,6 @@ import java.util.Map;
  * Commands for switching things on and off without opening the menu:
  * <ul>
  *   <li>/sb toggle &lt;setting&gt;: flips any on/off setting (e.g. /sb toggle dungeons.caseOpening), with suggestions.</li>
- *   <li>/sb togglenick &lt;player&gt;: hides or shows that player's nickname for you (your own name toggles yours).</li>
  *   <li>/sb disableall: turns every feature off, after you click to confirm (like /skyblocker disableall).</li>
  * </ul>
  */
@@ -42,13 +41,6 @@ public final class SkyBallsToggleCommands {
                         .then(ClientCommands.argument("setting", StringArgumentType.greedyString())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(toggles().keySet(), b))
                             .executes(c -> toggle(StringArgumentType.getString(c, "setting")))))
-                    .then(ClientCommands.literal("togglenick")
-                        .then(ClientCommands.argument("player", StringArgumentType.word())
-                            .suggests((c, b) -> SharedSuggestionProvider.suggest(SkyBallsNick.nickedPlayers(), b))
-                            .executes(c -> {
-                                SkyBallsNick.toggleFor(StringArgumentType.getString(c, "player"));
-                                return 1;
-                            })))
                     .then(ClientCommands.literal("who").executes(c -> {
                         SkyBallsGlobalChat.requestWho();
                         return 1;

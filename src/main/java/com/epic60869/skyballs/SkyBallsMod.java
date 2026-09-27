@@ -4,8 +4,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import java.nio.file.Path;
@@ -41,6 +43,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.core.SkyBallsLocation.init();
         com.epic60869.skyballs.features.core.SkyBallsChat.init();
         com.epic60869.skyballs.features.core.SkyBallsAlerts.init();
+        SkyBallsFoxyScare.init();
         com.epic60869.skyballs.features.core.SkyBallsHuds.init(configDir);
         com.epic60869.skyballs.features.core.SkyBallsWorldRender.init();
 
@@ -60,7 +63,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.misc.PartyCommands.init();
         com.epic60869.skyballs.features.misc.AutoWelcome.init();
         com.epic60869.skyballs.features.misc.ItemNotification.init();
-        com.epic60869.skyballs.features.misc.HeldItemModel.init(configDir);
+        com.epic60869.skyballs.features.helditem.HeldItem.init(configDir);
         com.epic60869.skyballs.features.misc.ScrollableTooltips.init();
         com.epic60869.skyballs.features.misc.ToggleSprint.init();
         com.epic60869.skyballs.features.misc.WarpShortcuts.init();
@@ -125,6 +128,8 @@ public final class SkyBallsMod implements ClientModInitializer {
             .then(ClientCommands.literal("notes").executes(context -> openNotes()))
             .then(ClientCommands.literal("search").executes(context -> openStorageSearch()))
             .then(SkyBallsRecipeCommand.command())
+            .then(ClientCommands.literal("casino").executes(context ->
+                com.epic60869.skyballs.custom.util.Compat.queueOpenScreen(new SkyBallsCasinoScreen())))
             .then(ClientCommands.literal("calc")
                 .then(ClientCommands.argument("calculation", StringArgumentType.greedyString())
                     .executes(context -> calculate(StringArgumentType.getString(context, "calculation")))))
@@ -133,16 +138,26 @@ public final class SkyBallsMod implements ClientModInitializer {
                 .then(ClientCommands.literal("leave").executes(context -> leaveSkyBallsChat()))
                 .then(ClientCommands.argument("message", StringArgumentType.greedyString())
                     .executes(context -> sendGlobalChat(StringArgumentType.getString(context, "message")))))
-            .then(ClientCommands.literal("nick")
-                .executes(context -> openNick())
-                .then(ClientCommands.argument("value", StringArgumentType.greedyString())
-                    .executes(context -> setNick(StringArgumentType.getString(context, "value")))))
+            .then(SkyBallsNickCommand.node())
+            .then(ClientCommands.literal("discord").executes(context -> discord()))
             .then(ClientCommands.literal("gui").executes(context -> openHudEditor()))
             .then(ClientCommands.literal("debug").executes(context -> SkyBallsDebug.run()));
 
         return root;
     }
 
+
+    private int discord() {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.player == null) return;
+            String link = "https://discord.gg/7AAjvjxsby";
+            mc.gui.hud.getChat().addClientSystemMessage(Component.literal("The SkyBalls Discord Is: ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(link).withStyle(style -> style.withColor(ChatFormatting.AQUA).withUnderlined(true)
+                    .withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(java.net.URI.create(link))))));
+        });
+        return 1;
+    }
 
     private int openMenu() {
         Minecraft.getInstance().execute(SkyBallsConfig::openGui);
@@ -172,15 +187,6 @@ public final class SkyBallsMod implements ClientModInitializer {
         } else {
             SkyBallsGlobalChat.send(message);
         }
-        return 1;
-    }
-
-    private int openNick() {
-        return com.epic60869.skyballs.custom.util.Compat.queueOpenScreen(new SkyBallsNickScreen(null));
-    }
-
-    private int setNick(String value) {
-        SkyBallsNick.set(value);
         return 1;
     }
 
@@ -221,9 +227,8 @@ public final class SkyBallsMod implements ClientModInitializer {
     }
 
     private int openStorageSearch() {
-        Minecraft.getInstance().execute(() ->
-            SkyBallsStorageSearch.open(Minecraft.getInstance(), ""));
-        return 1;
+        // Queued so closing the chat doesn't close it again; opens off Hypixel too (it just shows what's cached).
+        return com.epic60869.skyballs.custom.util.Compat.queueOpenScreen(new SkyBallsStorageSearchScreen(null, ""));
     }
 
     private int openNotes() {

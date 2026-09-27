@@ -1,9 +1,19 @@
+// Ported from Skysoft (https://github.com/Akinsoft/Skysoft), src/main/java/com/skysoft/mixin/ItemInHandRendererMixin.java.
+// SPDX-License-Identifier: LGPL-3.0-only
 package com.epic60869.skyballs.mixin;
 
-import com.epic60869.skyballs.features.misc.HeldItemModel;
+import com.epic60869.skyballs.features.helditem.HeldItemSwing;
+import com.epic60869.skyballs.features.helditem.HeldItemTextures;
+import com.epic60869.skyballs.features.helditem.HeldItemTransforms;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -12,67 +22,50 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Misc > Held Item Model: transforms the first-person item. The collector copies the pose, so popping at the end is safe. */
+/** Misc > Held Item: the first-person item's transform, swing style, and the Held Item Update Fix. */
 @Mixin(ItemInHandRenderer.class)
 public abstract class SkyBallsHeldItemMixin {
-    /**
-     * Misc > Held Item Model > Swing Rotation: scales every turn in the swing (vanilla turns 45 + up to -20 degrees
-     * around Y, up to -20 around Z, up to -80 around X, then -45 back around Y; at rest they cancel out, so scaling
-     * them all keeps the resting pose and only shrinks the swing).
-     */
-    @com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "applyItemArmAttackTransform", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;"))
-    private org.joml.Quaternionf skyballs$swingRotation(org.joml.Quaternionf rotation) {
-        float scale = HeldItemModel.swingRotation();
-        if (scale == 1f) return rotation;
-        // Same axis, angle times the setting.
-        org.joml.AxisAngle4f axisAngle = new org.joml.AxisAngle4f(rotation);
-        axisAngle.angle *= scale;
-        return new org.joml.Quaternionf(axisAngle);
+    /** Held Item Update Fix: Hypixel updating the same item doesn't play the re-equip animation. */
+    @ModifyReturnValue(method = "shouldInstantlyReplaceVisibleItem", at = @At("RETURN"))
+    private boolean skyballs$keepUpdatedItemVisible(boolean original, ItemStack currentlyVisible, ItemStack expected) {
+        if (original) return true;
+        try {
+            return HeldItemTextures.shouldPreserveUpdate(currentlyVisible, expected);
+        } catch (Throwable e) {
+            return false;
+        }
     }
-
-    @org.spongepowered.asm.mixin.Shadow private float mainHandHeight;
-    @org.spongepowered.asm.mixin.Shadow private float oMainHandHeight;
-    @org.spongepowered.asm.mixin.Shadow private float offHandHeight;
-    @org.spongepowered.asm.mixin.Shadow private float oOffHandHeight;
-
-    /** Misc > Held Item Model > No Re-equip Animation: a changed item is shown straight away, like NoFrills. */
-    @Inject(method = "shouldInstantlyReplaceVisibleItem", at = @At("HEAD"), cancellable = true)
-    private void skyballs$noEquipAnimation(ItemStack current, ItemStack expected, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
-        if (HeldItemModel.noEquipAnimation()) cir.setReturnValue(true);
-    }
-
-    /** ...and the hand never lowers to swap it. */
-    @Inject(method = "tick", at = @At("TAIL"))
-    private void skyballs$holdHandUp(CallbackInfo ci) {
-        if (!HeldItemModel.noEquipAnimation()) return;
-        mainHandHeight = 1f;
-        oMainHandHeight = 1f;
-        offHandHeight = 1f;
-        oOffHandHeight = 1f;
-    }
-
-    /** Misc > Held Item Model > No Swing Animation: the first-person hand and item never swing. */
-    @com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "submitHandsWithItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getAttackAnim(F)F"))
-    private float skyballs$noSwing(float attack) {
-        return HeldItemModel.noSwing() ? 0f : attack;
-    }
-
-    private boolean skyballs$pushed;
 
     @Inject(method = "renderItem", at = @At("HEAD"))
-    private void skyballs$transformHeldItem(LivingEntity entity, ItemStack stack, ItemDisplayContext context, PoseStack pose, SubmitNodeCollector collector, int light, CallbackInfo ci) {
-        skyballs$pushed = false;
-        if (!context.firstPerson() || stack.isEmpty()) return;
-        HeldItemModel.Transform transform = HeldItemModel.transform(stack);
-        if (transform == null) return;
-        pose.pushPose();
-        HeldItemModel.apply(pose, transform, context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND);
-        skyballs$pushed = true;
+    private void skyballs$transformHeldItem(LivingEntity entity, ItemStack stack, ItemDisplayContext context, PoseStack pose,
+                                            SubmitNodeCollector collector, int light, CallbackInfo ci) {
+        if (context != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND && context != ItemDisplayContext.FIRST_PERSON_LEFT_HAND) return;
+        try {
+            HeldItemTransforms.apply(stack, pose);
+        } catch (Throwable ignored) {}
+        try {
+            HeldItemSwing.apply(stack, pose);
+        } catch (Throwable ignored) {}
     }
 
-    @Inject(method = "renderItem", at = @At("TAIL"))
-    private void skyballs$restoreHeldItem(LivingEntity entity, ItemStack stack, ItemDisplayContext context, PoseStack pose, SubmitNodeCollector collector, int light, CallbackInfo ci) {
-        if (skyballs$pushed) pose.popPose();
-        skyballs$pushed = false;
+    @WrapMethod(method = "submitArmWithItem")
+    private void skyballs$renderWithHeldItemSwing(AbstractClientPlayer player, float frameInterp, float xRot, InteractionHand hand,
+                                                  float attack, ItemStack stack, float inverseArmHeight, PoseStack pose,
+                                                  SubmitNodeCollector collector, int light, Operation<Void> original) {
+        HumanoidArm arm = hand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
+        HeldItemSwing.renderWithSwing(stack, attack, arm,
+            () -> original.call(player, frameInterp, xRot, hand, attack, stack, inverseArmHeight, pose, collector, light));
+    }
+
+    /** Swing style Item Only: the arm doesn't swing (the item does, in renderItem). */
+    @Inject(method = "swingArm", at = @At("HEAD"), cancellable = true)
+    private void skyballs$replaceHeldItemSwing(float attack, PoseStack pose, int invert, HumanoidArm arm, CallbackInfo ci) {
+        boolean replaced;
+        try {
+            replaced = HeldItemSwing.replaceVanillaSwing();
+        } catch (Throwable e) {
+            replaced = false;
+        }
+        if (replaced) ci.cancel();
     }
 }

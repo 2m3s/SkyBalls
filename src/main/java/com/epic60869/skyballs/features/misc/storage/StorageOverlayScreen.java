@@ -190,6 +190,15 @@ public class StorageOverlayScreen extends Screen {
             sb.x(), sb.y() + (int) (getScrollbarPercentage() * (sb.height() - SCROLL_BAR_HEIGHT)), SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT);
     }
 
+    /** Scrolls so the scroll bar's knob is centred on {@code mouseY}. */
+    private void scrollToKnobAt(double mouseY) {
+        CustomGui.Rect sb = getScrollBarRect();
+        int track = sb.height() - SCROLL_BAR_HEIGHT;
+        double percentage = track <= 0 ? 0 : (mouseY - sb.y() - SCROLL_BAR_HEIGHT / 2.0) / track;
+        scroll = (float) (getMaxScroll() * Math.max(0, Math.min(1, percentage)));
+        coerceScroll(0F);
+    }
+
     public void editPages() {
         isExiting = true;
         Minecraft mc = Minecraft.getInstance();
@@ -255,9 +264,21 @@ public class StorageOverlayScreen extends Screen {
                           StoragePageSlot excluding, List<Slot> slots, int slotOffsetX, int slotOffsetY) {
         createScissors(context);
         StorageData data = StorageData.data();
-        layoutedForEach(data, (rect, page, inventory) ->
-            drawPage(context, rect.x(), rect.y(), page, inventory, page.equals(excluding) ? slots : null, slotOffsetX, slotOffsetY, mouseX, mouseY));
+        boolean[] placedSlots = {false};
+        layoutedForEach(data, (rect, page, inventory) -> {
+            boolean active = page.equals(excluding);
+            int drawn = drawPage(context, rect.x(), rect.y(), page, inventory, active ? slots : null, slotOffsetX, slotOffsetY, mouseX, mouseY);
+            if (active && drawn > 0 && inventory.inventory != null) placedSlots[0] = true;
+        });
         context.disableScissor();
+        // The open page is hidden by the search (or not loaded yet): keep its real slots out of sight instead of
+        // leaving them where the chest had them, on top of the other pages in the top left corner.
+        if (slots != null && !placedSlots[0]) {
+            for (Slot slot : slots) {
+                slot.x = -100000;
+                slot.y = -100000;
+            }
+        }
     }
 
     @Override
@@ -278,10 +299,7 @@ public class StorageOverlayScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
         if (knobGrabbed) {
-            CustomGui.Rect sb = getScrollBarRect();
-            double percentage = (click.y() - sb.y()) / sb.height();
-            scroll = (float) (getMaxScroll() * percentage);
-            coerceScroll(0F);
+            scrollToKnobAt(click.y());
             return true;
         }
         if (host == this) return super.mouseDragged(click, offsetX, offsetY);
@@ -307,9 +325,7 @@ public class StorageOverlayScreen extends Screen {
         }
         CustomGui.Rect sb = getScrollBarRect();
         if (sb.contains(mouseX, mouseY)) {
-            double percentage = (mouseY - sb.y()) / sb.height();
-            scroll = (float) (getMaxScroll() * percentage);
-            coerceScroll(0F);
+            scrollToKnobAt(mouseY);
             knobGrabbed = true;
             return true;
         }
@@ -354,16 +370,19 @@ public class StorageOverlayScreen extends Screen {
     }
 
     private String searchCache = null;
+    private StorageData searchCacheData = null;
+    private int searchCacheVersion = -1;
     private Set<StoragePageSlot> filteredPagesCache = Set.of();
 
     public Set<StoragePageSlot> getFilteredPages() {
         String searchValue = searchText;
         StorageData data = StorageData.data();
-        if (searchValue.equals(searchCache)) return filteredPagesCache;
+        // Pages loaded after the last search (/ec 8, a profile switch) must show up too, so the cache also keys on the data.
+        if (searchValue.equals(searchCache) && data == searchCacheData && StorageData.version() == searchCacheVersion) return filteredPagesCache;
         Set<StoragePageSlot> result = new HashSet<>();
         for (Map.Entry<StoragePageSlot, StorageData.StorageInventory> e : data.storageInventories.entrySet()) {
             VirtualInventory inv = e.getValue().inventory;
-            if (inv == null) {
+            if (inv == null || searchValue.isBlank()) {
                 result.add(e.getKey());
                 continue;
             }
@@ -375,6 +394,8 @@ public class StorageOverlayScreen extends Screen {
             }
         }
         searchCache = searchValue;
+        searchCacheData = data;
+        searchCacheVersion = StorageData.version();
         filteredPagesCache = result;
         return result;
     }

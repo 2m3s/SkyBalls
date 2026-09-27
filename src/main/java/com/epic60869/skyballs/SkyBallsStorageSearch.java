@@ -4,9 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.epic60869.skyballs.sb.utils.Location;
+import com.epic60869.skyballs.sb.utils.Utils;
+import com.epic60869.skyballs.sb.utils.render.primitive.PrimitiveCollector;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
@@ -17,9 +22,17 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemLore;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -37,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,7 +86,48 @@ public final class SkyBallsStorageSearch {
     private record Page(String type, int number, String label, String blob, long updatedMs) {}
 
     public record Result(ItemStack stack, String name, String id, String lore,
-                         String location, String key, String type, int number, int slot) {}
+                         String location, String key, String type, int number, int slot) {
+        /** SkyOcean's search categories: where the item is kept. */
+        public Category category() {
+            return switch (type) {
+                case "ENDER_CHEST", "BACKPACK" -> Category.STORAGE;
+                case "CHEST" -> Category.ISLAND;
+                case "MUSEUM" -> Category.MUSEUM;
+                default -> Category.INVENTORY;
+            };
+        }
+
+        /** The lines SkyOcean adds under the item's tooltip: where it is and what clicking does. */
+        public List<Component> contextLines() {
+            List<Component> lines = new ArrayList<>();
+            lines.add(Component.literal(location).withStyle(ChatFormatting.GRAY));
+            String click = switch (type) {
+                case "ENDER_CHEST" -> "Click to open enderchest!";
+                case "BACKPACK" -> "Click to open backpack!";
+                case "CHEST" -> onPrivateIsland() ? "Click to highlight chest!" : "Click to warp to island and highlight chest!";
+                case "MUSEUM" -> "Click to warp to museum!";
+                default -> "Click to open your inventory!";
+            };
+            lines.add(Component.literal(click).withStyle(ChatFormatting.YELLOW));
+            return lines;
+        }
+    }
+
+    public enum Category {
+        ALL("All", Items.COMPASS),
+        STORAGE("Storage", Items.ENDER_CHEST),
+        ISLAND("Island", Items.CHEST),
+        MUSEUM("Museum", Items.GOLD_BLOCK),
+        INVENTORY("Inventory", Items.LEATHER_CHESTPLATE);
+
+        public final String label;
+        public final Item icon;
+
+        Category(String label, Item icon) {
+            this.label = label;
+            this.icon = icon;
+        }
+    }
 
     /** Current SkyBlock profile id (from "Profile ID: ..."), or "" until Hypixel has told us. */
     private static String profile = "";
@@ -113,6 +168,16 @@ public final class SkyBallsStorageSearch {
         });
         // The profile is kept between joins and launches (saved with the cache): Hypixel only says "Profile ID"
         // when you join SkyBlock, and waiting for it again meant storage was never saved or searchable.
+
+        // SkyOcean's ChestTracker: remember which chest on the island was opened, and forget it when it's broken.
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
+            if (level.isClientSide() && onPrivateIsland()) rememberClickedChest(level, hit.getBlockPos());
+            return net.minecraft.world.InteractionResult.PASS;
+        });
+        net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents.AFTER.register((level, player, pos, state) -> {
+            if (onPrivateIsland() && state.getBlock() instanceof ChestBlock) removeChestAt(pos);
+        });
+        com.epic60869.skyballs.features.core.SkyBallsWorldRender.register(SkyBallsStorageSearch::renderChestHighlights);
     }
 
     /** Key prefix for the current server and profile. Keys are "server|profile|type|number". */
@@ -175,7 +240,9 @@ public final class SkyBallsStorageSearch {
 
             for (int i = 0; i < contents.size(); i++) {
                 ItemStack stack = contents.get(i);
-                if (stack == null || stack.isEmpty() || !isSearchableStorageItem(stack)) continue;
+                if (stack == null || stack.isEmpty()) continue;
+                boolean storagePage = page.type().equals("ENDER_CHEST") || page.type().equals("BACKPACK");
+                if (storagePage && !isSearchableStorageItem(stack)) continue;
 
                 SearchText text = searchable(stack);
                 if (!q.isEmpty()
@@ -187,7 +254,8 @@ public final class SkyBallsStorageSearch {
 
                 int row = i / 9 + 1;
                 int col = i % 9 + 1;
-                String location = page.label() + " · slot " + (i + 1) + " (r" + row + " c" + col + ")";
+                String location = page.type().equals("MUSEUM") ? page.label()
+                    : page.label() + " · slot " + (i + 1) + " (r" + row + " c" + col + ")";
                 results.add(new Result(stack.copy(), text.displayName(), text.id(), text.lore(),
                         location, entry.getKey(), page.type(), page.number(), i));
             }
@@ -234,6 +302,19 @@ public final class SkyBallsStorageSearch {
 
     public static void openResult(Minecraft mc, Result result) {
         pendingHighlight = result;
+        highlightUntil = System.currentTimeMillis() + HIGHLIGHT_MS;
+        if ("CHEST".equals(result.type())) {
+            mc.gui.setScreen(null);
+            highlightedChests.clear();
+            highlightedChests.add(chestBox(result.key()));
+            if (!onPrivateIsland() && mc.player != null) mc.player.connection.sendCommand("warp island");
+            return;
+        }
+        if ("MUSEUM".equals(result.type())) {
+            mc.gui.setScreen(null);
+            if (mc.player != null) mc.player.connection.sendCommand("warp museum");
+            return;
+        }
         if ("INVENTORY".equals(result.type())) {
             mc.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
             return;
@@ -257,11 +338,70 @@ public final class SkyBallsStorageSearch {
 
     public static boolean shouldHighlight(ItemStack stack) {
         if (pendingHighlight == null || stack == null || stack.isEmpty()) return false;
-        return sameSearchItem(stack, pendingHighlight.stack());
+        if (System.currentTimeMillis() > highlightUntil) {
+            pendingHighlight = null;
+            return false;
+        }
+        if (Minecraft.getInstance().gui.screen() instanceof SkyBallsStorageSearchScreen) return false;
+        ItemStack reference = pendingHighlight.stack();
+        // Items without a SkyBlock id (vanilla blocks in a chest) can only be matched loosely.
+        if (customData(reference).getStringOr("id", "").isEmpty()) return sameSearchItem(stack, reference);
+        return referenceMatches(reference, stack);
     }
 
-    public static void consumeHighlight() {
-        pendingHighlight = null;
+    /** Kept so the highlight lasts: SkyOcean clears it after a while, not after the first frame. */
+    public static void consumeHighlight() {}
+
+    private static final long HIGHLIGHT_MS = 60_000L;
+    private static long highlightUntil;
+
+    private static CompoundTag customData(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? new CompoundTag() : data.copyTag();
+    }
+
+    /** SkyOcean's ReferenceItemFilter: same SkyBlock id, and the reference's enchantments, attributes and reforge. */
+    public static boolean referenceMatches(ItemStack reference, ItemStack other) {
+        CompoundTag ref = customData(reference);
+        String id = ref.getStringOr("id", "");
+        if (id.isEmpty()) return false;
+        if (other == reference) return true;
+        CompoundTag data = customData(other);
+        if (!id.equals(data.getStringOr("id", ""))) return false;
+        for (String key : List.of("attributes", "enchantments")) {
+            if (ref.get(key) instanceof CompoundTag refMap) {
+                if (!(data.get(key) instanceof CompoundTag otherMap) || !containsAll(refMap, otherMap)) return false;
+            }
+        }
+        String modifier = ref.getStringOr("modifier", "");
+        return modifier.isEmpty() || modifier.equals(data.getStringOr("modifier", ""));
+    }
+
+    /** SkyOcean's ItemMatcher: whether two stacks are the same item, so the search shows them as one. */
+    public static boolean sameForStacking(ItemStack first, ItemStack second) {
+        if (first.getItem() != second.getItem()) return false;
+        CompoundTag a = customData(first);
+        CompoundTag b = customData(second);
+        for (String key : List.of("id", "enchantments", "attributes", "modifier")) {
+            Tag x = a.get(key);
+            Tag y = b.get(key);
+            if (x instanceof CompoundTag cx && y instanceof CompoundTag cy) {
+                if (!containsAll(cx, cy)) return false;
+            } else if (!Objects.equals(x, y)) {
+                return false;
+            }
+        }
+        Component nameA = first.get(DataComponents.CUSTOM_NAME);
+        Component nameB = second.get(DataComponents.CUSTOM_NAME);
+        if (nameA == null || nameB == null) return nameA == null && nameB == null;
+        return nameA.getString().equalsIgnoreCase(nameB.getString());
+    }
+
+    private static boolean containsAll(CompoundTag first, CompoundTag second) {
+        for (String key : first.keySet()) {
+            if (!Objects.equals(first.get(key), second.get(key))) return false;
+        }
+        return true;
     }
 
     private static boolean sameSearchItem(ItemStack a, ItemStack b) {
@@ -288,7 +428,7 @@ public final class SkyBallsStorageSearch {
         boolean matching = result.type().equals("ENDER_CHEST")
             ? title.contains("ender chest")
             : title.contains("backpack");
-        if (matching) pendingHighlight = null;
+        // The highlight stays until it times out, like SkyOcean's.
     }
 
     private static String cleanTitle(String title) {
@@ -331,6 +471,8 @@ public final class SkyBallsStorageSearch {
         if (now - lastCapture < CAPTURE_INTERVAL_MS) return;
         lastCapture = now;
 
+        if (captureIslandChest(mc, container, now) || captureMuseum(container, now)) return;
+
         StorageTarget target = identify(cleanTitle(container.getTitle().getString()));
         if (target == null) return;
 
@@ -356,6 +498,205 @@ public final class SkyBallsStorageSearch {
             pages.put(key, new Page(target.type(), target.number(), target.label(), blob, now));
             dirty = true;
         }
+    }
+
+    // ---------------------------------------------------------------- island chests (SkyOcean's ChestTracker)
+
+    private static final long CHEST_CLICK_MS = 5_000L;
+    private static BlockPos clickedFirst;
+    private static BlockPos clickedSecond;
+    private static long clickedAt;
+    private static Screen chestScreen;
+    private static BlockPos chestFirst;
+    private static BlockPos chestSecond;
+    private static final List<AABB> highlightedChests = new ArrayList<>();
+
+    private static boolean onPrivateIsland() {
+        return Utils.getLocation() == Location.PRIVATE_ISLAND;
+    }
+
+    /** A double chest's first half holds slots 0-26 (vanilla's RIGHT half), as in SkyOcean. */
+    private static void rememberClickedChest(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock)) return;
+        ChestType type = state.getValue(ChestBlock.TYPE);
+        clickedFirst = pos.immutable();
+        clickedSecond = null;
+        if (type != ChestType.SINGLE) {
+            BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state)).immutable();
+            if (type == ChestType.RIGHT) {
+                clickedSecond = other;
+            } else {
+                clickedSecond = clickedFirst;
+                clickedFirst = other;
+            }
+        }
+        clickedAt = System.currentTimeMillis();
+    }
+
+    private static String chestKey(Minecraft mc, BlockPos first, BlockPos second) {
+        String key = profilePrefix(mc) + "CHEST|" + first.getX() + "," + first.getY() + "," + first.getZ();
+        return second == null ? key : key + ";" + second.getX() + "," + second.getY() + "," + second.getZ();
+    }
+
+    private static List<BlockPos> chestPositions(String key) {
+        List<BlockPos> out = new ArrayList<>();
+        for (String pos : key.substring(key.lastIndexOf('|') + 1).split(";")) {
+            String[] xyz = pos.split(",");
+            if (xyz.length == 3) out.add(new BlockPos(parseSigned(xyz[0]), parseSigned(xyz[1]), parseSigned(xyz[2])));
+        }
+        return out;
+    }
+
+    private static int parseSigned(String value) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private static AABB chestBox(String key) {
+        List<BlockPos> positions = chestPositions(key);
+        AABB box = new AABB(positions.getFirst());
+        for (BlockPos pos : positions) box = box.minmax(new AABB(pos));
+        return box;
+    }
+
+    private static void removeChestAt(BlockPos pos) {
+        boolean removed = pages.entrySet().removeIf(e -> "CHEST".equals(e.getValue().type())
+            && currentProfile(e.getKey()) && chestPositions(e.getKey()).contains(pos));
+        if (removed) dirty = true;
+    }
+
+    /** Vanilla chest menus ("container.chest"/"container.chestDouble") and Minion Chests on your island. */
+    private static boolean captureIslandChest(Minecraft mc, AbstractContainerScreen<?> container, long now) {
+        if (!onPrivateIsland()) return false;
+        boolean vanillaChest = container.getTitle().getContents() instanceof TranslatableContents contents
+            && contents.getKey().startsWith("container.chest");
+        boolean minionChest = !vanillaChest && "minion chest".equals(cleanTitle(container.getTitle().getString()));
+        if (!vanillaChest && !minionChest) return false;
+        if (container != chestScreen) {
+            chestScreen = container;
+            boolean recent = now - clickedAt <= CHEST_CLICK_MS;
+            chestFirst = recent ? clickedFirst : null;
+            chestSecond = recent ? clickedSecond : null;
+            clickedFirst = null;
+        }
+        if (chestFirst == null) return true;
+        if (minionChest) {
+            removeChestAt(chestFirst);
+            return true;
+        }
+        List<Slot> slots = container.getMenu().slots;
+        int count = slots.size() - 36;
+        List<ItemStack> contents = new ArrayList<>(count);
+        boolean any = false;
+        for (int i = 0; i < count; i++) {
+            ItemStack stack = slots.get(i).getItem();
+            any |= !stack.isEmpty();
+            contents.add(stack.isEmpty() ? ItemStack.EMPTY : stack.copy());
+        }
+        String key = chestKey(mc, chestFirst, chestSecond);
+        if (!any) {
+            if (pages.remove(key) != null) dirty = true;
+            return true;
+        }
+        String blob = encode(contents);
+        if (blob == null) return true;
+        Page old = pages.get(key);
+        if (old == null || !old.blob().equals(blob)) {
+            String label = "Chest at x: " + chestFirst.getX() + ", y: " + chestFirst.getY() + ", z: " + chestFirst.getZ();
+            pages.put(key, new Page("CHEST", 0, label, blob, now));
+            dirty = true;
+        }
+        return true;
+    }
+
+    private static void renderChestHighlights(PrimitiveCollector collector) {
+        if (highlightedChests.isEmpty()) return;
+        if (System.currentTimeMillis() > highlightUntil) {
+            highlightedChests.clear();
+            return;
+        }
+        if (!onPrivateIsland()) return;
+        // SkyOcean draws the chests in rainbow.
+        int rgb = java.awt.Color.HSBtoRGB((System.currentTimeMillis() % 4000L) / 4000f, 0.8f, 1f);
+        float[] colour = {(rgb >> 16 & 255) / 255f, (rgb >> 8 & 255) / 255f, (rgb & 255) / 255f};
+        for (AABB box : highlightedChests) {
+            collector.submitFilledBox(box, colour, 0.3f, true);
+            collector.submitOutlinedBox(box, colour, 3f, true);
+        }
+    }
+
+    // ---------------------------------------------------------------- museum (SkyblockAPI's MuseumAPI)
+
+    private static final Pattern MUSEUM_TITLE = Pattern.compile("^Museum ➜ (.+)$");
+
+    /** "Museum ➜ Combat" and the other category menus in the Hub: donated items that are kept in the museum. */
+    private static boolean captureMuseum(AbstractContainerScreen<?> container, long now) {
+        String title = ChatFormatting.stripFormatting(container.getTitle().getString());
+        Matcher matcher = MUSEUM_TITLE.matcher(title == null ? "" : title.trim());
+        if (!matcher.matches()) return false;
+        if (Utils.getLocation() != Location.HUB) return true;
+        String category = matcher.group(1).trim();
+        Minecraft mc = Minecraft.getInstance();
+        List<Slot> slots = container.getMenu().slots;
+        for (int i = 0; i < slots.size() - 36; i++) {
+            ItemStack stack = slots.get(i).getItem();
+            if (stack.isEmpty()) continue;
+            String name = ChatFormatting.stripFormatting(stack.getHoverName().getString());
+            name = name == null ? "" : name.trim();
+            if (stack.is(Items.DYE.gray()) || stack.is(Items.DYE.lime())) {
+                // Not donated, or donated but taken out: it isn't in the museum.
+                removeMuseumItem(mc, name);
+                continue;
+            }
+            String id = customData(stack).getStringOr("id", "");
+            if (id.isEmpty()) continue; // GUI filler, arrows, armor set previews
+            String key = profilePrefix(mc) + "MUSEUM|" + id;
+            String blob = encode(List.of(stack.copy()));
+            if (blob == null) continue;
+            Page old = pages.get(key);
+            String label = "Museum Category " + category;
+            if (old == null || !old.blob().equals(blob) || !old.label().equals(label)) {
+                pages.put(key, new Page("MUSEUM", 0, label, blob, now));
+                dirty = true;
+            }
+        }
+        return true;
+    }
+
+    private static void removeMuseumItem(Minecraft mc, String name) {
+        String prefix = profilePrefix(mc) + "MUSEUM|";
+        boolean removed = pages.entrySet().removeIf(e -> {
+            if (!e.getKey().startsWith(prefix)) return false;
+            List<ItemStack> items = decode(e.getValue().blob());
+            if (items == null || items.isEmpty()) return false;
+            String stored = ChatFormatting.stripFormatting(items.getFirst().getHoverName().getString());
+            return stored != null && stored.trim().equalsIgnoreCase(name);
+        });
+        if (removed) dirty = true;
+    }
+
+    private static final List<String> RARITIES = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC",
+        "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN");
+
+    /** SkyBlock rarity from the lore's rarity line, COMMON = 0; -1 when there's none. */
+    public static int rarity(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) return -1;
+        List<Component> lines = lore.lines();
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            String line = ChatFormatting.stripFormatting(lines.get(i).getString());
+            if (line == null) continue;
+            line = line.replaceAll("[^A-Z ]", "").trim();
+            if (line.startsWith("A ")) line = line.substring(2);
+            for (int r = RARITIES.size() - 1; r >= 0; r--) {
+                if (line.startsWith(RARITIES.get(r))) return r;
+            }
+        }
+        return -1;
     }
 
     private static StorageTarget identify(String title) {
@@ -600,6 +941,7 @@ public final class SkyBallsStorageSearch {
         for (Map.Entry<String, Page> entry : new ArrayList<>(pages.entrySet())) {
             if (!currentProfile(entry.getKey())) continue;
             Page page = entry.getValue();
+            if (!page.type().equals("ENDER_CHEST") && !page.type().equals("BACKPACK")) continue;
             List<ItemStack> items = decode(page.blob());
             if (items != null) out.add(new StoragePage(page.type(), page.number(), page.label(), items));
         }
@@ -619,7 +961,7 @@ public final class SkyBallsStorageSearch {
     public static List<ItemStack> storedStacks() {
         List<ItemStack> stacks = new ArrayList<>();
         for (Map.Entry<String, Page> entry : new ArrayList<>(pages.entrySet())) {
-            if (!currentProfile(entry.getKey())) continue;
+            if (!currentProfile(entry.getKey()) || "MUSEUM".equals(entry.getValue().type())) continue;
             List<ItemStack> contents = decode(entry.getValue().blob());
             if (contents == null) continue;
             for (ItemStack stack : contents) if (stack != null && !stack.isEmpty()) stacks.add(stack);
@@ -630,7 +972,7 @@ public final class SkyBallsStorageSearch {
     public static Map<String, Integer> storedItemCounts() {
         Map<String, Integer> counts = new java.util.HashMap<>();
         for (Map.Entry<String, Page> entry : new ArrayList<>(pages.entrySet())) {
-            if (!currentProfile(entry.getKey())) continue;
+            if (!currentProfile(entry.getKey()) || "MUSEUM".equals(entry.getValue().type())) continue;
             Page page = entry.getValue();
             List<ItemStack> contents = decode(page.blob());
             if (contents == null) continue;
