@@ -61,6 +61,12 @@ public final class StorageOverlay {
         return amount * config().scrollSpeed * (config().inverseScroll ? 1 : -1);
     }
 
+    /** The storage overlay is showing: on its own, or drawn over a storage menu. */
+    public static boolean isOverlayScreen(Screen screen) {
+        return screen instanceof StorageOverlayScreen || screen instanceof StorageOverviewScreen
+            || screen instanceof AbstractContainerScreen<?> acs && CustomGui.get(acs) instanceof StorageOverlayCustom;
+    }
+
     public static StorageOverviewScreen lastStorageOverlay;
     public static boolean skipNextStorageOverlayBackflip;
     public static StorageBackingHandle currentHandler;

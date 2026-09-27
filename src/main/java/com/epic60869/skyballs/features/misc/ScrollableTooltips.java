@@ -73,6 +73,9 @@ public final class ScrollableTooltips {
         // A tooltip that fits on screen has nothing to pan to: leave the wheel to the screen (lists, settings, the
         // storage overlay), which almost always has something with a tooltip under the mouse.
         if (!session.frame.overflows()) return false;
+        // The storage overlay scrolls with the wheel, and its item tooltips are often taller than the screen: the
+        // wheel always scrolls the storage there (the tooltip can still be moved with the keys).
+        if (com.epic60869.skyballs.features.misc.storage.StorageOverlay.isOverlayScreen(session.screen)) return false;
         boolean sideways = horizontal != 0 || isHorizontalModifierDown(settings);
         double x = horizontal * settings.mouseScrollingSpeed;
         double y = 0;
