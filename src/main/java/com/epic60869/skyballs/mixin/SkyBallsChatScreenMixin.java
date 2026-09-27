@@ -53,6 +53,11 @@ public abstract class SkyBallsChatScreenMixin {
     private net.minecraft.client.gui.components.ChatComponent.DisplayMode displayMode;
 
     /** Image preview when hovering an image link in chat. */
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void skyballs$currentChatDisplay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        com.epic60869.skyballs.SkyBallsCurrentChat.render(graphics, ((ChatScreen) (Object) this).height);
+    }
+
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void skyballs$imagePreview(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();

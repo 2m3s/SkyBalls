@@ -57,15 +57,16 @@ public final class SkyBallsCurrentChat {
             }
         });
 
-        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (!(screen instanceof ChatScreen)) return;
-            ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> {
-                SkyBallsConfig config = SkyBallsConfig.current();
-                if (config == null || !config.chat.currentChatDisplay) return;
-                // The gap between the chat history and the input box.
-                graphics.text(Minecraft.getInstance().font, display(), 2, s.height - 26, 0xFFFFFFFF, true);
-            });
-        });
+    }
+
+    /**
+     * Drawn at the start of the chat screen (SkyBallsChatScreenMixin), in the gap between the chat history and the
+     * input box, so command and emoji suggestions show over it instead of under it.
+     */
+    public static void render(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int screenHeight) {
+        SkyBallsConfig config = SkyBallsConfig.current();
+        if (config == null || !config.chat.currentChatDisplay) return;
+        graphics.text(Minecraft.getInstance().font, display(), 2, screenHeight - 26, 0xFFFFFFFF, true);
     }
 
     private static void set(String newChannel, String player) {
