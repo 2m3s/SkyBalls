@@ -33,8 +33,9 @@ import java.util.regex.Pattern;
 
 /**
  * Hypixel item emojis in SkyBalls chat, like the SkyHelper Discord: ":summoning_eye:" shows the Summoning Eye's icon.
- * Every SkyBlock item works by its id in lower case. Head items (most of them) show their own skin; other items show
- * their Minecraft texture. Client side only: the message itself stays ":summoning_eye:".
+ * Every SkyBlock item works by its id in lower case. Head items show their own skin; items Hypixel draws with its
+ * resource pack (item_model, e.g. the Summoning Eye) show Hypixel's texture while that pack is loaded (on Hypixel), and
+ * their plain Minecraft material otherwise. Client side only: the message itself stays ":summoning_eye:".
  *
  * Also the emoji autocomplete: a short, cached list of matches (typing ":" no longer lists thousands of emojis, which
  * lagged), with each emoji's picture next to its name.
@@ -48,7 +49,6 @@ public final class ItemEmojis {
 
     /** Emoji name ("summoning_eye") -> SkyBlock item id ("SUMMONING_EYE"). */
     private static final Map<String, String> ITEMS = new HashMap<>();
-    private static final Map<String, Component> ICONS = new HashMap<>();
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     /** Every emoji shortcode (":name:"), sorted; built once, rebuilt when the item list loads. */
     private static List<String> allSuggestions;
@@ -112,27 +112,63 @@ public final class ItemEmojis {
     private static Component icon(String name) {
         String id = ITEMS.get(name);
         if (id == null) return null;
-        if (ICONS.containsKey(name)) return ICONS.get(name);
         ItemStack stack = stack(name);
         Component icon = null;
         ResolvableProfile profile = stack.get(DataComponents.PROFILE);
         if (profile != null) {
             icon = Component.object(new PlayerSprite(profile, true));
         } else {
-            Identifier sprite = itemSprite(stack);
-            if (sprite != null) icon = Component.object(new AtlasSprite(sprite.getPath().startsWith("block/") ? AtlasIds.BLOCKS : AtlasIds.ITEMS, sprite));
+            Identifier sprite = hypixelSprite(id);
+            if (sprite == null) sprite = itemSprite(stack);
+            if (sprite != null) icon = Component.object(new AtlasSprite(exists(AtlasIds.ITEMS, sprite) ? AtlasIds.ITEMS : AtlasIds.BLOCKS, sprite));
         }
         if (icon != null) {
             String display = RepoItems.displayName(id);
             icon = icon.copy().withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE).withHoverEvent(new HoverEvent.ShowText(
                 Component.literal(display == null ? id : display).append(Component.literal("\n:" + name + ":").withStyle(ChatFormatting.DARK_GRAY)))));
         }
-        ICONS.put(name, icon);
         return icon;
     }
 
     private static ItemStack stack(String name) {
         return STACKS.computeIfAbsent(name, n -> RepoItems.itemStack(ITEMS.get(n)));
+    }
+
+    /**
+     * The item as drawn in the autocomplete: with Hypixel's item model when Hypixel's resource pack has it (on Hypixel),
+     * otherwise the plain material. Checked each time, since the pack only loads once you join Hypixel.
+     */
+    private static ItemStack previewStack(String name) {
+        ItemStack stack = stack(name);
+        Identifier model = hypixelModel(ITEMS.get(name));
+        if (model == null) return stack;
+        ItemStack withModel = stack.copy();
+        withModel.set(DataComponents.ITEM_MODEL, model);
+        return withModel;
+    }
+
+    /** Hypixel's item model for the item, if Hypixel's resource pack is loaded and has it. */
+    private static Identifier hypixelModel(String id) {
+        String model = id == null ? null : RepoItems.itemModel(id);
+        Identifier modelId = model == null ? null : Identifier.tryParse(model);
+        if (modelId == null) return null;
+        try {
+            var models = Minecraft.getInstance().getModelManager();
+            var missing = models.getItemModel(Identifier.fromNamespaceAndPath("skyballs", "no_such_item_model"));
+            return models.getItemModel(modelId) != missing ? modelId : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Hypixel's texture for the item (same path as its item model), if Hypixel's resource pack is loaded. */
+    private static Identifier hypixelSprite(String id) {
+        String model = RepoItems.itemModel(id);
+        Identifier sprite = model == null ? null : Identifier.tryParse(model);
+        if (sprite == null) return null;
+        if (exists(AtlasIds.ITEMS, sprite)) return sprite;
+        if (exists(AtlasIds.BLOCKS, sprite)) return sprite;
+        return null;
     }
 
     /** The Minecraft texture of a non-head item: item/&lt;id&gt; in the items atlas, else block/&lt;id&gt;; null if neither exists. */
@@ -220,7 +256,7 @@ public final class ItemEmojis {
         g.pose().pushMatrix();
         g.pose().translate(x, y);
         g.pose().scale(9f / 16f, 9f / 16f);
-        g.item(stack(name), 0, 0);
+        g.item(previewStack(name), 0, 0);
         g.pose().popMatrix();
     }
 }

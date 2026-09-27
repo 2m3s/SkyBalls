@@ -46,7 +46,7 @@ public final class RepoItems {
 	private static final List<Runnable> AFTER_ITEMS_LOADED = new ArrayList<>();
 	private static volatile boolean itemsLoaded;
 
-	private record RepoItem(String id, String name, Item item, @Nullable String texture) {}
+	private record RepoItem(String id, String name, Item item, @Nullable String texture, @Nullable String itemModel) {}
 
 	/** A SkyBlock player head, without creating an item stack. */
 	public record Head(String id, String name, String texture) {}
@@ -129,6 +129,17 @@ public final class RepoItems {
 		return null;
 	}
 
+	/**
+	 * Hypixel's item model for the item ("hypixel_skyblock:item/uncategorized/summoning_eye"), drawn by Hypixel's
+	 * resource pack; null if it has none. Without that pack loaded the item looks like its plain material (paper).
+	 */
+	public static @Nullable String itemModel(String id) {
+		synchronized (ITEMS) {
+			RepoItem item = ITEMS.get(id);
+			return item == null ? null : item.itemModel();
+		}
+	}
+
 	public static @Nullable String displayName(String id) {
 		synchronized (ITEMS) {
 			RepoItem item = ITEMS.get(id);
@@ -164,7 +175,8 @@ public final class RepoItems {
 				String name = item.has("name") ? item.get("name").getAsString() : id;
 				String material = item.has("material") ? item.get("material").getAsString() : "";
 				String texture = skinTexture(item.get("skin"));
-				loaded.put(id, new RepoItem(id, name, material(material), texture));
+				String itemModel = item.has("item_model") ? item.get("item_model").getAsString() : null;
+				loaded.put(id, new RepoItem(id, name, material(material), texture, itemModel));
 			}
 			synchronized (ITEMS) {
 				ITEMS.clear();
