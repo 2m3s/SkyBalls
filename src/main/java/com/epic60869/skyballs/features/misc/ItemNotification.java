@@ -62,6 +62,27 @@ public final class ItemNotification {
     private static final long RECENT_MS = 10_000L;
     /** Inventory gains in the last few seconds, so the same drop also reported by a [Sacks] message isn't shown twice. */
     private static final Map<String, Long> inventoryGainAt = new HashMap<>();
+    /**
+     * Ticks to wait after a menu closes (or you change area) before counting again: Hypixel resends your inventory a
+     * moment later, which looked like new items when you just opened and closed your sacks.
+     */
+    private static int settleTicks;
+    private static final int SETTLE_AFTER_MENU = 20;
+    /** "Moved 64 Gold Ingot from your Sacks to your inventory." (/gfs): items taken out of your sacks aren't gains. */
+    private static final Pattern FROM_SACKS = Pattern.compile("^Moved ([0-9,]+) (.+?) from your Sacks to your inventory\\.?$");
+    /** Lower-case item name -> until when gains of it are ignored. */
+    private static final Map<String, Long> fromSacksUntil = new HashMap<>();
+
+    private static void onFromSacks(String text) {
+        Matcher m = FROM_SACKS.matcher(ChatFormatting.stripFormatting(text).trim());
+        if (m.matches()) fromSacksUntil.put(m.group(2).trim().toLowerCase(Locale.ROOT), System.currentTimeMillis() + 3_000L);
+    }
+
+    private static boolean takenFromSacks(String name) {
+        Long until = fromSacksUntil.get(ChatFormatting.stripFormatting(name == null ? "" : name).trim().toLowerCase(Locale.ROOT));
+        return until != null && System.currentTimeMillis() < until;
+    }
+
     private static final Map<String, String> NAMES = new HashMap<>(); // item id -> name with colour codes
 
     private ItemNotification() {}
@@ -80,7 +101,10 @@ public final class ItemNotification {
         // Shown in the RNG HUD (SkyBallsRngHud) together with the farming RNG drops, not a HUD of its own.
         ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
         SkyBallsChat.onGameMessage((component, overlay) -> {
-            if (!overlay) onSacksMessage(component);
+            if (!overlay) {
+                onSacksMessage(component);
+                onFromSacks(component.getString());
+            }
         });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
@@ -145,6 +169,12 @@ public final class ItemNotification {
         // Only count pickups while no menu is open, so moving items out of chests doesn't count.
         if (mc.gui.screen() != null) {
             lastInventory = null;
+            settleTicks = SETTLE_AFTER_MENU;
+            return;
+        }
+        if (settleTicks > 0) {
+            settleTicks--;
+            lastInventory = null;
             return;
         }
         Map<String, Integer> nowCounts = new HashMap<>();
@@ -172,7 +202,7 @@ public final class ItemNotification {
                 if (at != null && now - at < RECENT_MS) before = Math.max(before, recentMax.getOrDefault(e.getKey(), 0));
                 int gained = e.getValue() - before;
                 String name = NAMES.getOrDefault(e.getKey(), e.getKey());
-                if (gained > 0 && listed(name, e.getKey())) {
+                if (gained > 0 && listed(name, e.getKey()) && !takenFromSacks(name)) {
                     show(e.getKey(), name, gained);
                     inventoryGainAt.put(e.getKey().toLowerCase(Locale.ROOT), now);
                 }

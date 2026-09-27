@@ -2,6 +2,11 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.1
+
+### Fixed
+- Item Notification (and the Collection Tracker) counted items after you opened and closed a menu such as your sacks: Hypixel resends your inventory a moment after a menu closes. They now wait a second after a menu closes or you change area, and items taken out of your sacks (the Sacks menu or /gfs) don't count.
+
 ## 1.3.0 — 2026-09-27
 
 ### Added

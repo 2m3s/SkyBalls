@@ -130,6 +130,29 @@ public final class CollectionTracker {
     private static final Map<String, java.util.ArrayDeque<Long>> recentLevels = new HashMap<>();
     private static final int SETTLE_TICKS = 10;
     /**
+     * Ticks to wait after a menu closes (or you change area) before counting again: Hypixel resends your inventory a
+     * moment later, which looked like new items when you just opened and closed your sacks.
+     */
+    private static int settleTicks;
+    private static final int SETTLE_AFTER_MENU = 20;
+    /** "Moved 64 Gold Ingot from your Sacks to your inventory." (/gfs): items taken out of your sacks aren't gains. */
+    private static final Pattern FROM_SACKS = Pattern.compile("^Moved ([0-9,]+) (.+?) from your Sacks to your inventory\\.?$");
+    /** Lower-case item name -> until when gains of it are ignored. */
+    private static final Map<String, Long> fromSacksUntil = new HashMap<>();
+
+    private static void onFromSacks(String text) {
+        Matcher m = FROM_SACKS.matcher(ChatFormatting.stripFormatting(text).trim());
+        if (m.matches()) fromSacksUntil.put(m.group(2).trim().toLowerCase(Locale.ROOT), System.currentTimeMillis() + 3_000L);
+    }
+
+    private static boolean takenFromSacks(String name) {
+        Long until = fromSacksUntil.get(ChatFormatting.stripFormatting(name == null ? "" : name).trim().toLowerCase(Locale.ROOT));
+        return until != null && System.currentTimeMillis() < until;
+    }
+    /** Collection id -> until when inventory gains of it are ignored (taken out of your sacks). */
+    private static final Map<String, Long> collectionFromSacksUntil = new HashMap<>();
+
+    /**
      * Items that left your inventory recently (collection id -> when and how many). Items you picked up (already
      * counted) that Hypixel then moves into your sacks show up again in the "[Sacks]" message; that part isn't
      * counted a second time.
@@ -177,9 +200,22 @@ public final class CollectionTracker {
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
         SkyBallsChat.onGameMessage((component, overlay) -> {
-            if (!overlay) onSacksMessage(component);
+            if (!overlay) {
+                onSacksMessage(component);
+                onFromSacks(component.getString());
+                Matcher moved = FROM_SACKS.matcher(ChatFormatting.stripFormatting(component.getString()).trim());
+                if (moved.matches()) {
+                    String itemId = NAMES.get(moved.group(2).trim().toLowerCase(Locale.ROOT));
+                    Compact compact = itemId == null ? null : COMPACT.get(itemId);
+                    String collection = itemId == null ? null : compact != null ? compact.base() : collectionOf(itemId);
+                    if (collection != null) collectionFromSacksUntil.put(collection, System.currentTimeMillis() + 3_000L);
+                }
+            }
         });
-        SkyBallsLocation.onAreaChange(area -> lastInventory = null);
+        SkyBallsLocation.onAreaChange(area -> {
+            lastInventory = null;
+            settleTicks = SETTLE_AFTER_MENU;
+        });
     }
 
     // ---------------------------------------------------------------- what you're gathering
@@ -193,6 +229,12 @@ public final class CollectionTracker {
         loadBoards();
         // Only count pickups while no menu is open, so moving items out of chests doesn't count.
         if (mc.gui.screen() != null) {
+            lastInventory = null;
+            settleTicks = SETTLE_AFTER_MENU;
+            return;
+        }
+        if (settleTicks > 0) {
+            settleTicks--;
             lastInventory = null;
             return;
         }
@@ -240,8 +282,9 @@ public final class CollectionTracker {
                 }
                 long base = counted.getOrDefault(id, 0L);
                 if (low > base) {
-                    // Held more for the whole window: a real pickup.
-                    gain(id, low - base);
+                    // Held more for the whole window: a real pickup (unless you just took it out of your sacks).
+                    Long fromSacks = collectionFromSacksUntil.get(id);
+                    if (fromSacks == null || System.currentTimeMillis() > fromSacks) gain(id, low - base);
                     counted.put(id, low);
                 } else if (high < base) {
                     // Held less for the whole window (put in your sacks, sold, used): count up from there.
