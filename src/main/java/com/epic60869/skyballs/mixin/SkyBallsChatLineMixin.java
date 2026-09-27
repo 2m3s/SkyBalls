@@ -31,4 +31,10 @@ public abstract class SkyBallsChatLineMixin {
         Vector2f bottom = graphics.pose().transformPosition(new Vector2f(0, textTop + 9));
         CopyChat.recordLine(content, top.y, bottom.y);
     }
+
+    /** Item emojis: their icons go into the gaps left for them in the line. */
+    @Inject(method = "handleMessage", at = @At("TAIL"))
+    private void skyballs$itemEmojis(int textTop, float opacity, FormattedCharSequence content, CallbackInfoReturnable<Boolean> cir) {
+        com.epic60869.skyballs.features.misc.ItemEmojis.drawChatIcons(graphics, content, textTop, opacity);
+    }
 }

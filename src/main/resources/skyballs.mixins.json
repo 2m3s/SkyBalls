@@ -20,6 +20,7 @@
     "SkyBallsContainerTooltipMixin",
     "SkyBallsChatComponentAccessor",
     "SkyBallsChatLineMixin",
+    "SkyBallsChatLineBackgroundMixin",
     "SkyBallsDropMixin",
     "SkyBallsCustomGuiScreenMixin",
     "SkyBallsCustomGuiContainerMixin",

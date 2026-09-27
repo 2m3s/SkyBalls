@@ -3,39 +3,55 @@ package com.epic60869.skyballs.features.misc;
 import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.SkyBallsNopoFeatures;
 import com.epic60869.skyballs.custom.RepoItems;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.data.AtlasIds;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.contents.objects.AtlasSprite;
-import net.minecraft.network.chat.contents.objects.PlayerSprite;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ResolvableProfile;
 
+import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Hypixel item emojis in SkyBalls chat, like the SkyHelper Discord: ":summoning_eye:" shows the Summoning Eye's icon.
- * Every SkyBlock item works by its id in lower case. Head items show their own skin; items Hypixel draws with its
- * resource pack (item_model, e.g. the Summoning Eye) show Hypixel's texture while that pack is loaded (on Hypixel), and
- * their plain Minecraft material otherwise. Client side only: the message itself stays ":summoning_eye:".
+ * Every SkyBlock item works by its id in lower case. Client side only: the message itself stays ":summoning_eye:".
+ *
+ * The icons are SkyBlock's real item pictures, not whatever the plain item looks like without Hypixel's resource pack
+ * (the Summoning Eye is paper underneath): each is downloaded once from Coflnet (sky.coflnet.com/static/icon/ID) and
+ * kept in config/skyballs/item-icons, so they work in singleplayer and with any pack. Until an icon has downloaded,
+ * the item itself is drawn.
+ *
+ * In chat an emoji is a blank 9 pixel gap (the skyballs:item_emoji font) that remembers its item, and the icon is
+ * drawn into the gap as the line is drawn (SkyBallsChatLineMixin). Hovering it shows the item's name.
  *
  * Also the emoji autocomplete: a short, cached list of matches (typing ":" no longer lists thousands of emojis, which
  * lagged), with each emoji's picture next to its name.
@@ -46,6 +62,9 @@ public final class ItemEmojis {
     private static final int MAX_SUGGESTIONS = 50;
     /** Width of the picture drawn before each suggestion, plus its gap. */
     public static final int PREVIEW_WIDTH = 11;
+    private static final String GAP = "";
+    private static final FontDescription GAP_FONT = new FontDescription.Resource(Identifier.fromNamespaceAndPath("skyballs", "item_emoji"));
+    private static final String ICON_URL = "https://sky.coflnet.com/static/icon/";
 
     /** Emoji name ("summoning_eye") -> SkyBlock item id ("SUMMONING_EYE"). */
     private static final Map<String, String> ITEMS = new HashMap<>();
@@ -54,9 +73,19 @@ public final class ItemEmojis {
     private static List<String> allSuggestions;
     private static int nopoCountAtBuild = -1;
 
+    /** A downloaded icon, as a texture. */
+    private record Icon(Identifier texture, int width, int height) {}
+
+    private static final Map<String, Icon> ICONS = new ConcurrentHashMap<>();
+    private static final Set<String> REQUESTED = ConcurrentHashMap.newKeySet();
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8))
+        .followRedirects(HttpClient.Redirect.NORMAL).build();
+    private static Path iconDir;
+
     private ItemEmojis() {}
 
-    public static void init() {
+    public static void init(Path configDir) {
+        iconDir = configDir.resolve("skyballs").resolve("item-icons");
         RepoItems.runAfterItemsLoaded(() -> Minecraft.getInstance().execute(ItemEmojis::loadItems));
     }
 
@@ -86,7 +115,7 @@ public final class ItemEmojis {
 
     // ---------------------------------------------------------------- chat
 
-    /** SkyBalls chat: ":summoning_eye:" becomes the item's icon (hover shows its name). Nopo emojis are left to Nopo's renderer. */
+    /** SkyBalls chat: ":summoning_eye:" becomes a gap the item's icon is drawn into. Nopo emojis are left to Nopo's renderer. */
     public static Component replace(Component message) {
         if (!itemEmojisEnabled() || ITEMS.isEmpty() || !message.getString().contains(":")) return message;
         MutableComponent result = Component.empty();
@@ -96,10 +125,10 @@ public final class ItemEmojis {
             int cursor = 0;
             while (m.find()) {
                 String name = m.group(1);
-                Component icon = SkyBallsNopoFeatures.isChatEmoji(name) ? null : icon(name);
-                if (icon == null) continue;
+                if (SkyBallsNopoFeatures.isChatEmoji(name) || !ITEMS.containsKey(name)) continue;
                 if (m.start() > cursor) result.append(Component.literal(value.substring(cursor, m.start())).withStyle(style));
-                result.append(icon);
+                result.append(gap(name, style));
+                request(name);
                 cursor = m.end();
             }
             if (cursor < value.length()) result.append(Component.literal(value.substring(cursor)).withStyle(style));
@@ -108,83 +137,108 @@ public final class ItemEmojis {
         return result;
     }
 
-    /** The item's icon as a chat picture, or null if it isn't an item (or has no picture). */
-    private static Component icon(String name) {
+    private static Component gap(String name, Style style) {
         String id = ITEMS.get(name);
-        if (id == null) return null;
-        ItemStack stack = stack(name);
-        Component icon = null;
-        ResolvableProfile profile = stack.get(DataComponents.PROFILE);
-        if (profile != null) {
-            icon = Component.object(new PlayerSprite(profile, true));
-        } else {
-            Identifier sprite = hypixelSprite(id);
-            if (sprite == null) sprite = itemSprite(stack);
-            if (sprite != null) icon = Component.object(new AtlasSprite(exists(AtlasIds.ITEMS, sprite) ? AtlasIds.ITEMS : AtlasIds.BLOCKS, sprite));
+        String display = RepoItems.displayName(id);
+        return Component.literal(GAP).withStyle(style
+            .withFont(GAP_FONT)
+            .withInsertion(":" + name + ":")
+            .withHoverEvent(new HoverEvent.ShowText(Component.literal(display == null ? id : display)
+                .append(Component.literal("\n:" + name + ":").withStyle(ChatFormatting.DARK_GRAY)))));
+    }
+
+    /** Draws the icons into a chat line's emoji gaps (SkyBallsChatLineMixin, after vanilla drew the line at x 0). */
+    public static void drawChatIcons(GuiGraphicsExtractor graphics, FormattedCharSequence content, int textTop, float opacity) {
+        if (ITEMS.isEmpty()) return;
+        Font font = Minecraft.getInstance().font;
+        List<int[]> spots = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        float[] x = {0};
+        content.accept((index, style, codepoint) -> {
+            String single = new String(Character.toChars(codepoint));
+            if (single.equals(GAP) && style.getInsertion() != null && style.getInsertion().length() > 2) {
+                String name = style.getInsertion().substring(1, style.getInsertion().length() - 1);
+                if (ITEMS.containsKey(name)) {
+                    spots.add(new int[]{(int) x[0]});
+                    names.add(name);
+                }
+            }
+            x[0] += font.width(FormattedCharSequence.forward(single, style));
+            return true;
+        });
+        for (int i = 0; i < spots.size(); i++) {
+            drawIcon(graphics, names.get(i), spots.get(i)[0], textTop - 1, 9, opacity);
         }
+    }
+
+    // ---------------------------------------------------------------- icons
+
+    /** The emoji's picture at x, y, size x size: the downloaded icon, or the item itself until that has arrived. */
+    private static void drawIcon(GuiGraphicsExtractor g, String name, int x, int y, int size, float opacity) {
+        Icon icon = ICONS.get(name);
         if (icon != null) {
-            String display = RepoItems.displayName(id);
-            icon = icon.copy().withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE).withHoverEvent(new HoverEvent.ShowText(
-                Component.literal(display == null ? id : display).append(Component.literal("\n:" + name + ":").withStyle(ChatFormatting.DARK_GRAY)))));
+            g.blit(RenderPipelines.GUI_TEXTURED, icon.texture(), x, y, 0, 0, size, size, icon.width(), icon.height(),
+                icon.width(), icon.height(), ARGB.white(opacity));
+            return;
         }
-        return icon;
+        request(name);
+        g.pose().pushMatrix();
+        g.pose().translate(x, y);
+        g.pose().scale(size / 16f, size / 16f);
+        g.item(stack(name), 0, 0);
+        g.pose().popMatrix();
+    }
+
+    /** Loads the icon from disk, or downloads it (once) if it isn't there yet. */
+    private static void request(String name) {
+        if (iconDir == null || ICONS.containsKey(name) || !REQUESTED.add(name)) return;
+        String id = ITEMS.get(name);
+        if (id == null) return;
+        RepoItems.runAsync(() -> {
+            try {
+                Path file = iconDir.resolve(id.replace(':', '-') + ".png");
+                byte[] bytes;
+                if (Files.exists(file)) {
+                    bytes = Files.readAllBytes(file);
+                } else {
+                    HttpRequest request = HttpRequest.newBuilder(URI.create(ICON_URL + id))
+                        .timeout(Duration.ofSeconds(15)).header("User-Agent", "SkyBalls").GET().build();
+                    HttpResponse<byte[]> response = HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                    if (response.statusCode() != 200 || response.body().length == 0) return;
+                    bytes = response.body();
+                    Files.createDirectories(iconDir);
+                    Files.write(file, bytes);
+                }
+                NativeImage image = NativeImage.read(new ByteArrayInputStream(bytes));
+                Minecraft.getInstance().execute(() -> {
+                    Identifier texture = Identifier.fromNamespaceAndPath("skyballs", "item_icon/" + name);
+                    Minecraft.getInstance().getTextureManager().register(texture, new DynamicTexture(() -> "skyballs item icon " + name, image));
+                    ICONS.put(name, new Icon(texture, image.getWidth(), image.getHeight()));
+                });
+            } catch (Exception e) {
+                // Stays as the item itself; tried again next launch.
+            }
+        });
     }
 
     private static ItemStack stack(String name) {
-        return STACKS.computeIfAbsent(name, n -> RepoItems.itemStack(ITEMS.get(n)));
+        return STACKS.computeIfAbsent(name, n -> {
+            ItemStack stack = RepoItems.itemStack(ITEMS.get(n));
+            // With Hypixel's resource pack loaded (on Hypixel) the item looks right even before its icon downloads.
+            String model = RepoItems.itemModel(ITEMS.get(n));
+            Identifier modelId = model == null ? null : Identifier.tryParse(model);
+            if (modelId != null && hasModel(modelId)) {
+                stack = stack.copy();
+                stack.set(DataComponents.ITEM_MODEL, modelId);
+            }
+            return stack;
+        });
     }
 
-    /**
-     * The item as drawn in the autocomplete: with Hypixel's item model when Hypixel's resource pack has it (on Hypixel),
-     * otherwise the plain material. Checked each time, since the pack only loads once you join Hypixel.
-     */
-    private static ItemStack previewStack(String name) {
-        ItemStack stack = stack(name);
-        Identifier model = hypixelModel(ITEMS.get(name));
-        if (model == null) return stack;
-        ItemStack withModel = stack.copy();
-        withModel.set(DataComponents.ITEM_MODEL, model);
-        return withModel;
-    }
-
-    /** Hypixel's item model for the item, if Hypixel's resource pack is loaded and has it. */
-    private static Identifier hypixelModel(String id) {
-        String model = id == null ? null : RepoItems.itemModel(id);
-        Identifier modelId = model == null ? null : Identifier.tryParse(model);
-        if (modelId == null) return null;
+    private static boolean hasModel(Identifier modelId) {
         try {
             var models = Minecraft.getInstance().getModelManager();
-            var missing = models.getItemModel(Identifier.fromNamespaceAndPath("skyballs", "no_such_item_model"));
-            return models.getItemModel(modelId) != missing ? modelId : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /** Hypixel's texture for the item (same path as its item model), if Hypixel's resource pack is loaded. */
-    private static Identifier hypixelSprite(String id) {
-        String model = RepoItems.itemModel(id);
-        Identifier sprite = model == null ? null : Identifier.tryParse(model);
-        if (sprite == null) return null;
-        if (exists(AtlasIds.ITEMS, sprite)) return sprite;
-        if (exists(AtlasIds.BLOCKS, sprite)) return sprite;
-        return null;
-    }
-
-    /** The Minecraft texture of a non-head item: item/&lt;id&gt; in the items atlas, else block/&lt;id&gt;; null if neither exists. */
-    private static Identifier itemSprite(ItemStack stack) {
-        Identifier key = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        Identifier item = Identifier.fromNamespaceAndPath(key.getNamespace(), "item/" + key.getPath());
-        if (exists(AtlasIds.ITEMS, item)) return item;
-        Identifier block = Identifier.fromNamespaceAndPath(key.getNamespace(), "block/" + key.getPath());
-        if (exists(AtlasIds.BLOCKS, block)) return block;
-        return null;
-    }
-
-    private static boolean exists(Identifier atlasId, Identifier sprite) {
-        try {
-            TextureAtlas atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(atlasId);
-            return atlas.getSprite(sprite) != atlas.missingSprite();
+            return models.getItemModel(modelId) != models.getItemModel(Identifier.fromNamespaceAndPath("skyballs", "no_such_item_model"));
         } catch (Exception e) {
             return false;
         }
@@ -252,11 +306,6 @@ public final class ItemEmojis {
             g.blitSprite(RenderPipelines.GUI_TEXTURED, nopo, x, y, 9, 9);
             return;
         }
-        if (!ITEMS.containsKey(name)) return;
-        g.pose().pushMatrix();
-        g.pose().translate(x, y);
-        g.pose().scale(9f / 16f, 9f / 16f);
-        g.item(previewStack(name), 0, 0);
-        g.pose().popMatrix();
+        if (ITEMS.containsKey(name)) drawIcon(g, name, x, y, 9, 1f);
     }
 }
