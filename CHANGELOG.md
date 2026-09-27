@@ -2,11 +2,6 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.3.3
-
-### Changed
-- Update notifications are checked every minute while you play (was every 10 minutes), so a new release shows in chat within a minute. Checks that find nothing new don't count toward GitHub's limit.
-
 ## 1.3.2 — 2026-09-27
 
 ### Added
@@ -14,6 +9,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - RNG HUD colours: Farming > Farming RNG HUD has Drop Colour, Pet Rarity Colours and Price Colour; Misc > Item Notification has Use Item Rarity Colour and Name Colour.
 
 ### Changed
+- Update notifications are checked every minute while you play (was every 10 minutes), so a new release shows in chat within a minute. Checks that find nothing new don't count toward GitHub's limit.
 - Current Chat Display ("Chat: All") is drawn under the command and emoji suggestions instead of over them.
 - Storage overlay is now Firmament's, ported from Firmament (GPL-3.0-or-later, textures CC-BY-4.0): one scrollable view of every Ender Chest page and backpack with your inventory, a search box (matching pages only, results highlighted) and "Edit Pages" for the normal Storage menu. The open page is the real menu, so clicking, dragging, shift-click and tooltips work as normal, and it stays open while Hypixel switches pages (no mouse jump). New settings under Misc > Storage Overlay Settings (columns, height, scroll, outline, highlight colours). New commands: /sb storage, /sb storageoverview, /sb storagename enderchest|backpack <page> [name]. Pages saved before still show.
 - SkyBalls is now licensed GPL-3.0-or-later (needed for the Firmament code).
