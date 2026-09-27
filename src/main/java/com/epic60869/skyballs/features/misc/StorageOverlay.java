@@ -19,7 +19,12 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Storage overlay, working like Firmament's: in the /storage menu and in any Ender Chest page or backpack, every saved
@@ -63,7 +68,55 @@ public final class StorageOverlay {
     public static boolean applies(AbstractContainerScreen<?> screen) {
         if (!enabled()) return false;
         String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).trim();
-        return title.equals("Storage") || SkyBallsStorageSearch.pageKey(title) != null;
+        if (!title.equals("Storage") && SkyBallsStorageSearch.pageKey(title) == null) return false;
+        // Nothing to show yet (the menu's items haven't arrived): leave the normal menu usable.
+        return !pages(screen).isEmpty();
+    }
+
+    private static final Pattern MENU_ENDER_CHEST = Pattern.compile("^Ender Chest Page ([0-9]+)$");
+    private static final Pattern MENU_BACKPACK = Pattern.compile("^Backpack Slot ([0-9]+)$");
+    /** Pages seen in the Storage menu ("ENDER_CHEST:3"), so they can be opened from the overlay even before they're saved. */
+    private static final Set<String> KNOWN = new LinkedHashSet<>();
+
+    /**
+     * Every page to show: the saved ones, the open one (live, even if it isn't saved yet) and any page the Storage menu
+     * lists that hasn't been saved yet (an empty box you can click to open it).
+     */
+    private static List<SkyBallsStorageSearch.StoragePage> pages(AbstractContainerScreen<?> screen) {
+        String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).trim();
+        if (title.equals("Storage")) {
+            for (Slot slot : screen.getMenu().slots) {
+                if (slot.container instanceof Inventory || slot.getItem().isEmpty()) continue;
+                String name = ChatFormatting.stripFormatting(slot.getItem().getHoverName().getString()).trim();
+                Matcher m = MENU_ENDER_CHEST.matcher(name);
+                if (m.matches()) KNOWN.add("ENDER_CHEST:" + m.group(1));
+                m = MENU_BACKPACK.matcher(name);
+                if (m.matches()) KNOWN.add("BACKPACK:" + m.group(1));
+            }
+        }
+        List<SkyBallsStorageSearch.StoragePage> out = new ArrayList<>(SkyBallsStorageSearch.storagePages());
+        Set<String> have = new HashSet<>();
+        for (SkyBallsStorageSearch.StoragePage page : out) have.add(page.type() + ":" + page.number());
+        Set<String> wanted = new LinkedHashSet<>(KNOWN);
+        String openKey = SkyBallsStorageSearch.pageKey(title);
+        if (openKey != null) wanted.add(openKey);
+        for (String key : wanted) {
+            if (have.contains(key)) continue;
+            String[] parts = key.split(":");
+            int number;
+            try {
+                number = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            if (number <= 0) continue;
+            boolean ender = parts[0].equals("ENDER_CHEST");
+            out.add(new SkyBallsStorageSearch.StoragePage(parts[0], number,
+                (ender ? "Ender Chest #" : "Backpack #") + number + (key.equals(openKey) ? "" : " (click to load)"), List.of()));
+        }
+        out.sort((x, y) -> x.type().equals(y.type()) ? Integer.compare(x.number(), y.number())
+            : x.type().equals("ENDER_CHEST") ? -1 : 1);
+        return out;
     }
 
     public static void init() {
@@ -116,7 +169,7 @@ public final class StorageOverlay {
         int totalW = columns * PANEL_W + (columns - 1) * GAP;
         int left = (width - totalW) / 2;
         int[] columnY = new int[columns];
-        List<SkyBallsStorageSearch.StoragePage> pages = SkyBallsStorageSearch.storagePages();
+        List<SkyBallsStorageSearch.StoragePage> pages = pages(screen);
         for (SkyBallsStorageSearch.StoragePage page : pages) {
             boolean open = (page.type() + ":" + page.number()).equals(openKey);
             List<ItemStack> items = open ? liveItems(screen) : page.items();

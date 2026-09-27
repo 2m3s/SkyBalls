@@ -11,12 +11,17 @@ All notable changes to SkyBalls are listed here, newest first.
 ### Changed
 - Built-in positional messages are class specific again (on F7/M7): Py Stand Here and Mage Stop for Mage, Arch for Archer, Healer and SS for Healer, Tank for Tank.
 - Platform Highlight (3x3) shows whenever you're on F7/M7 (it waited for Goldor's chat line and often didn't show).
+- One RNG HUD: Item Notification items now show in the Farming RNG HUD (renamed RNG HUD) instead of a HUD of their own, and an item already shown as an RNG drop isn't listed twice.
+- Collection Tracker: your inventory and sack messages are a live guess on top of the API number, and each API refresh only replaces what it covers, so the total no longer jumps back while the API catches up.
+- Storage overlay: pages listed in the Storage menu that aren't saved yet show as boxes you can click to open, and the normal menu shows until there's something to put on the overlay.
 
 ### Fixed
 - "At SS" was sent again every time you stepped back onto the spot; it's sent once per run.
 - Simon Says solver didn't work: it waited for the floor and Skyblocker's boss-room detection; it now works anywhere in a dungeon (it only reacts to the Simon Says blocks).
 - Copy Chat could copy a line a couple of rows above the one under the mouse; it now uses where chat really drew each line.
 - Copy Chat's key set to right click (or another mouse button) did nothing.
+- /sb search, the Storage Search key and saving storage pages did nothing when your server address had a port (play.hypixel.net:25565) or until Hypixel said your Profile ID again; the profile is now remembered and any Hypixel address works. Pages saved before still show.
+- Item Notification could show the same drop twice (Hypixel swapping the stack out and back, or the drop also going into your sacks).
 
 ## 1.2.9 — 2026-09-26
 

@@ -56,7 +56,8 @@ import java.util.regex.Pattern;
  * on the Elite (elitebot.dev) collection leaderboard, with how much you need to pass the next player.
  *
  * What you're gathering is the collection item you picked up most recently, from your inventory or from a
- * "[Sacks]" message. The total comes from Elite's copy of the Hypixel API, plus what you've gathered since.
+ * "[Sacks]" message. The total is Elite's copy of the Hypixel API plus a live guess from your inventory and sack
+ * messages; each time the API refreshes, its number replaces the guess for what it covers.
  *
  * The HUD shows two lines: "Collection: 12,345,678" (with the item's icon in front), and the next player above you
  * on the Elite leaderboard with how far ahead of you they are ("Tado 1,500").
@@ -100,7 +101,19 @@ public final class CollectionTracker {
     private static final Map<String, Board> BOARDS = new HashMap<>();      // Hypixel item id -> board
     private static final Map<String, String> NAMES = new HashMap<>();      // lower-case item name -> item id
     private static final Map<String, Long> apiAmounts = new HashMap<>();   // item id -> collection from Elite
-    private static final Map<String, Long> sinceFetch = new HashMap<>();   // item id -> gathered since that amount
+    /** item id -> pickups (inventory and sacks) the API number doesn't include yet, oldest first. */
+    private static final Map<String, List<Pickup>> pending = new HashMap<>();
+
+    /** One pickup counted from your inventory or a [Sacks] message: the live guess on top of the API number. */
+    private static final class Pickup {
+        final long at;
+        long amount;
+
+        Pickup(long at, long amount) {
+            this.at = at;
+            this.amount = amount;
+        }
+    }
     private static final Map<String, Long> session = new HashMap<>();      // item id -> gathered this session
     private static final Map<String, Long> sessionStart = new HashMap<>(); // item id -> first gain this session
     private static final Map<String, Rank> ranks = new HashMap<>();
@@ -231,7 +244,7 @@ public final class CollectionTracker {
             recentGain += amount;
             recentGainAt = now;
         }
-        sinceFetch.merge(id, amount, Long::sum);
+        pending.computeIfAbsent(id, k -> new ArrayList<>()).add(new Pickup(now, amount));
         session.merge(id, amount, Long::sum);
         sessionStart.putIfAbsent(id, now);
         checkGoal(id);
@@ -335,7 +348,7 @@ public final class CollectionTracker {
         if (goalAmount <= 0 || !id.equals(pinned())) return;
         Long api = apiAmounts.get(id);
         if (api == null) return;
-        long live = api + sinceFetch.getOrDefault(id, 0L);
+        long live = api + pendingAmount(id);
         if (live < goalAmount) return;
         SkyBallsConfig c = SkyBallsConfig.current();
         c.misc.collectionTrackerGoal = 0;
@@ -536,6 +549,9 @@ public final class CollectionTracker {
             get("/profile/" + uuid + "/selected").thenAccept(json -> {
                 JsonObject profile = json.getAsJsonObject();
                 String pid = str(profile, "profileId");
+                // When Hypixel's API last updated this profile (Elite gives seconds; 0 if it doesn't say).
+                long updatedAt = profile.has("lastUpdated") && profile.get("lastUpdated").isJsonPrimitive()
+                    ? profile.get("lastUpdated").getAsLong() * 1000L : 0L;
                 Map<String, Long> amounts = new HashMap<>();
                 if (profile.has("collections") && profile.get("collections").isJsonObject()) {
                     for (Map.Entry<String, JsonElement> e : profile.getAsJsonObject("collections").entrySet()) {
@@ -547,8 +563,7 @@ public final class CollectionTracker {
                     profileId = pid;
                     for (Map.Entry<String, Long> e : amounts.entrySet()) {
                         Long old = apiAmounts.put(e.getKey(), e.getValue());
-                        // Hypixel's number moved, so it now includes what we had counted ourselves.
-                        if (old == null || !old.equals(e.getValue())) sinceFetch.remove(e.getKey());
+                        applyApiUpdate(e.getKey(), old, e.getValue(), updatedAt);
                     }
                     status = "";
                     profileLoading = false;
@@ -591,6 +606,37 @@ public final class CollectionTracker {
             });
             return null;
         });
+    }
+
+    /** What's been counted from your inventory and sacks that the API doesn't include yet. */
+    private static long pendingAmount(String id) {
+        long total = 0;
+        for (Pickup p : pending.getOrDefault(id, List.of())) total += p.amount;
+        return total;
+    }
+
+    /**
+     * The API has a (possibly new) number: it replaces the guess for everything it covers, and pickups it doesn't
+     * include yet stay on top, so the total never jumps back while the API catches up.
+     */
+    private static void applyApiUpdate(String id, Long old, long now, long updatedAt) {
+        List<Pickup> list = pending.get(id);
+        if (list == null || list.isEmpty()) return;
+        if (updatedAt > 0) {
+            // Exact: the API includes everything picked up before it updated.
+            list.removeIf(p -> p.at <= updatedAt);
+        } else if (old != null && now > old) {
+            // No time given: the API's increase covers that much of the oldest pickups.
+            long covered = now - old;
+            while (covered > 0 && !list.isEmpty()) {
+                Pickup first = list.get(0);
+                long used = Math.min(covered, first.amount);
+                first.amount -= used;
+                covered -= used;
+                if (first.amount <= 0) list.remove(0);
+            }
+        }
+        if (list.isEmpty()) pending.remove(id);
     }
 
     private static CompletableFuture<JsonElement> get(String path) {
@@ -681,7 +727,7 @@ public final class CollectionTracker {
 
     private static List<Component> liveLines() {
         Long api = apiAmounts.get(current);
-        long live = (api == null ? 0 : api) + sinceFetch.getOrDefault(current, 0L);
+        long live = (api == null ? 0 : api) + pendingAmount(current);
         // Once your profile has loaded, a collection Elite has no number for starts at 0.
         return lines(current, live, api != null || (!profileLoading && !profileId.isEmpty()));
     }

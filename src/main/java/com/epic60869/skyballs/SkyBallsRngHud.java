@@ -22,21 +22,45 @@ public final class SkyBallsRngHud {
         HudElementRegistry.addLast(ID, SkyBallsRngHud::extract);
     }
 
+    /** One line: the item text (may carry colour codes), its colour, its price. */
+    private record Line(String item, int colour, String price) {}
+
+    /**
+     * Everything the RNG HUD shows: farming RNG drops, then Item Notification items (one HUD for both). An item that
+     * is already on the HUD as an RNG drop isn't listed a second time.
+     */
+    private static List<Line> lines() {
+        List<Line> out = new java.util.ArrayList<>();
+        java.util.Set<String> names = new java.util.HashSet<>();
+        if (config != null && config.farming.rng.enabled) {
+            for (FarmingRngTracker.Drop drop : FarmingRngTracker.get().active()) {
+                out.add(new Line(itemText(drop), rarityColour(drop), priceText(drop)));
+                names.add(drop.name().toLowerCase(Locale.ROOT));
+            }
+        }
+        for (com.epic60869.skyballs.features.misc.ItemNotification.Row row : com.epic60869.skyballs.features.misc.ItemNotification.rows()) {
+            if (names.contains(row.plain().toLowerCase(Locale.ROOT))) continue;
+            out.add(new Line(row.item(), 0xFFFFFFFF, row.price()));
+        }
+        return out;
+    }
+
     private static void extract(GuiGraphicsExtractor graphics, net.minecraft.client.DeltaTracker deltaTracker) {
-        if (config == null || !config.farming.rng.enabled || Minecraft.getInstance().player == null) return;
-        List<FarmingRngTracker.Drop> drops = FarmingRngTracker.get().active();
+        if (config == null || Minecraft.getInstance().player == null) return;
+        List<Line> drops = lines();
         if (drops.isEmpty()) return;
         render(graphics, drops, com.epic60869.skyballs.features.core.SkyBallsHuds.mapX(positionX(), width()), com.epic60869.skyballs.features.core.SkyBallsHuds.mapY(positionY(), height()));
     }
 
-    private static final List<FarmingRngTracker.Drop> PREVIEW = List.of(
-        new FarmingRngTracker.Drop(1, "Crystalized Moonlight", "RARE DROP", 500000, Long.MAX_VALUE),
-        new FarmingRngTracker.Drop(2, "Designer Coffee Beans", "RARE DROP", 500000, Long.MAX_VALUE),
-        new FarmingRngTracker.Drop(1, "Legendary Slug Pet", "LEGENDARY", 5000000, Long.MAX_VALUE)
+    private static final List<Line> PREVIEW = List.of(
+        new Line("1x Crystalized Moonlight", 0xFF55FFFF, "500k"),
+        new Line("2x Designer Coffee Beans", 0xFF55FFFF, "1m"),
+        new Line("1x Legendary Slug Pet", 0xFFFFAA00, "5m"),
+        new Line("5x §9Enchanted Diamond", 0xFFFFFFFF, "8.5k")
     );
 
-    private static List<FarmingRngTracker.Drop> shown() {
-        List<FarmingRngTracker.Drop> active = FarmingRngTracker.get().active();
+    private static List<Line> shown() {
+        List<Line> active = lines();
         return active.isEmpty() ? PREVIEW : active;
     }
 
@@ -50,16 +74,16 @@ public final class SkyBallsRngHud {
         return Math.max(1, Math.round(contentHeight(shown()) * scale()));
     }
 
-    private static int contentWidth(List<FarmingRngTracker.Drop> drops) {
+    private static int contentWidth(List<Line> drops) {
         var font = Minecraft.getInstance().font;
         int w = 0;
-        for (FarmingRngTracker.Drop drop : drops) {
-            w = Math.max(w, PADDING + font.width(itemText(drop)) + 8 + font.width(priceText(drop)) + PADDING);
+        for (Line drop : drops) {
+            w = Math.max(w, PADDING + font.width(drop.item()) + 8 + font.width(drop.price()) + PADDING);
         }
         return Math.max(40, w);
     }
 
-    private static int contentHeight(List<FarmingRngTracker.Drop> drops) {
+    private static int contentHeight(List<Line> drops) {
         return PADDING + drops.size() * LINE_HEIGHT;
     }
 
@@ -122,7 +146,7 @@ public final class SkyBallsRngHud {
     }
 
     private static void render(GuiGraphicsExtractor graphics,
-                               List<FarmingRngTracker.Drop> drops,
+                               List<Line> drops,
                                int x,
                                int y) {
         float s = scale();
@@ -139,12 +163,14 @@ public final class SkyBallsRngHud {
         }
 
         int yOffset = PADDING;
-        for (FarmingRngTracker.Drop drop : drops) {
-            String item = itemText(drop);
-            String price = priceText(drop);
+        for (Line drop : drops) {
+            String item = drop.item();
+            String price = drop.price();
 
-            // One complete drop per line: amount, item name, then total value.
-            drawShadowed(graphics, item, PADDING, yOffset, rarityColour(drop), true);
+            // One complete drop per line: amount, item name, then total value. Names with colour codes (Item
+            // Notification) use the normal shadow so the codes don't tint the shadow.
+            if (item.indexOf('\u00a7') >= 0) graphics.text(Minecraft.getInstance().font, item, PADDING, yOffset, drop.colour(), true);
+            else drawShadowed(graphics, item, PADDING, yOffset, drop.colour(), true);
             drawShadowed(graphics, price, w - PADDING - Minecraft.getInstance().font.width(price), yOffset, 0xFFB8B8B8, false);
             yOffset += LINE_HEIGHT;
         }

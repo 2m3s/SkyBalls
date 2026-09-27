@@ -35,7 +35,7 @@ public final class SkyBallsHudEditorScreen extends Screen {
 
     private void rebuildElements() {
         elements.clear();
-        elements.add(new EditableHud("Farming RNG", SkyBallsRngHud::x, SkyBallsRngHud::y,
+        elements.add(new EditableHud("RNG HUD", SkyBallsRngHud::x, SkyBallsRngHud::y,
             SkyBallsRngHud::setPosition, SkyBallsRngHud::width, SkyBallsRngHud::height,
             SkyBallsRngHud::renderPreview, "rng"));
         elements.add(new EditableHud("Mining Commissions", SkyBallsCommissionHud::x, SkyBallsCommissionHud::y,

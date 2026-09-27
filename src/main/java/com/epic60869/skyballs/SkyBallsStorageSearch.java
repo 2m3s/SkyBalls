@@ -76,6 +76,7 @@ public final class SkyBallsStorageSearch {
 
     /** Current SkyBlock profile id (from "Profile ID: ..."), or "" until Hypixel has told us. */
     private static String profile = "";
+    private static final String PROFILE_KEY = "_profile";
     private static final java.util.regex.Pattern PROFILE_ID = java.util.regex.Pattern.compile("^Profile ID: (?<id>[0-9a-fA-F-]+)$");
 
     private SkyBallsStorageSearch() {}
@@ -87,14 +88,22 @@ public final class SkyBallsStorageSearch {
         // Pages are stored per SkyBlock profile so different profiles (e.g. an ironman) never share storage.
         com.epic60869.skyballs.features.core.SkyBallsChat.onChat(message -> {
             java.util.regex.Matcher m = PROFILE_ID.matcher(message.text().trim());
-            if (m.matches()) profile = m.group("id").toLowerCase(Locale.ROOT);
+            if (m.matches()) {
+                String id = m.group("id").toLowerCase(Locale.ROOT);
+                if (!id.equals(profile)) {
+                    profile = id;
+                    dirty = true; // remember it for next launch
+                }
+            }
         });
-        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> profile = "");
+        // The profile is kept between joins and launches (saved with the cache): Hypixel only says "Profile ID"
+        // when you join SkyBlock, and waiting for it again meant storage was never saved or searchable.
     }
 
     /** Key prefix for the current server and profile. Keys are "server|profile|type|number". */
     private static String profilePrefix(Minecraft mc) {
         String server = "unknown";
+        if (isHypixel(mc)) return "hypixel|" + profile + "|";
         try {
             if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null) {
                 server = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
@@ -134,14 +143,9 @@ public final class SkyBallsStorageSearch {
         mc.gui.setScreen(new SkyBallsStorageSearchScreen(parent, query == null ? "" : query));
     }
 
+    /** Server brand, any address containing "hypixel" (with or without a port) or the SkyBlock sidebar. */
     public static boolean isHypixel(Minecraft mc) {
-        try {
-            if (mc.getCurrentServer() == null || mc.getCurrentServer().ip == null) return false;
-            String ip = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
-            return ip.equals("hypixel.net") || ip.endsWith(".hypixel.net");
-        } catch (Throwable ignored) {
-            return false;
-        }
+        return SkyBallsCustom.isHypixel(mc);
     }
 
     public static List<Result> search(Minecraft mc, String query, boolean lore, boolean inventory) {
@@ -479,6 +483,11 @@ public final class SkyBallsStorageSearch {
             JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
             inventoryPages.clear();
             for (String key : root.keySet()) {
+                if (key.equals(PROFILE_KEY)) {
+                    JsonObject saved = root.getAsJsonObject(key);
+                    if (saved != null && saved.has("id")) profile = saved.get("id").getAsString();
+                    continue;
+                }
                 JsonObject obj = root.getAsJsonObject(key);
                 if (obj == null || !obj.has("blob")) continue;
                 String type = obj.has("type") ? obj.get("type").getAsString() : "";
@@ -486,6 +495,8 @@ public final class SkyBallsStorageSearch {
                 String label = obj.has("label") ? obj.get("label").getAsString() : type + " #" + number;
                 long updated = obj.has("updated") ? obj.get("updated").getAsLong() : 0L;
                 if (key.split("\\|", -1).length < 4) continue; // pre-profile cache entry (mixed profiles)
+                // Older builds keyed by the exact address ("play.hypixel.net:25565|..."); all Hypixel addresses share one now.
+                if (key.substring(0, key.indexOf('|')).contains("hypixel")) key = "hypixel" + key.substring(key.indexOf('|'));
                 Page page = new Page(type, number, label, obj.get("blob").getAsString(), updated);
                 if ("INVENTORY".equals(type)) inventoryPages.put(key, page);
                 else pages.put(key, page);
@@ -501,6 +512,11 @@ public final class SkyBallsStorageSearch {
         try {
             Files.createDirectories(configDir);
             JsonObject root = new JsonObject();
+            if (!profile.isEmpty()) {
+                JsonObject saved = new JsonObject();
+                saved.addProperty("id", profile);
+                root.add(PROFILE_KEY, saved);
+            }
             for (Map.Entry<String, Page> entry : pages.entrySet()) {
                 Page page = entry.getValue();
                 JsonObject obj = new JsonObject();

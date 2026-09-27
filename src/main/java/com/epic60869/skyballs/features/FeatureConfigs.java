@@ -886,7 +886,7 @@ public final class FeatureConfigs {
 
     public static final class ItemNotification {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Show items from your list on a HUD when you get them (in your sacks or your inventory), like the farming RNG HUD: amount, name and total price. Move it in /sb gui.")
+        @ConfigOption(name = "Enabled", desc = "Show items from your list on a HUD when you get them (in your sacks or your inventory), in the RNG HUD (with the farming RNG drops): amount, name and total price. Move it in /sb gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 

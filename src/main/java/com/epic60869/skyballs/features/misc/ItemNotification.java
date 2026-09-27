@@ -53,6 +53,15 @@ public final class ItemNotification {
     private static final Map<String, Shown> SHOWN = new LinkedHashMap<>();
     /** Everything in your inventory last tick, by item id; null when there's nothing to compare against. */
     private static Map<String, Integer> lastInventory;
+    /**
+     * The most of each item you had just before its count dropped, and when. Hypixel sometimes swaps a stack out and
+     * back (lore or cooldown updates, moving it), which looked like picking it up again; a gain only counts past this.
+     */
+    private static final Map<String, Integer> recentMax = new HashMap<>();
+    private static final Map<String, Long> recentMaxAt = new HashMap<>();
+    private static final long RECENT_MS = 10_000L;
+    /** Inventory gains in the last few seconds, so the same drop also reported by a [Sacks] message isn't shown twice. */
+    private static final Map<String, Long> inventoryGainAt = new HashMap<>();
     private static final Map<String, String> NAMES = new HashMap<>(); // item id -> name with colour codes
 
     private ItemNotification() {}
@@ -68,7 +77,7 @@ public final class ItemNotification {
     }
 
     public static void init() {
-        SkyBallsHuds.registerCustom("item_notification", "Item Notification", ItemNotification::enabled, new Hud(), 8, 200);
+        // Shown in the RNG HUD (SkyBallsRngHud) together with the farming RNG drops, not a HUD of its own.
         ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
         SkyBallsChat.onGameMessage((component, overlay) -> {
             if (!overlay) onSacksMessage(component);
@@ -149,10 +158,24 @@ public final class ItemNotification {
             NAMES.putIfAbsent(id, legacyName(stack));
         }
         if (lastInventory != null) {
+            for (Map.Entry<String, Integer> e : lastInventory.entrySet()) {
+                int had = e.getValue();
+                if (nowCounts.getOrDefault(e.getKey(), 0) >= had) continue;
+                Long at = recentMaxAt.get(e.getKey());
+                int max = at != null && now - at < RECENT_MS ? Math.max(had, recentMax.getOrDefault(e.getKey(), 0)) : had;
+                recentMax.put(e.getKey(), max);
+                recentMaxAt.put(e.getKey(), now);
+            }
             for (Map.Entry<String, Integer> e : nowCounts.entrySet()) {
-                int gained = e.getValue() - lastInventory.getOrDefault(e.getKey(), 0);
+                int before = lastInventory.getOrDefault(e.getKey(), 0);
+                Long at = recentMaxAt.get(e.getKey());
+                if (at != null && now - at < RECENT_MS) before = Math.max(before, recentMax.getOrDefault(e.getKey(), 0));
+                int gained = e.getValue() - before;
                 String name = NAMES.getOrDefault(e.getKey(), e.getKey());
-                if (gained > 0 && listed(name, e.getKey())) show(e.getKey(), name, gained);
+                if (gained > 0 && listed(name, e.getKey())) {
+                    show(e.getKey(), name, gained);
+                    inventoryGainAt.put(e.getKey().toLowerCase(Locale.ROOT), now);
+                }
             }
         }
         lastInventory = nowCounts;
@@ -171,6 +194,9 @@ public final class ItemNotification {
                 String id = RepoItems.idByName(name);
                 if (!listed(name, id == null ? "" : id)) continue;
                 String shownName = id != null && RepoItems.displayName(id) != null ? RepoItems.displayName(id) : name;
+                // Already shown from your inventory a moment ago (the same drop, then put into your sacks).
+                Long gainedAt = inventoryGainAt.get((id == null ? name : id).toLowerCase(Locale.ROOT));
+                if (gainedAt != null && System.currentTimeMillis() - gainedAt < 3_000L) continue;
                 show(id == null ? name : id, shownName, Long.parseLong(m.group(1).replace(",", "")));
             }
         }
@@ -282,54 +308,18 @@ public final class ItemNotification {
         return String.format(Locale.ROOT, "%.2f", value).replaceAll("0+$", "").replaceAll("\\.$", "") + suffix;
     }
 
-    private record Row(String item, String price) {}
+    /** One line on the RNG HUD: "5x Enchanted Diamond" (with colour codes), its total price, and the plain name. */
+    public record Row(String item, String price, String plain) {}
 
-    private static final List<Row> PREVIEW = List.of(new Row("5x §9Enchanted Diamond", "8.5k"), new Row("1x §6Ender Artifact", "12.3m"));
-
-    private static List<Row> rows(boolean preview) {
+    /** What Item Notification is showing right now, for the RNG HUD. */
+    public static List<Row> rows() {
         List<Row> rows = new ArrayList<>();
+        if (!enabled()) return rows;
         for (Shown s : SHOWN.values()) {
             double unit = SkyBallsPriceTooltip.unitPrice(s.id);
-            rows.add(new Row(s.amount + "x " + s.name, unit > 0 ? coins(unit * s.amount) : "—"));
+            rows.add(new Row(s.amount + "x " + s.name, unit > 0 ? coins(unit * s.amount) : "—",
+                ChatFormatting.stripFormatting(s.name).trim()));
         }
-        return rows.isEmpty() && preview ? PREVIEW : rows;
-    }
-
-    private static final class Hud implements SkyBallsHuds.CustomHud {
-        @Override
-        public int width() {
-            var font = Minecraft.getInstance().font;
-            int w = 40;
-            for (Row row : rows(true)) w = Math.max(w, PADDING + font.width(row.item()) + 8 + font.width(row.price()) + PADDING);
-            return w;
-        }
-
-        @Override
-        public int height() {
-            return PADDING + rows(true).size() * LINE_HEIGHT;
-        }
-
-        @Override
-        public boolean visible() {
-            return !SHOWN.isEmpty();
-        }
-
-        @Override
-        public void render(GuiGraphicsExtractor g, boolean preview) {
-            List<Row> rows = rows(preview);
-            if (rows.isEmpty()) return;
-            var font = Minecraft.getInstance().font;
-            int w = width();
-            if (SkyBallsHuds.placement("item_notification").background) {
-                g.fill(0, 0, w, height(), 0xA8000000);
-                g.fill(0, 0, w, 1, 0x55FFFFFF);
-            }
-            int y = PADDING;
-            for (Row row : rows) {
-                g.text(font, row.item(), PADDING, y, 0xFFFFFFFF, true);
-                g.text(font, row.price(), w - PADDING - font.width(row.price()), y, 0xFFB8B8B8, true);
-                y += LINE_HEIGHT;
-            }
-        }
+        return rows;
     }
 }
