@@ -63,7 +63,7 @@ public final class CopyChat {
         if (c != null && c.preview) {
             int length = c.previewLength;
             String shown = length > 0 && text.length() > length ? text.substring(0, length) + "..." : text;
-            Component message = Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN)
+            Component message = Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE)
                 .append(Component.literal("Message copied" + (length == 0 ? "." : ": ")).withStyle(ChatFormatting.GREEN));
             if (length != 0) {
                 message = message.copy().append(Component.literal("\"").withStyle(ChatFormatting.GREEN))

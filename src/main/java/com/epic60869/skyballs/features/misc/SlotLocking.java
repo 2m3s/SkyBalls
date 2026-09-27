@@ -214,6 +214,6 @@ public final class SlotLocking {
     private static void say(Component message) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) mc.gui.hud.getChat().addClientSystemMessage(
-            Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN).append(message));
+            Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE).append(message));
     }
 }

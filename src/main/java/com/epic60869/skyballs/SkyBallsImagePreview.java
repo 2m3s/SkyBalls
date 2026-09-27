@@ -30,7 +30,8 @@ import java.util.regex.Pattern;
 /**
  * Shows a preview of an image when hovering an image link in chat (including SkyBalls chat). Links ending in an
  * image extension preview straight away; Discord, Imgur and Gyazo links (and any other link that turns out to be an
- * image) are tried too. While it downloads a "Loading image..." box shows, so you can tell it's working.
+ * image) are tried too. While it downloads a "Loading image..." box shows, so you can tell it's working. The preview
+ * replaces the link's own hover text (the URL).
  */
 public final class SkyBallsImagePreview {
     private static final Pattern IMAGE_URL = Pattern.compile(
@@ -68,6 +69,10 @@ public final class SkyBallsImagePreview {
         if (url == null) return;
 
         Loaded texture = texture(url);
+        // The image (or its "Loading image..." box) takes the place of the link's hover text.
+        if (texture != null || LOADING.containsKey(url)) {
+            ((com.epic60869.skyballs.mixin.SkyBallsDeferredTooltipAccessor) graphics).skyballs$setDeferredTooltip(null);
+        }
         // Draw above the link's own hover text.
         graphics.nextStratum();
         if (texture == null) {

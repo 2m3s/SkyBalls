@@ -151,7 +151,7 @@ public final class SkyBallsNickCommand {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
             if (mc.player != null) {
-                mc.gui.hud.getChat().addClientSystemMessage(Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN).append(text));
+                mc.gui.hud.getChat().addClientSystemMessage(Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE).append(text));
             }
         });
     }

@@ -217,7 +217,7 @@ public final class Reports {
             long suggestions = list.stream().filter(r -> r.type() == Type.SUGGESTION).count();
             long feedback = list.stream().filter(r -> r.type() == Type.FEEDBACK).count();
             if (bugs + suggestions + feedback == 0) return;
-            MutableComponent message = Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN)
+            MutableComponent message = Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE)
                 .append(Component.literal("Waiting for you: ").withStyle(ChatFormatting.YELLOW))
                 .append(count(bugs, "bug report", ChatFormatting.RED, "viewreport"))
                 .append(Component.literal(", ").withStyle(ChatFormatting.GRAY))
@@ -229,7 +229,7 @@ public final class Reports {
                     .withHoverEvent(new HoverEvent.ShowText(Component.literal("Open all reports, suggestions and feedback")))));
             say(message);
         }).exceptionally(e -> {
-            say(Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN)
+            say(Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE)
                 .append(Component.literal("Couldn't check for bug reports: " + rootMessage(e)).withStyle(ChatFormatting.GRAY)));
             return null;
         });

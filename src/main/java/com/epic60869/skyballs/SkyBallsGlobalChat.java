@@ -95,7 +95,7 @@ public final class SkyBallsGlobalChat {
     private static void showWho(JsonObject packet) {
         whoAskedAt = 0;
         com.google.gson.JsonArray players = packet.has("players") && packet.get("players").isJsonArray() ? packet.getAsJsonArray("players") : new com.google.gson.JsonArray();
-        MutableComponent message = Component.literal("[SB] ").withStyle(net.minecraft.ChatFormatting.DARK_GREEN)
+        MutableComponent message = Component.literal("[SB] ").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE)
             .append(Component.literal(players.size() + " online with SkyBalls: ").withStyle(net.minecraft.ChatFormatting.YELLOW));
         boolean first = true;
         for (var element : players) {
@@ -309,6 +309,7 @@ public final class SkyBallsGlobalChat {
                 // Packets this mod understands; without "rankAnnounce" the server sends a plain bot message instead.
                 JsonArray features = new JsonArray();
                 features.add("rankAnnounce");
+                features.add("leaderboards");
                 hello.add("features", features);
                 hello.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
                 hello.addProperty("modVersion", net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("skyballs")
@@ -399,7 +400,7 @@ public final class SkyBallsGlobalChat {
                     .append(Component.literal(name).withStyle(Style.EMPTY.withColor(0xFFFFFF))))));
         Component rank = Component.literal("[" + prefix + "]").withStyle(Style.EMPTY.withColor(colour).withBold(bold));
         MutableComponent line = Component.empty()
-            .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.DARK_GREEN))
+            .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE))
             .append(Component.literal(" "))
             .append(user);
         if (removed) {
@@ -465,6 +466,11 @@ public final class SkyBallsGlobalChat {
             try {
                 JsonObject packet = JsonParser.parseString(raw).getAsJsonObject();
                 String type = packet.has("type") ? packet.get("type").getAsString() : "";
+
+                if (type.startsWith("leaderboard")) {
+                    Minecraft.getInstance().execute(() -> SkyBallsLeaderboards.handle(type, packet));
+                    return;
+                }
 
                 if ("accountStatus".equals(type) || "nickResult".equals(type)) {
                     Minecraft.getInstance().execute(() -> SkyBallsNickCommand.handle(type, packet));
@@ -592,7 +598,7 @@ public final class SkyBallsGlobalChat {
                 Component messageComponent = com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(Component.literal(message)));
                 // [SB] in dark green, like Hypixel's "Guild >"; messages from Discord add a blue [Discord] after it.
                 MutableComponent line = Component.empty()
-                    .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.DARK_GREEN))
+                    .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE))
                     .append(Component.literal(" "));
                 if (!"[SB]".equals(prefix)) {
                     line.append(Component.literal(prefix).withStyle(net.minecraft.ChatFormatting.BLUE)).append(Component.literal(" "));

@@ -53,6 +53,7 @@
     "SkyBallsSwingSpeedMixin",
     "SkyBallsHeldItemTextureMixin",
     "SkyBallsHeldItemMiningMixin",
+    "SkyBallsDeferredTooltipAccessor",
     "SkyBallsHideMenuMixin",
     "SkyBallsNameTagStateMixin",
     "SkyBallsAvatarNameTagMixin",

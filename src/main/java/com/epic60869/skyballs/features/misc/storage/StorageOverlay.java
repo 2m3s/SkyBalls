@@ -125,7 +125,7 @@ public final class StorageOverlay {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
             if (mc.player != null) mc.gui.hud.getChat().addClientSystemMessage(
-                Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN).append(Component.literal(text).withStyle(ChatFormatting.YELLOW)));
+                Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE).append(Component.literal(text).withStyle(ChatFormatting.YELLOW)));
         });
         return 1;
     }

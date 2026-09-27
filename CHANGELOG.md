@@ -2,6 +2,18 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.4 — 2026-09-27
+
+### Added
+- Discord leaderboards: leaderboards run from the SkyBalls Discord (for example "most Summoning Eyes this week") count your drops and other chat events through the mod automatically. /sb leaderboard lists the running ones; /sb leaderboard <name> shows the standings.
+
+### Changed
+- The [SB] in front of SkyBalls messages is light purple instead of dark green.
+
+### Fixed
+- Hovering an image link in chat shows just the image, without the link's hover text on top.
+- Storage overlay: the mouse wheel still didn't scroll over items whose tooltip is taller than the screen (Tooltip Scroll took it). In the storage overlay and /sb storageoverview the wheel now always scrolls the storage; Tooltip Scroll's keys still move long tooltips.
+
 ## 1.3.3 — 2026-09-27
 
 ### Added
@@ -18,7 +30,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Mouse Lock now works like Skyblocker's: it locks with every farming tool (all Theoretical Hoe tiers including Sunflower and Wild Rose, Fungi Cutter, Cactus Knife, Melon and Pumpkin Dicers, Coco Chopper, Gardening Hoes and Axes, Binghoe), goes by the SkyBlock id so renamed tools still lock, and pauses in the Garden's barn. Before, it never locked with Theoretical Hoes (it looked for the tool's id in the item's name) or renamed tools.
 - Storage overlay: pages opened after you searched (like /ec 8) didn't show, and searching could hide Ender Chest pages until the search changed.
 - Storage overlay: searching left the open page's items in the top left corner, over the other pages.
-- Storage overlay: the mouse wheel didn't scroll. Block Scrolling on Items is now off by default, and in the storage overlay the wheel always scrolls the storage, even over items with tooltips taller than the screen (Tooltip Scroll's keys still move those).
+- Storage overlay: the mouse wheel didn't scroll while over an item. Block Scrolling on Items is now off by default, and Tooltip Scroll no longer takes the wheel from it.
 - Storage overlay: the scroll bar keeps the knob under the mouse when clicked or dragged, and reaches the top and bottom.
 - Tooltip Scroll took the mouse wheel whenever any tooltip showed (settings, lists, menus). It now only moves tooltips too big to fit on screen.
 - /sb search did nothing off Hypixel, and could be closed again by the chat closing.

@@ -44,6 +44,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.core.SkyBallsChat.init();
         com.epic60869.skyballs.features.core.SkyBallsAlerts.init();
         SkyBallsFoxyScare.init();
+        SkyBallsLeaderboards.init();
         com.epic60869.skyballs.features.core.SkyBallsHuds.init(configDir);
         com.epic60869.skyballs.features.core.SkyBallsWorldRender.init();
 

@@ -78,7 +78,7 @@ public final class ReportScreen extends Screen {
         Reports.submit(type, t, d).thenAccept(ok -> minecraft.execute(() -> {
             sending = false;
             if (ok) {
-                Reports.say(Component.literal("[SB] ").withStyle(ChatFormatting.DARK_GREEN)
+                Reports.say(Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE)
                     .append(Component.literal("Thanks! Your " + type.label.toLowerCase() + " was sent.").withStyle(ChatFormatting.GREEN)));
                 keptTitle = "";
                 keptDescription = "";
