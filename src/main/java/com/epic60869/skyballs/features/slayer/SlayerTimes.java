@@ -78,12 +78,21 @@ public final class SlayerTimes {
         if (spawnedAt == 0) spawnedAt = System.currentTimeMillis();
         Matcher m = BOSS.matcher(healthLine);
         if (m.find()) {
-            boss = m.group(2) == null ? m.group(1) : m.group(1) + " " + m.group(2);
+            boss = key(m.group(2) == null ? m.group(1) : m.group(1) + " " + m.group(2));
             if (!boss.equals(lastBoss)) {
                 lastBoss = boss;
                 saveLastBoss();
             }
         }
+    }
+
+    /**
+     * The boss key a nametag name is saved under. A Tier 5 Tarantula is one boss in two phases, "Tarantula
+     * Broodfather V" and then "Conjoined Brood" (no tier in its nametag), so both count as "Tarantula Broodfather V",
+     * as in SkyHanni. Otherwise the key would change mid-fight and the PB HUD would switch boards.
+     */
+    static String key(String name) {
+        return name.equalsIgnoreCase("Conjoined Brood") ? "Tarantula Broodfather V" : name;
     }
 
     /** Your current boss key, or if none is alive, the last one you fought; null if you haven't fought one yet. */
@@ -200,7 +209,7 @@ public final class SlayerTimes {
         try {
             if (Files.exists(lastBossFile)) {
                 String boss = Files.readString(lastBossFile, StandardCharsets.UTF_8).trim();
-                if (!boss.isEmpty()) lastBoss = boss;
+                if (!boss.isEmpty()) lastBoss = key(boss);
             }
         } catch (Exception e) {
             System.err.println("[SkyBalls] Could not read slayer-last-boss.txt: " + e.getMessage());
@@ -210,7 +219,10 @@ public final class SlayerTimes {
             JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
             for (var player : root.entrySet()) {
                 Map<String, Long> bests = new ConcurrentHashMap<>();
-                for (var best : player.getValue().getAsJsonObject().entrySet()) bests.put(best.getKey(), best.getValue().getAsLong());
+                for (var best : player.getValue().getAsJsonObject().entrySet()) {
+                    // Older saves kept Tier 5 Tarantula's second phase as its own boss: keep the faster of the two.
+                    bests.merge(key(best.getKey()), best.getValue().getAsLong(), Math::min);
+                }
                 BESTS.put(player.getKey(), bests);
             }
         } catch (Exception e) {

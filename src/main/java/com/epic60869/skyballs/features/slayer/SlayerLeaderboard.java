@@ -107,12 +107,15 @@ public final class SlayerLeaderboard {
 
     // ---------------------------------------------------------------- views
 
-    /** The boss key written the way the server and {@link SlayerTimes} write it, or null if it isn't one. */
+    /**
+     * The boss key written the way the server and {@link SlayerTimes} write it, or null if it isn't one.
+     * "Conjoined Brood" (Tier 5 Tarantula's second phase) is "Tarantula Broodfather V".
+     */
     public static String canonical(String input) {
         Matcher m = KEY.matcher(input == null ? "" : input.trim().replaceAll("\\s+", " "));
         if (!m.matches()) return null;
         String name = BOSSES.stream().filter(b -> b.equalsIgnoreCase(m.group(1))).findFirst().orElse(m.group(1));
-        return m.group(2) == null ? name : name + " " + m.group(2).toUpperCase(Locale.ROOT);
+        return SlayerTimes.key(m.group(2) == null ? name : name + " " + m.group(2).toUpperCase(Locale.ROOT));
     }
 
     /** Boss keys for tab completion: yours and the ones in the last summary, in boss and tier order. */
