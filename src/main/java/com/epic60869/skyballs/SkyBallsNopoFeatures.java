@@ -89,6 +89,7 @@ public final class SkyBallsNopoFeatures {
 
     public static void init(Path dir) {
         configDir = dir;
+        PetHeldItems.init(dir, () -> currentPet);
         loadJson();
         loadDefaultEmojiSymbols();
         loadEmojis();
@@ -114,11 +115,13 @@ public final class SkyBallsNopoFeatures {
                 String petInfo = custom.copyTag().getStringOr("petInfo", "");
                 if (petInfo.isBlank()) continue;
                 JsonObject json = JsonParser.parseString(petInfo).getAsJsonObject();
+                // Every pet's held item, for the pet HUD when you switch to it later.
+                String shownName = clean(com.epic60869.skyballs.custom.util.Compat.realName(slot.getItem()).getString());
+                PetHeldItems.fromMenu(shownName, json.has("heldItem") && !json.get("heldItem").isJsonNull() ? json.get("heldItem").getAsString() : "");
                 if (!json.has("active") || !json.get("active").getAsBoolean() || !json.has("exp")) continue;
                 activePetExp = json.get("exp").getAsFloat();
                 activePetTier = json.has("tier") ? json.get("tier").getAsString() : "LEGENDARY";
-                activePetName = clean(com.epic60869.skyballs.custom.util.Compat.realName(slot.getItem()).getString()).replaceAll("^\\[Lvl \\d+\\]\\s*", "").trim();
-                return;
+                activePetName = shownName.replaceAll("^\\[Lvl \\d+\\]\\s*", "").trim();
             } catch (Throwable ignored) {}
         }
     }
@@ -385,6 +388,11 @@ public final class SkyBallsNopoFeatures {
                     .append(Component.literal("!").withStyle(ChatFormatting.GRAY)));
             }
             currentOverflowLevel = shownOverflow;
+        }
+
+        if (config.pets.display.heldItem) {
+            Component held = PetHeldItems.heldItem(petName);
+            if (held != null) display.add(Component.literal(" Held: ").withStyle(ChatFormatting.GRAY).append(held));
         }
 
         petDisplay = List.copyOf(display);

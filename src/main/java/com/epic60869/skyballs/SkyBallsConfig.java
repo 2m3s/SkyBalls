@@ -735,6 +735,11 @@ public final class SkyBallsConfig extends Config {
         public boolean autoDisplay = true;
 
         @Expose
+        @ConfigOption(name = "Show Held Item", desc = "Show what your pet is holding under it. Hypixel's tab list doesn't say, so it's learned from the Pets menu (open it once), \"Your pet is now holding ...\" and Autopet messages.")
+        @ConfigEditorBoolean
+        public boolean heldItem = true;
+
+        @Expose
         @ConfigOption(name = "Scale", desc = "Scale the pet HUD.")
         @ConfigEditorSlider(minValue = 0.5f, maxValue = 3.0f, minStep = 0.1f)
         public float scale = 1.0f;

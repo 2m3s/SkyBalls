@@ -5,6 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## test-1.3.7 — 2026-09-28
 
 ### Added
+- Pet HUD shows your pet's held item (Pets → Pets Display → Show Held Item). The tab list doesn't show it, so it's learned from the Pets menu (open it once), "Your pet is now holding ..." and Autopet messages, and remembered per pet.
 - Overflow pet level ups in chat again (NopoMod's): "[SB] Your Golden Dragon leveled up to level 158!" when your pet reaches the next overflow level. Needs Overflow Pet Levels on (Pets).
 - Boss Profit (Slayers): after each slayer boss, "Profit: +50k" (or "-10k") in chat, and a Boss Profit HUD. Hover the chat line for each drop and its value, the drops' total, the quest's cost and the total. The HUD shows the moment the boss dies and fills in as the drops arrive (sack drops come with Hypixel's "[Sacks]" message); the chat line goes out once the sack drops are in, or 2 seconds after the kill. The cost is Hypixel's price for the boss and tier, or half of it with Aatrox's Slashed Pricing when your purse shows that.
 - Sign Calculator (Misc), from Skyblocker: on SkyBlock's number signs (auction prices, bazaar amounts) the number you typed shows above the sign, e.g. `15m = 15,000,000`, and sums like `2.5m*3` are worked out and sent as the number.
