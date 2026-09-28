@@ -65,7 +65,7 @@ public final class SlayerLeaderboard {
 
     private static boolean sharing() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c != null && c.slayers.sharePbs;
+        return c != null && c.slayers.personalBest.sharePbs;
     }
 
     // ---------------------------------------------------------------- reporting
