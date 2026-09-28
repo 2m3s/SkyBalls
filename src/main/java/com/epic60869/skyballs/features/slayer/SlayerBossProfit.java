@@ -179,11 +179,8 @@ public final class SlayerBossProfit {
         });
         SkyBallsHuds.register("slayer_boss_profit", "Slayer Boss Profit", SlayerBossProfit::hudVisible, SlayerBossProfit::hudLines,
             List.of(
-                Component.literal("Revenant Horror V").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-                Component.literal("Profit: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("+84.2k").withStyle(ChatFormatting.GREEN)),
-                Component.literal("1x Scythe Blade ").withStyle(ChatFormatting.WHITE).append(Component.literal("120.0k").withStyle(ChatFormatting.GOLD)),
-                Component.literal("64x Revenant Flesh ").withStyle(ChatFormatting.WHITE).append(Component.literal("4.2k").withStyle(ChatFormatting.GOLD)),
-                Component.literal("Slayer cost: ").withStyle(ChatFormatting.GRAY).append(Component.literal("-50.0k").withStyle(ChatFormatting.RED))),
+                Component.literal("Revenant Horror V ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal("+84.2k").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD))),
             8, 320);
     }
 
@@ -284,6 +281,7 @@ public final class SlayerBossProfit {
         if (kill != null) close();
         long cost = cost(boss);
         kill = new Kill(boss, System.currentTimeMillis(), baseline, cost);
+        hudUntil = Long.MAX_VALUE;
         // Items that were lying around when the boss spawned aren't its drops (ones dropped since are, even if they
         // landed a moment before Hypixel's kill message).
         kill.seenItems.addAll(groundAtSpawn);
@@ -412,6 +410,7 @@ public final class SlayerBossProfit {
         SkyBallsConfig.BossProfit c = config();
         if (k == null || k.posted || last == null) return;
         k.posted = true;
+        settleHud();
         if (c == null || !c.chat) return;
         Result r = last;
         MutableComponent hover = Component.literal(r.boss() + " drops").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
@@ -432,30 +431,37 @@ public final class SlayerBossProfit {
 
     // ---------------------------------------------------------------- HUD
 
+    /** Until when the HUD shows the last boss: while its drops land, then a few seconds more ({@code HUD Time}). */
+    private static long hudUntil;
+
     private static boolean hudVisible() {
         SkyBallsConfig.BossProfit c = config();
         Minecraft mc = Minecraft.getInstance();
         if (c == null || !c.hud || last == null || mc.level == null || mc.gui.hud.isHidden()) return false;
-        return last.counting() || System.currentTimeMillis() - last.at() < c.hudSeconds * 1000L;
+        return System.currentTimeMillis() < hudUntil;
     }
 
+    /** The boss's drops are all in (the chat line went out): the HUD stays up {@code HUD Time} more, then hides. */
+    private static void settleHud() {
+        SkyBallsConfig.BossProfit c = config();
+        hudUntil = System.currentTimeMillis() + (c == null ? 5 : c.hudShowSeconds) * 1000L;
+    }
+
+    /** One line per boss, "Tarantula Broodfather V +84.2k", with its best drops under it when HUD Drops is above 0. */
     private static List<Component> hudLines() {
         Result r = last;
         if (r == null) return List.of();
         List<Component> lines = new ArrayList<>();
-        MutableComponent title = Component.literal(r.boss()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
-        if (r.counting()) title.append(Component.literal(" (counting)").withStyle(style -> style.withColor(ChatFormatting.DARK_GRAY).withBold(false)));
-        lines.add(title);
-        lines.add(Component.literal("Profit: ").withStyle(ChatFormatting.YELLOW).append(coins(r.total())));
+        lines.add(Component.literal(r.boss() + " ").withStyle(ChatFormatting.GOLD).append(coins(r.total()).withStyle(ChatFormatting.BOLD)));
         SkyBallsConfig.BossProfit c = config();
-        int rows = c == null ? 5 : c.hudRows;
+        int rows = c == null ? 0 : c.hudDrops;
+        if (rows <= 0) return lines;
         for (int i = 0; i < Math.min(rows, r.lines().size()); i++) {
             Line line = r.lines().get(i);
             lines.add(Component.literal(line.amount() + "x " + line.name() + " ").withStyle(ChatFormatting.WHITE)
                 .append(Component.literal(line.value() > 0 ? CombatFeatures.formatCoins(line.value()) : "no price").withStyle(ChatFormatting.GOLD)));
         }
         if (r.lines().size() > rows) lines.add(Component.literal("+" + (r.lines().size() - rows) + " more").withStyle(ChatFormatting.DARK_GRAY));
-        if (r.lines().isEmpty()) lines.add(Component.literal("No drops yet").withStyle(ChatFormatting.GRAY));
         lines.add(Component.literal("Slayer cost: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal("-" + CombatFeatures.formatCoins(r.cost())).withStyle(ChatFormatting.RED)));
         return lines;

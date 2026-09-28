@@ -191,19 +191,19 @@ public final class SkyBallsConfig extends Config {
         public boolean chat = true;
 
         @Expose
-        @ConfigOption(name = "HUD", desc = "A HUD with the last boss's profit and its best drops. It shows the moment the boss dies and fills in as the drops arrive. Move it in /sb hud.")
+        @ConfigOption(name = "HUD", desc = "When a boss dies, its profit (+84.2k or -15.0k) on screen, then it hides until the next boss. Move it in /sb hud.")
         @ConfigEditorBoolean
         public boolean hud = true;
 
         @Expose
-        @ConfigOption(name = "HUD Time (seconds)", desc = "How long the HUD shows after each boss.")
-        @ConfigEditorSlider(minValue = 10, maxValue = 300, minStep = 5)
-        public int hudSeconds = 60;
+        @ConfigOption(name = "HUD Time (seconds)", desc = "How long the HUD stays up once the boss's drops are in, before it hides until the next boss.")
+        @ConfigEditorSlider(minValue = 2, maxValue = 60, minStep = 1)
+        public int hudShowSeconds = 5;
 
         @Expose
-        @ConfigOption(name = "HUD Drops", desc = "How many of the most valuable drops the HUD lists.")
-        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
-        public int hudRows = 5;
+        @ConfigOption(name = "HUD Drops", desc = "How many of the most valuable drops the HUD lists under the profit (0: just the profit).")
+        @ConfigEditorSlider(minValue = 0, maxValue = 10, minStep = 1)
+        public int hudDrops = 0;
     }
 
     public static final class PersonalBest {
