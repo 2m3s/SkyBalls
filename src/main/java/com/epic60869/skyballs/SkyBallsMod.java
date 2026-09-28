@@ -51,6 +51,8 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.combat.CombatFeatures.init();
         com.epic60869.skyballs.features.combat.ZealotCounter.init(configDir);
         com.epic60869.skyballs.features.slayer.SlayerFeatures.init();
+        com.epic60869.skyballs.features.slayer.RngMeterValue.init();
+        com.epic60869.skyballs.features.slayer.SlayerTimes.init(configDir);
         com.epic60869.skyballs.features.garden.GardenFeatures.init();
         com.epic60869.skyballs.features.fishing.FishingFeatures.init();
         com.epic60869.skyballs.features.mining.MiningFeatures.init();

@@ -2,7 +2,18 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.3.6 — unreleased
+## 1.3.7 — 2026-09-28
+
+### Added
+- RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins".
+- Slayer time messages (SkyHanni's): how long your boss took to kill, your personal best for that boss and tier ("NEW PERSONAL BEST!"), and how long the whole quest took. Each can be turned off, and there's a compact style.
+- The slayer boss phase display shows your Tarantula's egg sacs (time left and hits) under its health.
+
+### Fixed
+- Storage overview: smooth-scrolling mice and touchpads barely scrolled (each small wheel step was rounded to nothing).
+- Storage overlay and overview: Retain Scroll Position was lost the first time you opened them after starting the game.
+
+## 1.3.6 — 2026-09-28
 
 ### Removed
 - The SS skip helper (start-click counter and limit) from the Simon Says solver.

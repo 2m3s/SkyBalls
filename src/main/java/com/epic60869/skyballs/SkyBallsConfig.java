@@ -135,6 +135,31 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Kills Since Rare Drop", desc = "Show the kills-since-drop counter.")
         @ConfigEditorBoolean
         public boolean killsSinceDrop = true;
+
+        @Expose
+        @ConfigOption(name = "RNG Meter Value", desc = "In an RNG Meter menu, show each drop's price and how many coins one Slayer XP (or dungeon Score) of meter progress is worth.")
+        @ConfigEditorBoolean
+        public boolean rngMeterValue = true;
+
+        @Expose
+        @ConfigOption(name = "Time to Kill", desc = "Say in chat how long your slayer boss took to kill.")
+        @ConfigEditorBoolean
+        public boolean timeToKill = true;
+
+        @Expose
+        @ConfigOption(name = "Time to Kill Personal Bests", desc = "Say in chat when you beat your fastest kill of that boss and tier, or what your personal best is. Saved per Minecraft account.")
+        @ConfigEditorBoolean
+        public boolean personalBests = true;
+
+        @Expose
+        @ConfigOption(name = "Quest Complete", desc = "Say in chat how long the whole slayer quest (spawn and kill) took.")
+        @ConfigEditorBoolean
+        public boolean questComplete = true;
+
+        @Expose
+        @ConfigOption(name = "Compact Time Messages", desc = "Shorter Time to Kill, Personal Best and Quest Complete messages.")
+        @ConfigEditorBoolean
+        public boolean compactTimes = false;
     }
 
     public static final class Pets {

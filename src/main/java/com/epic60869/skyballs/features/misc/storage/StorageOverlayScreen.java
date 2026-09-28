@@ -113,7 +113,8 @@ public class StorageOverlayScreen extends Screen {
         super.init();
         pageWidthCount = Math.max(1, Math.min(StorageOverlay.config().columns, (width - PADDING) / (PAGE_WIDTH + PADDING)));
         measurements = new Measurements();
-        scroll = Math.max(0F, Math.min(scroll, getMaxScroll()));
+        // Before the first render the content height isn't known yet: don't throw away the retained scroll.
+        if (lastRenderedInnerHeight > 0) scroll = Math.max(0F, Math.min(scroll, getMaxScroll()));
         placeControls();
         if (host == this) {
             addWidget(searchField);

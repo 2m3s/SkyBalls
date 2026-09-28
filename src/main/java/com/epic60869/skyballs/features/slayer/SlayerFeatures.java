@@ -20,11 +20,19 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
-/** Slayer boss phase display: your boss's health (or hits while Voidgloom's shield is up) from its nametag, in a HUD. */
+/**
+ * Slayer boss phase display: your boss's health (or hits while Voidgloom's shield is up) from its nametag, in a HUD,
+ * with your Tarantula's egg sacs (time left and hits) under it. The same scan times your kills for {@link SlayerTimes}.
+ */
 public final class SlayerFeatures {
     /** How far from you your own boss is looked for. */
     private static final double SEARCH_RANGE = 48;
+    /** How far from you a Tarantula's egg sacs are looked for. */
+    private static final double SACK_RANGE = 20;
+
+    private static final Pattern EGG_SAC = Pattern.compile("\\d+s \\d+/\\d+");
 
     private static List<Component> bossLines = List.of();
 
@@ -39,7 +47,7 @@ public final class SlayerFeatures {
 
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            if (++ticks % 5 == 0) tick(mc);
+            if (++ticks % 2 == 0) tick(mc);
         });
 
         SkyBallsHuds.register("slayer_phase", "Slayer Boss Phase",
@@ -51,8 +59,10 @@ public final class SlayerFeatures {
 
     private static void tick(Minecraft mc) {
         FeatureConfigs.Slayer config = config();
-        if (mc.player == null || mc.level == null || config == null || !config.phaseDisplay || !SkyBallsLocation.onSkyblock()) {
+        boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled();
+        if (mc.player == null || mc.level == null || !needed || !SkyBallsLocation.onSkyblock()) {
             bossLines = List.of();
+            SlayerTimes.onBoss(null);
             return;
         }
         updateBossLines(mc);
@@ -96,6 +106,7 @@ public final class SlayerFeatures {
         }
         if (owner == null) {
             bossLines = List.of();
+            SlayerTimes.onBoss(null);
             return;
         }
         AABB area = owner.getBoundingBox().inflate(1.5, 3, 1.5);
@@ -112,7 +123,31 @@ public final class SlayerFeatures {
             }
             if (!lines.isEmpty()) break;
         }
+        String health = lines.isEmpty() ? "" : SkyBallsLocation.strip(lines.get(0).getString());
+        SlayerTimes.onBoss(health);
+        if (isTarantula(health)) addEggSacLines(mc, lines);
         bossLines = lines;
+    }
+
+    private static boolean isTarantula(String text) {
+        return text.contains("Tarantula") || text.contains("Brood");
+    }
+
+    /**
+     * Your Tarantula's egg sacs, nearest first, under its health line. As in SkyHanni's SpiderEggSacHighlighter, an
+     * egg sac is a "5s 1/3" nametag (time left, hits taken/needed) next to a "SHOOT ME!" one.
+     */
+    private static void addEggSacLines(Minecraft mc, List<Component> lines) {
+        List<Entity> tags = mc.level.getEntities((Entity) null, mc.player.getBoundingBox().inflate(SACK_RANGE), e -> nametag(e) != null);
+        List<Entity> shootMe = tags.stream()
+            .filter(e -> SkyBallsLocation.strip(nametag(e).getString()).trim().equalsIgnoreCase("SHOOT ME!")).toList();
+        tags.sort(Comparator.comparingDouble(mc.player::distanceToSqr));
+        for (Entity tagEntity : tags) {
+            Component tag = nametag(tagEntity);
+            if (!EGG_SAC.matcher(SkyBallsLocation.strip(tag.getString()).trim()).matches()) continue;
+            if (shootMe.stream().noneMatch(e -> e.distanceToSqr(tagEntity) < 2.5 * 2.5)) continue;
+            lines.add(Component.literal("Egg Sac ").withStyle(ChatFormatting.YELLOW).append(tag));
+        }
     }
 
     private static final List<String> BOSSES = List.of("Revenant Horror", "Atoned Horror", "Tarantula Broodfather",

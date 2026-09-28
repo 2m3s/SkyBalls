@@ -24,6 +24,7 @@ public class StorageOverviewScreen extends Screen {
 
     public static int scroll = 0;
     public static int lastRenderedHeight = 0;
+    private double scrollRemainder;
 
     public final StorageData content = StorageData.data();
     public boolean isClosing = false;
@@ -35,7 +36,8 @@ public class StorageOverviewScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        scroll = Math.max(0, Math.min(scroll, getMaxScroll()));
+        // Before the first render the content height isn't known yet: don't throw away the retained scroll.
+        if (lastRenderedHeight > 0) scroll = Math.max(0, Math.min(scroll, getMaxScroll()));
     }
 
     @Override
@@ -109,7 +111,11 @@ public class StorageOverviewScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        scroll = Math.max(0, Math.min((int) (scroll + StorageOverlay.adjustScrollSpeed(verticalAmount)), getMaxScroll()));
+        // Smooth-scrolling mice and touchpads send fractions of a notch: add them up rather than rounding each to 0.
+        scrollRemainder += StorageOverlay.adjustScrollSpeed(verticalAmount);
+        int step = (int) scrollRemainder;
+        scrollRemainder -= step;
+        scroll = Math.max(0, Math.min(scroll + step, getMaxScroll()));
         return true;
     }
 
