@@ -5,6 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## test-1.3.7 — 2026-09-28
 
 ### Added
+- Sign Calculator (Misc), from Skyblocker: on SkyBlock's number signs (auction prices, bazaar amounts) the number you typed shows above the sign, e.g. `15m = 15,000,000`, and sums like `2.5m*3` are worked out and sent as the number.
 - RNG Drop Totem Animation (Combat → Rare Drops), from Skyblocker: big RNG drops pop up like a Totem of Undying, with particles and a sound.
 - Miniboss Alert (Slayers): a title, a ding and a chat line when a slayer miniboss spawns near you during a slayer quest.
 - RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins". Above the menu, "Best Profit" names the drop worth the most per point.

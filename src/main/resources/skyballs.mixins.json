@@ -14,6 +14,7 @@
     "SkyBallsEmojiPreviewMixin",
     "SkyBallsMouseHandlerMixin",
     "SkyBallsTooltipScrollMixin",
+    "SkyBallsSignEditMixin",
     "SkyBallsPlayerInfoMixin",
     "SkyBallsPlayerInfoAccessor",
     "SkyBallsMultiLineEditBoxAccessor",

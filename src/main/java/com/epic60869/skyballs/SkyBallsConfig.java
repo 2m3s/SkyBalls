@@ -300,6 +300,11 @@ public final class SkyBallsConfig extends Config {
         public com.epic60869.skyballs.features.misc.ScreenshotShare.Host screenshotHost = com.epic60869.skyballs.features.misc.ScreenshotShare.Host.LITTERBOX_72H;
 
         @Expose
+        @ConfigOption(name = "Sign Calculator", desc = "On SkyBlock's number signs (auction prices, bazaar amounts, ...) show what you typed as a number above the sign, e.g. 15m = 15,000,000, and send that number, so sums like 2.5m*3 work. Suffixes: k, m, b, s (64), e (160).")
+        @ConfigEditorBoolean
+        public boolean signCalculator = true;
+
+        @Expose
         @ConfigOption(name = "Hypixel Button", desc = "A Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.")
         @ConfigEditorBoolean
         public boolean hypixelButton = true;
