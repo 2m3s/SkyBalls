@@ -167,9 +167,8 @@ public final class SlayerPbHud {
         }
 
         // The fight in progress, against your PB and the #1 time.
-        long spawnedAt = SlayerTimes.bossSpawnedAt();
-        if (spawnedAt > 0 && boss.equals(SlayerLeaderboard.canonical(SlayerTimes.lastBoss()))) {
-            long elapsed = System.currentTimeMillis() - spawnedAt;
+        long elapsed = SlayerTimes.bossElapsed();
+        if (elapsed >= 0 && boss.equals(SlayerLeaderboard.canonical(SlayerTimes.lastBoss()))) {
             MutableComponent live = Component.literal("Now: " + SlayerTimes.format(elapsed)).withStyle(ChatFormatting.AQUA);
             if (mine != null) live.append(gap("  PB ", elapsed, mine));
             if (best > 0) live.append(gap("  #1 ", elapsed, best));

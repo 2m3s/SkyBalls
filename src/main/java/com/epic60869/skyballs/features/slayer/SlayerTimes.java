@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
 
 /**
  * Slayer time messages and personal bests, following SkyHanni's SlayerTimeMessages: how long your boss took to kill
- * (from its "Spawned by: you" nametag appearing to "NICE! SLAYER BOSS SLAIN!", or to "YOU COCOONED YOUR SLAYER BOSS"
- * when it's cocooned, since the slain message only comes once the cocoon hatches), your personal best for that boss and
+ * (from its "Spawned by: you" nametag appearing to the moment it dies: its health hitting 0 or its nametag going,
+ * confirmed by "NICE! SLAYER BOSS SLAIN!" or "YOU COCOONED YOUR SLAYER BOSS"), your personal best for that boss and
  * tier (saved per Minecraft account), and how long the whole quest took.
  */
 public final class SlayerTimes {
@@ -43,6 +43,11 @@ public final class SlayerTimes {
 
     private static long questStartedAt;
     private static long spawnedAt;
+    /** The last scan your boss was seen alive, and when it died (0 while alive): see {@link #onBoss}. */
+    private static long lastSeenAt;
+    private static long diedAt;
+    /** "☠ Revenant Horror V 0❤": the boss is dead even if its nametag lingers. */
+    private static final Pattern ZERO_HEALTH = Pattern.compile("(?<![\\d.,])0❤");
     private static String boss;
     /** Set after a kill until your boss's nametag is gone, so the lingering tag doesn't start a new timer. */
     private static boolean killed;
@@ -68,14 +73,28 @@ public final class SlayerTimes {
         return config != null && (config.timeToKill || config.personalBests);
     }
 
-    /** Your boss's health line this tick, or null when your boss isn't around (from {@link SlayerFeatures}). */
+    /**
+     * Your boss's health line this scan (every 2 ticks), "" when its nametag is there without one, or null when your
+     * boss isn't around (from {@link SlayerFeatures}). The boss dies at the last scan it was seen alive: its health
+     * hits 0 or its nametag goes. The kill only counts once Hypixel confirms it ("NICE! SLAYER BOSS SLAIN!" or a
+     * cocoon), but it is timed to that moment, not to the chat message.
+     */
     static void onBoss(String healthLine) {
+        long now = System.currentTimeMillis();
         if (healthLine == null) {
             killed = false;
+            if (spawnedAt > 0 && diedAt == 0 && lastSeenAt > 0) diedAt = lastSeenAt;
             return;
         }
         if (killed) return;
-        if (spawnedAt == 0) spawnedAt = System.currentTimeMillis();
+        if (spawnedAt == 0) spawnedAt = now;
+        if (healthLine.isEmpty() || ZERO_HEALTH.matcher(healthLine).find()) {
+            if (diedAt == 0 && lastSeenAt > 0) diedAt = healthLine.isEmpty() ? lastSeenAt : now;
+        } else {
+            // Alive: back in range, or Tier 5 Tarantula's second phase after the first one went.
+            lastSeenAt = now;
+            diedAt = 0;
+        }
         Matcher m = BOSS.matcher(healthLine);
         if (m.find()) {
             boss = key(m.group(2) == null ? m.group(1) : m.group(1) + " " + m.group(2));
@@ -103,6 +122,12 @@ public final class SlayerTimes {
     /** When your current boss spawned (System.currentTimeMillis), or 0 when none is being timed. */
     public static long bossSpawnedAt() {
         return spawnedAt;
+    }
+
+    /** How long the current fight has lasted, stopped at the boss's death; -1 when none is being timed. */
+    public static long bossElapsed() {
+        if (spawnedAt == 0) return -1;
+        return (diedAt > 0 ? diedAt : System.currentTimeMillis()) - spawnedAt;
     }
 
     private static void onChat(String text) {
@@ -134,14 +159,18 @@ public final class SlayerTimes {
     private static void reset() {
         questStartedAt = 0;
         spawnedAt = 0;
+        lastSeenAt = 0;
+        diedAt = 0;
         boss = null;
     }
 
     private static void onKill() {
         if (spawnedAt == 0 || boss == null) return;
-        long time = System.currentTimeMillis() - spawnedAt;
+        long time = (diedAt > 0 ? diedAt : System.currentTimeMillis()) - spawnedAt;
         String name = boss;
         spawnedAt = 0;
+        lastSeenAt = 0;
+        diedAt = 0;
         boss = null;
         killed = true;
         SkyBallsConfig.PersonalBest config = config();
