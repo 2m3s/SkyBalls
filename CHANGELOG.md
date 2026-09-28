@@ -6,7 +6,7 @@ All notable changes to SkyBalls are listed here, newest first.
 
 ### Added
 - Overflow pet level ups in chat again (NopoMod's): "[SB] Your Golden Dragon leveled up to level 158!" when your pet reaches the next overflow level. Needs Overflow Pet Levels on (Pets).
-- Boss Profit Message (Slayers): after each slayer boss, "Profit: +50k" (or "-10k") in chat. Hover it for each drop and its value, the drops' total, the quest's cost (what your purse went down by, or Hypixel's price) and the total.
+- Boss Profit (Slayers): after each slayer boss, "Profit: +50k" (or "-10k") in chat, and a Boss Profit HUD. Hover the chat line for each drop and its value, the drops' total, the quest's cost and the total. The HUD shows the moment the boss dies and fills in as the drops arrive (sack drops come with Hypixel's "[Sacks]" message); the chat line goes out once the sack drops are in, or 2 seconds after the kill. The cost is Hypixel's price for the boss and tier, or half of it with Aatrox's Slashed Pricing when your purse shows that.
 - Sign Calculator (Misc), from Skyblocker: on SkyBlock's number signs (auction prices, bazaar amounts) the number you typed shows above the sign, e.g. `15m = 15,000,000`, and sums like `2.5m*3` are worked out and sent as the number.
 - RNG Drop Totem Animation (Combat → Rare Drops), from Skyblocker: big RNG drops pop up like a Totem of Undying, with particles and a sound.
 - Miniboss Alert (Slayers): a title, a ding and a chat line when a slayer miniboss spawns near you during a slayer quest.

@@ -147,9 +147,9 @@ public final class SkyBallsConfig extends Config {
         public boolean minibossAlert = true;
 
         @Expose
-        @ConfigOption(name = "Boss Profit Message", desc = "After each slayer boss, \"Profit: +50k\" in chat: hover it for each drop and its value, the drops' total, the quest's cost and what's left. Drops are what came into your inventory or sacks from that boss.")
-        @ConfigEditorBoolean
-        public boolean bossProfit = true;
+        @Accordion
+        @ConfigOption(name = "Boss Profit", desc = "Profit from each slayer boss: its drops and their value, minus the quest's cost, in chat and in a HUD.")
+        public BossProfit bossProfit = new BossProfit();
 
         @Expose
         @Accordion
@@ -182,6 +182,28 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "PB Leaderboard Boss", desc = "Leave empty (or Auto) for your current or last slayer boss, or pin one, e.g. Revenant Horror V or Voidgloom Seraph IV.")
         @ConfigEditorText
         public String boss = "Auto";
+    }
+
+    public static final class BossProfit {
+        @Expose
+        @ConfigOption(name = "Chat Message", desc = "After each slayer boss, \"Profit: +50k\" in chat: hover it for each drop and its value, the drops' total, the quest's cost and what's left. It goes out once the boss's sack drops are in, or 2 seconds after the kill.")
+        @ConfigEditorBoolean
+        public boolean chat = true;
+
+        @Expose
+        @ConfigOption(name = "HUD", desc = "A HUD with the last boss's profit and its best drops. It shows the moment the boss dies and fills in as the drops arrive. Move it in /sb hud.")
+        @ConfigEditorBoolean
+        public boolean hud = true;
+
+        @Expose
+        @ConfigOption(name = "HUD Time (seconds)", desc = "How long the HUD shows after each boss.")
+        @ConfigEditorSlider(minValue = 10, maxValue = 300, minStep = 5)
+        public int hudSeconds = 60;
+
+        @Expose
+        @ConfigOption(name = "HUD Drops", desc = "How many of the most valuable drops the HUD lists.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
+        public int hudRows = 5;
     }
 
     public static final class PersonalBest {
@@ -1136,6 +1158,17 @@ public final class SkyBallsConfig extends Config {
         JsonObject root = LEGACY_GSON.fromJson(Files.readString(path, StandardCharsets.UTF_8), JsonObject.class);
         if (root == null) return;
         boolean changed = false;
+
+        // Slayers > Boss Profit Message (on/off) became the Boss Profit section (chat message, HUD, ...).
+        if (root.has("slayers") && root.get("slayers").isJsonObject()) {
+            JsonObject slayers = root.getAsJsonObject("slayers");
+            if (slayers.has("bossProfit") && slayers.get("bossProfit").isJsonPrimitive()) {
+                JsonObject profit = new JsonObject();
+                profit.addProperty("chat", slayers.get("bossProfit").getAsBoolean());
+                slayers.add("bossProfit", profit);
+                changed = true;
+            }
+        }
 
         if (root.has("pets") && root.get("pets").isJsonObject()) {
             JsonObject pets = root.getAsJsonObject("pets");
