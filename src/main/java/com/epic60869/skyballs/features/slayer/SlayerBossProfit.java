@@ -460,7 +460,7 @@ public final class SlayerBossProfit {
     /** The boss's drops are all in (the chat line went out): the HUD stays up {@code HUD Time} more, then hides. */
     private static void settleHud() {
         SkyBallsConfig.BossProfit c = config();
-        hudUntil = System.currentTimeMillis() + (c == null ? 5 : c.hudShowSeconds) * 1000L;
+        hudUntil = System.currentTimeMillis() + (c == null ? 2 : c.hudHideSeconds) * 1000L;
     }
 
     /** One line per boss, "Tarantula Broodfather V +84.2k", with its best drops under it when HUD Drops is above 0. */

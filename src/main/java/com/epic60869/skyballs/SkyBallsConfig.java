@@ -197,8 +197,8 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @ConfigOption(name = "HUD Time (seconds)", desc = "How long the HUD stays up once the boss's drops are in, before it hides until the next boss.")
-        @ConfigEditorSlider(minValue = 2, maxValue = 60, minStep = 1)
-        public int hudShowSeconds = 5;
+        @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1)
+        public int hudHideSeconds = 2;
 
         @Expose
         @ConfigOption(name = "HUD Drops", desc = "How many of the most valuable drops the HUD lists under the profit (0: just the profit).")
