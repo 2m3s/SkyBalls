@@ -173,6 +173,9 @@ public final class SlayerBossProfit {
         loadDrops(configDir);
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 == 0) tick();
+            // Right after a kill, every tick: the boss's drops land on the ground all at once, and the chat line goes
+            // out as soon as they have.
+            else if (kill != null && System.currentTimeMillis() - kill.at < FAST_MS) checkGround();
         });
         SkyBallsChat.onGameMessage((component, overlay) -> {
             if (!overlay) onMessage(component);
@@ -287,7 +290,19 @@ public final class SlayerBossProfit {
         // landed a moment before Hypixel's kill message).
         kill.seenItems.addAll(groundAtSpawn);
         baseline = null;
+        // The drops may already be on the ground when Hypixel's kill message comes.
+        checkGround();
+    }
+
+    /** How long after a kill the ground is read every tick. */
+    private static final long FAST_MS = 3_000L;
+
+    /** Reads the boss's drops off the ground; once they've landed, the chat line goes out. */
+    private static void checkGround() {
+        if (kill == null) return;
+        readGround();
         refresh();
+        if (kill.groundAt > 0 && System.currentTimeMillis() - kill.groundAt >= GROUND_SETTLE_MS) postChat();
     }
 
     private static void tick() {
@@ -319,8 +334,8 @@ public final class SlayerBossProfit {
 
     /** How far from you the boss's drops on the ground are looked for. */
     private static final double GROUND_RANGE = 15;
-    /** After the first drop shows on the ground, the rest land within this. */
-    private static final long GROUND_SETTLE_MS = 1_500L;
+    /** After the first drop shows on the ground, the rest land within this (they come together, within a few ticks). */
+    private static final long GROUND_SETTLE_MS = 250L;
 
     private static List<net.minecraft.world.entity.item.ItemEntity> groundItems() {
         Minecraft mc = Minecraft.getInstance();
