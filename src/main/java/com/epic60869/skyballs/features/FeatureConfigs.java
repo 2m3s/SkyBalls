@@ -128,6 +128,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Animation Threshold (millions)", desc = "Minimum drop value, in millions of coins, for the animation.")
         @ConfigEditorSlider(minValue = 1, maxValue = 500, minStep = 1)
         public float thresholdMillions = 10;
+
+        @Expose
+        @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: big RNG drops (slayer, Diana and fishing RNG items, and any PRAY TO RNGESUS or RNG METER drop) pop up like a Totem of Undying, with particles and a sound.")
+        @ConfigEditorBoolean
+        public boolean totemAnimation = true;
     }
 
     public static final class Slayer {

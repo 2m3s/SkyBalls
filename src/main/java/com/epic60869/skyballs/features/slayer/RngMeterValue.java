@@ -11,7 +11,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.core.component.DataComponents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import com.epic60869.skyballs.mixin.SkyBallsContainerScreenAccessor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -33,19 +39,49 @@ public final class RngMeterValue {
 
     public static void init() {
         ItemTooltipCallback.EVENT.register((stack, context, flag, lines) -> {
-            SkyBallsConfig config = SkyBallsConfig.current();
-            if (config == null || !config.slayers.rngMeterValue || !Compat.isOnSkyblock() || !inRngMeter()) return;
+            if (!enabled() || !inRngMeter()) return;
             addValue(stack, lines);
+        });
+        // The best drop per point, above the menu (worked out twice a second: prices and the menu change slowly).
+        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+            if (!(screen instanceof AbstractContainerScreen<?> container) || !isRngMeter(container)) return;
+            Component[] line = {null};
+            int[] ticks = {0};
+            ScreenEvents.afterTick(screen).register(s -> {
+                if (ticks[0]++ % 10 == 0) line[0] = enabled() ? best(container) : null;
+            });
+            ScreenEvents.afterExtract(screen).register((s, graphics, mouseX, mouseY, delta) -> {
+                if (line[0] == null) return;
+                var font = Minecraft.getInstance().font;
+                int top = ((SkyBallsContainerScreenAccessor) container).skyballs$getTopPos();
+                graphics.text(font, line[0], container.width / 2 - font.width(line[0]) / 2, Math.max(2, top - 12), 0xFFFFFFFF, true);
+            });
         });
     }
 
-    private static boolean inRngMeter() {
-        if (!(Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> container)) return false;
+    private static boolean enabled() {
+        SkyBallsConfig config = SkyBallsConfig.current();
+        return config != null && config.slayers.rngMeterValue && Compat.isOnSkyblock();
+    }
+
+    private static boolean isRngMeter(AbstractContainerScreen<?> container) {
         String title = ChatFormatting.stripFormatting(container.getTitle().getString());
         return title != null && title.contains("RNG Meter");
     }
 
-    private static void addValue(ItemStack stack, List<Component> lines) {
+    private static boolean inRngMeter() {
+        return Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> container && isRngMeter(container);
+    }
+
+    /** A drop's price, what the meter needs for it, and whether that's Slayer XP or dungeon Score. */
+    private record Value(double price, double required, String unit) {
+        double perPoint() {
+            return price / required;
+        }
+    }
+
+    /** The drop's value from its tooltip (or name and lore) lines, or null if it isn't an RNG meter drop. */
+    private static Value value(ItemStack stack, List<Component> lines) {
         double required = -1;
         String unit = "XP";
         for (Component line : lines) {
@@ -60,10 +96,15 @@ public final class RngMeterValue {
                 required = parse(m.group(1));
             }
         }
-        if (required <= 0) return;
-
+        if (required <= 0) return null;
         String id = priceId(stack, lines);
-        double price = id == null ? 0 : SkyBallsPriceTooltip.unitPrice(id);
+        return new Value(id == null ? 0 : SkyBallsPriceTooltip.unitPrice(id), required, unit);
+    }
+
+    private static void addValue(ItemStack stack, List<Component> lines) {
+        Value value = value(stack, lines);
+        if (value == null) return;
+        double price = value.price();
         if (price <= 0) {
             lines.add(Component.literal("RNG Value: ").withStyle(ChatFormatting.GOLD)
                 .append(Component.literal("No price data").withStyle(ChatFormatting.RED)));
@@ -71,8 +112,35 @@ public final class RngMeterValue {
         }
         lines.add(Component.literal("RNG Value: ").withStyle(ChatFormatting.GOLD)
             .append(Component.literal(CombatFeatures.formatCoins(price) + " coins").withStyle(ChatFormatting.DARK_AQUA)));
-        lines.add(Component.literal("1 " + unit + " = ").withStyle(ChatFormatting.GOLD)
-            .append(Component.literal(perPoint(price / required) + " coins").withStyle(ChatFormatting.GREEN)));
+        lines.add(Component.literal("1 " + value.unit() + " = ").withStyle(ChatFormatting.GOLD)
+            .append(Component.literal(perPoint(value.perPoint()) + " coins").withStyle(ChatFormatting.GREEN)));
+    }
+
+    // ---------------------------------------------------------------- best profit, above the menu
+
+    /** The menu's best drop per point, e.g. "Best Profit: Tarantula Silk (1 XP = 123 coins)"; null if none has a price. */
+    private static Component best(AbstractContainerScreen<?> screen) {
+        String bestName = null;
+        Value best = null;
+        List<Slot> slots = screen.getMenu().slots;
+        for (int i = 0; i < slots.size() - 36; i++) {
+            ItemStack stack = slots.get(i).getItem();
+            if (stack.isEmpty()) continue;
+            List<Component> lines = new ArrayList<>();
+            lines.add(Compat.realName(stack));
+            ItemLore lore = stack.get(DataComponents.LORE);
+            if (lore != null) lines.addAll(lore.lines());
+            Value value = value(stack, lines);
+            if (value == null || value.price() <= 0) continue;
+            if (best == null || value.perPoint() > best.perPoint()) {
+                best = value;
+                bestName = ChatFormatting.stripFormatting(lines.get(0).getString());
+            }
+        }
+        if (best == null) return null;
+        return Component.literal("Best Profit: ").withStyle(ChatFormatting.GOLD)
+            .append(Component.literal(bestName == null ? "?" : bestName.trim()).withStyle(ChatFormatting.WHITE))
+            .append(Component.literal(" (1 " + best.unit() + " = " + perPoint(best.perPoint()) + " coins)").withStyle(ChatFormatting.GREEN));
     }
 
     /** Coins per point, with decimals when it's small (books can be worth under a coin per XP). */

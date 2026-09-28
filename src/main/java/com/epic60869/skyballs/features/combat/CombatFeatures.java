@@ -187,6 +187,7 @@ public final class CombatFeatures {
                 item = prefixed.group("item").trim();
             }
             onRareDrop(config.rareDrops, text.trim(), item, amount);
+            RareDropTotem.onDrop(m.group("type").trim(), item);
         }
     }
 

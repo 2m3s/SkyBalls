@@ -5,8 +5,9 @@ All notable changes to SkyBalls are listed here, newest first.
 ## test-1.3.7 — 2026-09-28
 
 ### Added
+- RNG Drop Totem Animation (Combat → Rare Drops), from Skyblocker: big RNG drops pop up like a Totem of Undying, with particles and a sound.
 - Miniboss Alert (Slayers): a title, a ding and a chat line when a slayer miniboss spawns near you during a slayer quest.
-- RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins".
+- RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins". Above the menu, "Best Profit" names the drop worth the most per point.
 - Slayer time messages (SkyHanni's): how long your boss took to kill, timed to the moment it dies (its health hits 0 or it's gone; a cocooned boss when it's cocooned), not to Hypixel's chat message, your personal best for that boss and tier ("NEW PERSONAL BEST!"), and how long the whole quest took. Each can be turned off, and there's a compact style.
 - The slayer boss phase display shows your Tarantula's egg sacs (time left and hits) under its health.
 - Slayer kill time leaderboard: your slayer personal bests are shared with the SkyBalls leaderboard (Slayers → Personal Best → Share Slayer PBs, on by default; bests from before this update are sent the next time you connect). `/sb leaderboard slayer` shows every boss and tier with its record holder and your time and rank (click a row for its top 10), and `/sb leaderboard slayer <boss>` shows the top 10 for one boss, e.g. `Revenant Horror V`. Without a connection it shows your own times. The board is also in Discord (`/leaderboard slayer`).
