@@ -142,12 +142,20 @@ public final class SlayerFeatures {
         List<Entity> shootMe = tags.stream()
             .filter(e -> SkyBallsLocation.strip(nametag(e).getString()).trim().equalsIgnoreCase("SHOOT ME!")).toList();
         tags.sort(Comparator.comparingDouble(mc.player::distanceToSqr));
+        MutableComponent row = null;
         for (Entity tagEntity : tags) {
             Component tag = nametag(tagEntity);
             if (!EGG_SAC.matcher(SkyBallsLocation.strip(tag.getString()).trim()).matches()) continue;
             if (shootMe.stream().noneMatch(e -> e.distanceToSqr(tagEntity) < 2.5 * 2.5)) continue;
-            lines.add(Component.literal("Egg Sac ").withStyle(ChatFormatting.YELLOW).append(tag));
+            // Two egg sacs per line.
+            if (row == null) {
+                row = Component.literal("Egg Sac ").withStyle(ChatFormatting.YELLOW).append(tag);
+            } else {
+                lines.add(row.append(Component.literal("   Egg Sac ").withStyle(ChatFormatting.YELLOW)).append(tag));
+                row = null;
+            }
         }
+        if (row != null) lines.add(row);
     }
 
     private static final List<String> BOSSES = List.of("Revenant Horror", "Atoned Horror", "Tarantula Broodfather",
