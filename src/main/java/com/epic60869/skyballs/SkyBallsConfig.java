@@ -142,7 +142,7 @@ public final class SkyBallsConfig extends Config {
         public boolean rngMeterValue = false;
 
         @Expose
-        @ConfigOption(name = "Miniboss Alert", desc = "A title, a ding and a chat line when a slayer miniboss (Revenant Champion, Tarantula Beast, Voidcrazed Maniac, ...) spawns near you during a slayer quest.")
+        @ConfigOption(name = "Miniboss Alert", desc = "A title and a ding when one of your slayer minibosses spawns (Hypixel's \"SLAYER MINI-BOSS ... has spawned!\"), not other players' minibosses.")
         @ConfigEditorBoolean
         public boolean minibossAlert = false;
 
