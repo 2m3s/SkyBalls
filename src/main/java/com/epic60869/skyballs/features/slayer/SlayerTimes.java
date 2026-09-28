@@ -120,6 +120,7 @@ public final class SlayerTimes {
         if (newBest) {
             bests.put(name, time);
             save();
+            SlayerLeaderboard.onPersonalBest(name, time);
         }
 
         boolean compact = config.compactTimes;

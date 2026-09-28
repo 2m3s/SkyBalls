@@ -24,6 +24,10 @@ import java.util.regex.PatternSyntaxException;
  * your chat for those things and reports them, and the server keeps the standings (shown in Discord and with
  * /sb leaderboard).
  *
+ * <p>/sb leaderboard lists the running event boards and the Slayer PBs board; /sb leaderboard &lt;name&gt; shows an
+ * event board, and when no event board has that name, "slayer" and "slayer &lt;boss&gt;" show the slayer kill time
+ * board ({@link com.epic60869.skyballs.features.slayer.SlayerLeaderboard}, which documents its slayerPb* packets).
+ *
  * <pre>
  * server -> mod: leaderboardsActive {boards: [{id, name, endsAt, trackers: [
  *                    {kind: "drop", items: ["Summoning Eye", ...]},            RARE DROP! / PET DROP! ... messages
@@ -59,7 +63,7 @@ public final class SkyBallsLeaderboards {
                 dispatcher.register(ClientCommands.literal(root).then(ClientCommands.literal("leaderboard")
                     .executes(c -> list())
                     .then(ClientCommands.argument("name", StringArgumentType.greedyString())
-                        .suggests((c, b) -> SharedSuggestionProvider.suggest(boards.stream().map(Board::name).toList(), b))
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(nameSuggestions(), b))
                         .executes(c -> standings(StringArgumentType.getString(c, "name"))))));
                 // Testing tools, only for the owner account (like /sb viewboth).
                 if (com.epic60869.skyballs.reports.Reports.isOwner()) dispatcher.register(ClientCommands.literal(root).then(debugCommand()));
@@ -272,25 +276,52 @@ public final class SkyBallsLeaderboards {
     private static int list() {
         List<Board> running = boards;
         if (running.isEmpty()) {
-            say(Component.literal("No leaderboards are running right now.").withStyle(ChatFormatting.GRAY));
-            return 1;
+            say(Component.literal("No event leaderboards are running right now.").withStyle(ChatFormatting.GRAY));
+        } else {
+            MutableComponent text = Component.literal("Running leaderboards: ").withStyle(ChatFormatting.GRAY);
+            for (int i = 0; i < running.size(); i++) {
+                Board board = running.get(i);
+                if (i > 0) text.append(Component.literal(", ").withStyle(ChatFormatting.GRAY));
+                text.append(Component.literal(board.name()).withStyle(style -> style.withColor(ChatFormatting.YELLOW)
+                    .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/sb leaderboard " + board.name()))
+                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Show the standings")))));
+            }
+            say(text);
         }
-        MutableComponent text = Component.literal("Running leaderboards: ").withStyle(ChatFormatting.GRAY);
-        for (int i = 0; i < running.size(); i++) {
-            Board board = running.get(i);
-            if (i > 0) text.append(Component.literal(", ").withStyle(ChatFormatting.GRAY));
-            text.append(Component.literal(board.name()).withStyle(style -> style.withColor(ChatFormatting.YELLOW)
-                .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/sb leaderboard " + board.name()))
-                .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Show the standings")))));
-        }
-        say(text);
+        say(Component.literal("Always on: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal("Slayer PBs").withStyle(style -> style.withColor(ChatFormatting.RED)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/sb leaderboard slayer"))
+                .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Everyone's fastest slayer kill for each boss and tier"))))));
         return 1;
     }
 
+    /** Tab completion: running event boards, then "slayer" and "slayer &lt;boss&gt;" for your and the known boss keys. */
+    private static List<String> nameSuggestions() {
+        List<String> out = new ArrayList<>(boards.stream().map(Board::name).toList());
+        out.add("slayer");
+        for (String boss : com.epic60869.skyballs.features.slayer.SlayerLeaderboard.suggestions()) out.add("slayer " + boss);
+        return out;
+    }
+
+    /**
+     * /sb leaderboard &lt;name&gt;: an event board with that name first (so a board called "slayer" or "Slayer Race"
+     * still works), otherwise "slayer" / "slayer &lt;boss&gt;" for the slayer kill time board.
+     */
     private static int standings(String name) {
-        Board board = boards.stream().filter(b -> b.name().equalsIgnoreCase(name.trim())).findFirst().orElse(null);
+        String input = name.trim();
+        Board board = boards.stream().filter(b -> b.name().equalsIgnoreCase(input)).findFirst().orElse(null);
         if (board == null) {
-            say(Component.literal("No running leaderboard called \"" + name + "\".").withStyle(ChatFormatting.RED));
+            String lower = input.toLowerCase(Locale.ROOT);
+            if (lower.equals("slayer")) {
+                com.epic60869.skyballs.features.slayer.SlayerLeaderboard.showSummary();
+                return 1;
+            }
+            if (lower.startsWith("slayer ")) {
+                com.epic60869.skyballs.features.slayer.SlayerLeaderboard.showBoss(input.substring("slayer ".length()));
+                return 1;
+            }
+            say(Component.literal("No running leaderboard called \"" + name + "\". Try /sb leaderboard slayer for slayer kill times.")
+                .withStyle(ChatFormatting.RED));
             return 1;
         }
         JsonObject packet = new JsonObject();

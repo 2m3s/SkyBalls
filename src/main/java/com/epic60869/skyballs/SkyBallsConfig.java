@@ -160,6 +160,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Compact Time Messages", desc = "Shorter Time to Kill, Personal Best and Quest Complete messages.")
         @ConfigEditorBoolean
         public boolean compactTimes = false;
+
+        @Expose
+        @ConfigOption(name = "Share Slayer PBs", desc = "Send your slayer kill time personal bests to the SkyBalls leaderboard (/sb leaderboard slayer). When off, nothing is sent.")
+        @ConfigEditorBoolean
+        public boolean sharePbs = true;
     }
 
     public static final class Pets {
