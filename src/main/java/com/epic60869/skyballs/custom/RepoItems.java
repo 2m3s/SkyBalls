@@ -46,7 +46,7 @@ public final class RepoItems {
 	private static final List<Runnable> AFTER_ITEMS_LOADED = new ArrayList<>();
 	private static volatile boolean itemsLoaded;
 
-	private record RepoItem(String id, String name, Item item, @Nullable String texture, @Nullable String itemModel) {}
+	private record RepoItem(String id, String name, Item item, @Nullable String texture, @Nullable String itemModel, @Nullable String tier) {}
 
 	/** A SkyBlock player head, without creating an item stack. */
 	public record Head(String id, String name, String texture) {}
@@ -147,6 +147,30 @@ public final class RepoItems {
 		}
 	}
 
+	/** The item's rarity as Hypixel's item list gives it ("LEGENDARY", "EPIC", ...), or null if unknown. */
+	public static @Nullable String tier(String id) {
+		synchronized (ITEMS) {
+			RepoItem item = ITEMS.get(id);
+			return item == null ? null : item.tier();
+		}
+	}
+
+	/** The colour of a rarity ("LEGENDARY" is gold), white when unknown. */
+	public static net.minecraft.ChatFormatting tierColour(@Nullable String tier) {
+		if (tier == null) return net.minecraft.ChatFormatting.WHITE;
+		return switch (tier) {
+			case "UNCOMMON" -> net.minecraft.ChatFormatting.GREEN;
+			case "RARE" -> net.minecraft.ChatFormatting.BLUE;
+			case "EPIC" -> net.minecraft.ChatFormatting.DARK_PURPLE;
+			case "LEGENDARY" -> net.minecraft.ChatFormatting.GOLD;
+			case "MYTHIC" -> net.minecraft.ChatFormatting.LIGHT_PURPLE;
+			case "DIVINE" -> net.minecraft.ChatFormatting.AQUA;
+			case "SPECIAL", "VERY_SPECIAL" -> net.minecraft.ChatFormatting.RED;
+			case "ULTIMATE" -> net.minecraft.ChatFormatting.DARK_RED;
+			default -> net.minecraft.ChatFormatting.WHITE;
+		};
+	}
+
 	public static ItemStack itemStack(String id) {
 		RepoItem item;
 		synchronized (ITEMS) {
@@ -176,7 +200,8 @@ public final class RepoItems {
 				String material = item.has("material") ? item.get("material").getAsString() : "";
 				String texture = skinTexture(item.get("skin"));
 				String itemModel = item.has("item_model") ? item.get("item_model").getAsString() : null;
-				loaded.put(id, new RepoItem(id, name, material(material), texture, itemModel));
+				String tier = item.has("tier") ? item.get("tier").getAsString() : null;
+				loaded.put(id, new RepoItem(id, name, material(material), texture, itemModel, tier));
 			}
 			synchronized (ITEMS) {
 				ITEMS.clear();
