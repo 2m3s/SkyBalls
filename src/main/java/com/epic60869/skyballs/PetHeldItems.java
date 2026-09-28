@@ -71,8 +71,11 @@ public final class PetHeldItems {
     public static Component heldItem(String petName) {
         String id = HELD.get(key(petName));
         if (id == null || id.isEmpty()) return null;
+        // The repo item's name carries its rarity colour ("Lucky Clover" in the colour of its rarity).
+        net.minecraft.world.item.ItemStack stack = RepoItems.itemStack(id);
+        if (!stack.isEmpty() && !stack.is(net.minecraft.world.item.Items.BARRIER)) return stack.getHoverName().copy();
         String name = RepoItems.displayName(id);
-        return Component.literal(name != null ? name : id.replace('_', ' '));
+        return Component.literal(name != null ? name : id.replace('_', ' ')).withStyle(net.minecraft.ChatFormatting.WHITE);
     }
 
     private static void onMessage(Component component) {

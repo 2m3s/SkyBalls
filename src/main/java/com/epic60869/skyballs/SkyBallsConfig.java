@@ -186,7 +186,7 @@ public final class SkyBallsConfig extends Config {
 
     public static final class BossProfit {
         @Expose
-        @ConfigOption(name = "Chat Message", desc = "After each slayer boss, \"Profit: +50k\" in chat: hover it for each drop and its value, the drops' total, the quest's cost and what's left. It goes out once the boss's sack drops are in, or 2 seconds after the kill.")
+        @ConfigOption(name = "Chat Message", desc = "After each slayer boss, \"Profit: +50k\" in chat: hover it for each drop and its value, the drops' total, the quest's cost and what's left. It goes out once the boss's drops have landed on the ground (or Hypixel's [Sacks] message with them comes); the HUD shows straight away.")
         @ConfigEditorBoolean
         public boolean chat = true;
 

@@ -28,15 +28,20 @@ import java.util.regex.Pattern;
 /**
  * Profit per slayer boss: "Profit: -10k" in chat after each kill, with a hover listing each drop and its value, the
  * drops' total, the quest's cost and what's left, and the same in the Boss Profit HUD. Drops are what came into your
- * inventory since your boss spawned, plus what went straight into your sacks (Hypixel's "[Sacks]" messages), and only
+ * inventory since your boss spawned, what went straight into your sacks (Hypixel's "[Sacks]" messages) and what it
+ * showed on the ground when it died (whichever is more for each item), and only
  * items that boss drops (SkyHanni's slayer drop lists), so mob drops and pickups meanwhile don't count. The
- * chat line goes out as soon as the "[Sacks]" message after the kill comes, or 2 seconds after the kill without one;
+ * chat line goes out once the drops on the ground have landed (or the "[Sacks]" message with them comes), at most
+ * 30 seconds after the kill;
  * the HUD shows from the moment the boss dies and fills in as later drops arrive, for up to 30 seconds. The cost is
  * what your purse went down by when the quest started, or Hypixel's price for that boss and tier.
  */
 public final class SlayerBossProfit {
-    /** Without a "[Sacks]" message, the chat line waits this long for drops to reach your inventory. */
-    private static final long CHAT_WAIT_MS = 2_000L;
+    /**
+     * The chat line waits for the "[Sacks]" message with the boss's drops (Hypixel sends those every so often, not
+     * at the kill); without one it goes out this long after the kill.
+     */
+    private static final long CHAT_WAIT_MS = 30_000L;
     /** How long after the kill late drops (sacks, pickups) still count. */
     private static final long TRACK_MS = 30_000L;
     /** "+64 Revenant Flesh (Combat Sack)" in a "[Sacks]" message's hover. */
@@ -62,6 +67,11 @@ public final class SlayerBossProfit {
         final long at;
         final Map<String, Integer> baseline;
         final Map<String, Long> sacks = new LinkedHashMap<>();
+        /** The boss's drops shown on the ground (item id -> amount), and the item entities already read. */
+        final Map<String, Long> ground = new LinkedHashMap<>();
+        final java.util.Set<Integer> seenItems = new java.util.HashSet<>();
+        /** When the first of the boss's drops showed on the ground, or 0. */
+        long groundAt;
         final long cost;
         boolean posted;
 
@@ -196,12 +206,16 @@ public final class SlayerBossProfit {
             questStartedAt = System.currentTimeMillis();
             questPaid = -1;
         } else if (text.startsWith("[Sacks]") && kill != null) {
+            boolean bossDrops = false;
             for (Map.Entry<String, Long> e : sackGains(component).entrySet()) {
-                if (e.getValue() > 0) kill.sacks.merge(e.getKey(), e.getValue(), Long::sum);
+                if (e.getValue() <= 0) continue;
+                kill.sacks.merge(e.getKey(), e.getValue(), Long::sum);
+                bossDrops |= isBossDrop(kill.boss, RepoItems.idByName(e.getKey()));
             }
-            // The boss's sack drops are in: the chat line can go.
             refresh();
-            postChat();
+            // The boss's sack drops are in: the chat line can go. (A "[Sacks]" message with only other items, e.g.
+            // from before the kill, doesn't count: the boss's come in a later one.)
+            if (bossDrops) postChat();
         }
     }
 
@@ -255,8 +269,14 @@ public final class SlayerBossProfit {
 
     /** Your boss appeared ({@link SlayerTimes}): remember the inventory, so the drops are what's new after. */
     static void onSpawn() {
-        if (enabled()) baseline = inventory();
+        if (!enabled()) return;
+        baseline = inventory();
+        groundAtSpawn.clear();
+        for (net.minecraft.world.entity.item.ItemEntity item : groundItems()) groundAtSpawn.add(item.getId());
     }
+
+    /** Item entities near you when your boss spawned. */
+    private static final java.util.Set<Integer> groundAtSpawn = new java.util.HashSet<>();
 
     /** Hypixel confirmed the kill ({@link SlayerTimes}): the HUD shows it straight away. */
     static void onKill(String boss) {
@@ -264,6 +284,9 @@ public final class SlayerBossProfit {
         if (kill != null) close();
         long cost = cost(boss);
         kill = new Kill(boss, System.currentTimeMillis(), baseline, cost);
+        // Items that were lying around when the boss spawned aren't its drops (ones dropped since are, even if they
+        // landed a moment before Hypixel's kill message).
+        kill.seenItems.addAll(groundAtSpawn);
         baseline = null;
         refresh();
     }
@@ -287,9 +310,41 @@ public final class SlayerBossProfit {
         }
         if (kill == null) return;
         long since = System.currentTimeMillis() - kill.at;
+        readGround();
         refresh();
+        // The drops on the ground are the boss's whole drop: once they've all landed the chat line can go.
+        if (kill.groundAt > 0 && now - kill.groundAt >= GROUND_SETTLE_MS) postChat();
         if (since >= CHAT_WAIT_MS) postChat();
         if (since >= TRACK_MS) close();
+    }
+
+    /** How far from you the boss's drops on the ground are looked for. */
+    private static final double GROUND_RANGE = 15;
+    /** After the first drop shows on the ground, the rest land within this. */
+    private static final long GROUND_SETTLE_MS = 1_500L;
+
+    private static List<net.minecraft.world.entity.item.ItemEntity> groundItems() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return List.of();
+        return mc.level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+            mc.player.getBoundingBox().inflate(GROUND_RANGE), e -> true);
+    }
+
+    /**
+     * The boss drops its loot on the ground to show it (SkyHanni reads the same for its Slayer Items On Ground):
+     * each new item entity near you after the kill that is one of the boss's drops counts, once.
+     */
+    private static void readGround() {
+        Kill k = kill;
+        if (k == null || System.currentTimeMillis() - k.at > CHAT_WAIT_MS) return;
+        for (net.minecraft.world.entity.item.ItemEntity entity : groundItems()) {
+            if (!k.seenItems.add(entity.getId())) continue;
+            ItemStack stack = entity.getItem();
+            String id = SkyBallsPriceTooltip.marketId(stack);
+            if (id.isEmpty() || !isBossDrop(k.boss, id)) continue;
+            k.ground.merge(id, (long) stack.getCount(), Long::sum);
+            if (k.groundAt == 0) k.groundAt = System.currentTimeMillis();
+        }
     }
 
     /** Stops counting drops for the kill; its last result stays on the HUD. */
@@ -318,22 +373,32 @@ public final class SlayerBossProfit {
     private static void refresh() {
         Kill k = kill;
         if (k == null) return;
-        List<Line> lines = new ArrayList<>();
+        // Per item: what came into your inventory and sacks, or what showed on the ground if that's more (the
+        // same drop shows on the ground and then goes to your sacks, so the two aren't added up).
+        Map<String, Long> received = new LinkedHashMap<>();
+        Map<String, String> names = new HashMap<>();
         for (Map.Entry<String, Integer> e : inventory().entrySet()) {
             int gained = e.getValue() - k.baseline.getOrDefault(e.getKey(), 0);
-            if (gained <= 0) continue;
-            String id = e.getKey();
             // Only the boss's own drops: not mob drops or anything else picked up meanwhile.
-            if (!isBossDrop(k.boss, id)) continue;
-            String name = RepoItems.displayName(id);
-            String plain = name == null ? null : ChatFormatting.stripFormatting(name);
-            lines.add(new Line(plain == null ? id : plain, gained, SkyBallsPriceTooltip.unitPrice(id) * gained));
+            if (gained > 0 && isBossDrop(k.boss, e.getKey())) received.merge(e.getKey(), (long) gained, Long::sum);
         }
         for (Map.Entry<String, Long> e : k.sacks.entrySet()) {
             String id = RepoItems.idByName(e.getKey());
-            if (!isBossDrop(k.boss, id)) continue;
-            double each = id == null ? 0 : SkyBallsPriceTooltip.unitPrice(id);
-            lines.add(new Line(e.getKey(), e.getValue(), each * e.getValue()));
+            if (id == null || !isBossDrop(k.boss, id)) continue;
+            received.merge(id, e.getValue(), Long::sum);
+            names.put(id, e.getKey());
+        }
+        Map<String, Long> amounts = new LinkedHashMap<>(received);
+        k.ground.forEach((id, amount) -> amounts.merge(id, amount, Math::max));
+        List<Line> lines = new ArrayList<>();
+        for (Map.Entry<String, Long> e : amounts.entrySet()) {
+            String id = e.getKey();
+            String name = names.get(id);
+            if (name == null) {
+                String display = RepoItems.displayName(id);
+                name = display == null ? id : ChatFormatting.stripFormatting(display);
+            }
+            lines.add(new Line(name, e.getValue(), SkyBallsPriceTooltip.unitPrice(id) * e.getValue()));
         }
         lines.sort((a, b) -> Double.compare(b.value(), a.value()));
         double drops = lines.stream().mapToDouble(Line::value).sum();
