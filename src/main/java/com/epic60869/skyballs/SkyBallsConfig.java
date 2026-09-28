@@ -142,6 +142,11 @@ public final class SkyBallsConfig extends Config {
         public boolean rngMeterValue = true;
 
         @Expose
+        @ConfigOption(name = "Miniboss Alert", desc = "A title, a ding and a chat line when a slayer miniboss (Revenant Champion, Tarantula Beast, Voidcrazed Maniac, ...) spawns near you during a slayer quest.")
+        @ConfigEditorBoolean
+        public boolean minibossAlert = true;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Personal Best", desc = "Slayer kill times, personal bests and quest times in chat.")
         public PersonalBest personalBest = new PersonalBest();

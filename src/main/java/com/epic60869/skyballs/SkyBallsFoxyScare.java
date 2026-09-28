@@ -15,9 +15,9 @@ import java.util.Random;
  * It's drawn over the HUD and any open menu without taking input, so you can keep moving and clicking through it.
  */
 public final class SkyBallsFoxyScare {
-    private static final long RUN_MS = 350L;
-    private static final long LUNGE_MS = 900L;
-    private static final long END_MS = 1300L;
+    private static final long RUN_MS = 270L;
+    private static final long LUNGE_MS = 690L;
+    private static final long END_MS = 1000L;
 
     // His head, then the lower jaw that drops away from it. One character per pixel.
     private static final String[] HEAD = {

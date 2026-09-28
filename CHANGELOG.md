@@ -2,9 +2,10 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.3.7 — 2026-09-28
+## test-1.3.7 — 2026-09-28
 
 ### Added
+- Miniboss Alert (Slayers): a title, a ding and a chat line when a slayer miniboss spawns near you during a slayer quest.
 - RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins".
 - Slayer time messages (SkyHanni's): how long your boss took to kill, timed to the moment it dies (its health hits 0 or it's gone; a cocooned boss when it's cocooned), not to Hypixel's chat message, your personal best for that boss and tier ("NEW PERSONAL BEST!"), and how long the whole quest took. Each can be turned off, and there's a compact style.
 - The slayer boss phase display shows your Tarantula's egg sacs (time left and hits) under its health.
@@ -12,9 +13,11 @@ All notable changes to SkyBalls are listed here, newest first.
 - Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/sb hud`. Offline it keeps the last standings it got.
 
 ### Changed
+- The jumpscare lasts 1 second.
 - `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
 ### Fixed
+- The PB HUD's live timer froze while a Tier 5 Tarantula swapped phases. It now keeps running until the boss's health hits 0.
 - Slayer PBs: a Tier 5 Tarantula was two bosses ("Tarantula Broodfather V", then "Conjoined Brood"), so the PB HUD switched to an empty board at the start of each fight. Both phases are now one boss, Tarantula Broodfather V, and older Conjoined Brood times move over to it.
 - Screenshot upload: when the host failed (e.g. Litterbox's HTTP 500) its whole error web page was pasted into chat. It now tries once more, then says what went wrong in one line with a [Retry] button.
 - Storage overview: smooth-scrolling mice and touchpads barely scrolled (each small wheel step was rounded to nothing).

@@ -46,6 +46,8 @@ public final class SlayerTimes {
     /** The last scan your boss was seen alive, and when it died (0 while alive): see {@link #onBoss}. */
     private static long lastSeenAt;
     private static long diedAt;
+    /** When its health showed 0: certainly dead, unlike a nametag that went (Tier 5 Tarantula between phases). */
+    private static long zeroAt;
     /** "☠ Revenant Horror V 0❤": the boss is dead even if its nametag lingers. */
     private static final Pattern ZERO_HEALTH = Pattern.compile("(?<![\\d.,])0❤");
     private static String boss;
@@ -90,10 +92,12 @@ public final class SlayerTimes {
         if (spawnedAt == 0) spawnedAt = now;
         if (healthLine.isEmpty() || ZERO_HEALTH.matcher(healthLine).find()) {
             if (diedAt == 0 && lastSeenAt > 0) diedAt = healthLine.isEmpty() ? lastSeenAt : now;
+            if (zeroAt == 0 && !healthLine.isEmpty()) zeroAt = now;
         } else {
             // Alive: back in range, or Tier 5 Tarantula's second phase after the first one went.
             lastSeenAt = now;
             diedAt = 0;
+            zeroAt = 0;
         }
         Matcher m = BOSS.matcher(healthLine);
         if (m.find()) {
@@ -124,10 +128,14 @@ public final class SlayerTimes {
         return spawnedAt;
     }
 
-    /** How long the current fight has lasted, stopped at the boss's death; -1 when none is being timed. */
+    /**
+     * How long the current fight has lasted; -1 when none is being timed. It stops when the boss's health shows 0,
+     * but keeps running while the boss is only out of sight, so the live timer doesn't freeze while a Tier 5
+     * Tarantula swaps phases.
+     */
     public static long bossElapsed() {
         if (spawnedAt == 0) return -1;
-        return (diedAt > 0 ? diedAt : System.currentTimeMillis()) - spawnedAt;
+        return (zeroAt > 0 ? zeroAt : System.currentTimeMillis()) - spawnedAt;
     }
 
     private static void onChat(String text) {
@@ -161,6 +169,7 @@ public final class SlayerTimes {
         spawnedAt = 0;
         lastSeenAt = 0;
         diedAt = 0;
+        zeroAt = 0;
         boss = null;
     }
 
@@ -171,6 +180,7 @@ public final class SlayerTimes {
         spawnedAt = 0;
         lastSeenAt = 0;
         diedAt = 0;
+        zeroAt = 0;
         boss = null;
         killed = true;
         SkyBallsConfig.PersonalBest config = config();

@@ -73,7 +73,7 @@ public final class SlayerFeatures {
      * display. The text display's text is read from its synced data rather than getText(), which the nickname
      * mixin rewrites: with a nickname set, "Spawned by: you" would otherwise never match your username.
      */
-    private static Component nametag(Entity entity) {
+    static Component nametag(Entity entity) {
         if (entity instanceof ArmorStand stand && stand.hasCustomName()) return stand.getCustomName();
         if (entity instanceof Display.TextDisplay display) return display.getEntityData().get(Display.TextDisplay.DATA_TEXT_ID);
         return null;
@@ -170,7 +170,7 @@ public final class SlayerFeatures {
     }
 
     /** Splits a nametag on its line breaks, keeping each part's colours. */
-    private static List<Component> splitLines(Component tag) {
+    static List<Component> splitLines(Component tag) {
         List<Component> lines = new ArrayList<>();
         MutableComponent[] current = {Component.empty()};
         tag.visit((style, value) -> {
