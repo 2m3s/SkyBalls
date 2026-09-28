@@ -61,6 +61,7 @@ public final class Sbc {
         try {
             switch (type) {
                 case "flags" -> Flags.update(packet);
+                case "museumResult" -> com.epic60869.skyballs.features.misc.MuseumTooltip.handle(packet);
                 case "updateAvailable", "announcement", "motd" -> SbcServer.handle(type, packet);
                 case "reactions", "reactionError", "chatBlocked", "muted", "unmuted" -> SbcChat.handle(type, packet);
                 case "cosmetics", "cosmeticsProfile", "cosmeticsError", "badgeEarned" -> SbcCosmetics.handle(type, packet);

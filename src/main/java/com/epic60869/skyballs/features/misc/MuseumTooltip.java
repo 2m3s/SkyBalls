@@ -33,10 +33,11 @@ import java.util.regex.Pattern;
 /**
  * Museum tooltip, following Skyblocker's MuseumTooltip and MuseumItemCache: shows whether an item is donated to
  * your museum. Which items (and armor sets) go in the museum, and which upgrades count their lower tiers as
- * donated, comes from NEU's constants/museum.json. Skyblocker asks the Hypixel API (through its own signed-in proxy)
- * what you've donated; SkyBalls instead remembers it, per profile, from the "Museum ➜ Combat" and other category
- * menus as you look through them: a donated item shows as itself (or lime dye while borrowed), a missing one as
- * gray dye.
+ * donated, comes from NEU's constants/museum.json. Like Skyblocker, it asks the Hypixel API what you've donated: the
+ * SBC server reads Hypixel's museum API for your profile ("museum" -> "museumResult"), when you join and every 10
+ * minutes. It also remembers, per profile, the "Museum ➜ Combat" and other category menus as you look through them
+ * (a donated item shows as itself, or lime dye while borrowed; a missing one as gray dye), so it works while SBC
+ * can't answer.
  */
 public final class MuseumTooltip {
     private static final Pattern MUSEUM_TITLE = Pattern.compile("^Museum ➜ (.+)$");
@@ -85,6 +86,54 @@ public final class MuseumTooltip {
             if (config == null || !config.misc.collectionTooltips.museum || !Compat.isOnSkyblock()) return;
             addTooltip(stack, lines);
         });
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (++ticks % 100 == 0) maybeFetch();
+        });
+    }
+
+    // ---------------------------------------------------------------- from the Hypixel API (through SBC)
+
+    /** How often your museum is asked for again while you play. */
+    private static final long FETCH_EVERY_MS = 10 * 60_000L;
+    private static final Map<String, Long> FETCHED_AT = new ConcurrentHashMap<>();
+    private static int ticks;
+
+    /**
+     * Asks the SBC server for your museum (it reads Hypixel's museum API for your profile), once per profile when you
+     * join and every 10 minutes after, so the tooltip knows what you've donated without opening the museum menus.
+     */
+    private static void maybeFetch() {
+        SkyBallsConfig config = SkyBallsConfig.current();
+        if (config == null || !config.misc.collectionTooltips.museum || !Compat.isOnSkyblock() || categories.isEmpty()) return;
+        String profile = SkyBallsStorageSearch.currentProfile();
+        if (profile.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        Long last = FETCHED_AT.get(profile);
+        if (last != null && now - last < FETCH_EVERY_MS) return;
+        com.google.gson.JsonObject packet = com.epic60869.skyballs.features.sbc.Sbc.packet("museum");
+        packet.addProperty("profile", profile);
+        // Offline: try again in a minute rather than waiting the full 10.
+        FETCHED_AT.put(profile, com.epic60869.skyballs.features.sbc.SbcNet.sendQuietly(packet) ? now : now - FETCH_EVERY_MS + 60_000L);
+    }
+
+    /**
+     * museumResult {ok, profile, donated: [museum ids], message}: everything in the museum category lists that isn't
+     * donated is missing. A failed answer (API off, SBC can't reach Hypixel) leaves what the menus showed.
+     */
+    public static void handle(JsonObject packet) {
+        if (!packet.has("ok") || !packet.get("ok").getAsBoolean() || !packet.has("donated") || !packet.get("donated").isJsonArray()) return;
+        String profile = packet.has("profile") ? packet.get("profile").getAsString() : SkyBallsStorageSearch.currentProfile();
+        if (profile.isEmpty() || categories.isEmpty()) return;
+        ProfileMuseum museum = new ProfileMuseum();
+        for (JsonElement id : packet.getAsJsonArray("donated")) {
+            String museumId = museumId(id.getAsString());
+            if (categories.containsKey(museumId)) museum.donated().add(museumId);
+        }
+        categories.forEach((id, category) -> {
+            if (!category.equals("Special") && !museum.donated().contains(id)) museum.missing().add(id);
+        });
+        PROFILES.put(profile, museum);
+        save();
     }
 
     private static String plainTitle(AbstractContainerScreen<?> container) {

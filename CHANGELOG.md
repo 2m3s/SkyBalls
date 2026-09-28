@@ -16,6 +16,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/sb hud`. Offline it keeps the last standings it got.
 
 ### Changed
+- Museum tooltip: your donations are also read from Hypixel's museum API (through SBC) when you join and every 10 minutes, so you don't have to open the museum menus first.
 - Auto Welcome's description warns USE AT OWN RISK.
 - The jumpscare lasts 1 second.
 - `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
