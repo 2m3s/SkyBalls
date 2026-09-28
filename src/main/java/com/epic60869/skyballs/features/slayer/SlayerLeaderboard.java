@@ -193,6 +193,8 @@ public final class SlayerLeaderboard {
                 }
             }
             case "slayerPbStandings" -> {
+                // The PB HUD shows the latest standings whoever asked; the chat view only prints what it asked for.
+                remember(packet);
                 if (!string(packet, "boss").equalsIgnoreCase(waitingFor == null ? "" : waitingFor)) return;
                 waitingFor = null;
                 showStandings(packet);
@@ -223,11 +225,55 @@ public final class SlayerLeaderboard {
             return;
         }
         // SlayerTimes already said "NEW PERSONAL BEST!"; add where that puts you on the SkyBalls board.
-        if (packet.has("improved") && packet.get("improved").getAsBoolean() && !message.isEmpty()) {
+        boolean improved = packet.has("improved") && packet.get("improved").getAsBoolean();
+        if (improved) SlayerPbHud.onImproved(string(packet, "boss"));
+        if (improved && !message.isEmpty()) {
             say(Component.literal(message).withStyle(style -> style.withColor(ChatFormatting.GRAY)
                 .withClickEvent(new ClickEvent.RunCommand("/sb leaderboard slayer " + string(packet, "boss")))
                 .withHoverEvent(new HoverEvent.ShowText(Component.literal("Show the standings")))));
         }
+    }
+
+    // ---------------------------------------------------------------- standings cache (for the PB HUD)
+
+    /** One row of a boss's standings. */
+    public record Entry(String username, long timeMs) {}
+
+    /** The latest standings for one boss key: the top 10, and your rank and time (0 when you aren't on the board). */
+    public record Standings(List<Entry> entries, long youRank, long youTimeMs) {}
+
+    private static final Map<String, Standings> STANDINGS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The last standings the server sent for {@code boss}, or null. */
+    public static Standings cached(String boss) {
+        return boss == null ? null : STANDINGS.get(boss);
+    }
+
+    /**
+     * Asks for one boss's standings for the PB HUD. It only reads, so it is sent even with Share Slayer PBs off, and
+     * it leaves the chat view's {@link #waitingFor} alone. Returns false when SBC isn't connected.
+     */
+    public static boolean fetch(String boss) {
+        JsonObject packet = new JsonObject();
+        packet.addProperty("type", "slayerPbGet");
+        packet.addProperty("boss", boss);
+        return SkyBallsGlobalChat.send(packet);
+    }
+
+    private static void remember(JsonObject packet) {
+        String boss = canonical(string(packet, "boss"));
+        if (boss == null || !string(packet, "error").isEmpty()) return;
+        List<Entry> entries = new ArrayList<>();
+        for (JsonObject row : rows(packet, "entries")) {
+            if (row.has("timeMs")) entries.add(new Entry(string(row, "username"), row.get("timeMs").getAsLong()));
+        }
+        long rank = 0, time = 0;
+        if (packet.has("you") && packet.get("you").isJsonObject()) {
+            JsonObject you = packet.getAsJsonObject("you");
+            rank = you.has("rank") ? you.get("rank").getAsLong() : 0;
+            time = you.has("timeMs") ? you.get("timeMs").getAsLong() : 0;
+        }
+        STANDINGS.put(boss, new Standings(List.copyOf(entries), rank, time));
     }
 
     private static void rememberSummary(JsonObject packet) {

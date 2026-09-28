@@ -145,6 +145,33 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Personal Best", desc = "Slayer kill times, personal bests and quest times in chat.")
         public PersonalBest personalBest = new PersonalBest();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "PB Leaderboard HUD", desc = "A HUD with the SkyBalls kill time leaderboard for your slayer boss, and a live timer against your PB and the #1 time. Move it in /sb hud.")
+        public PbLeaderboardHud pbLeaderboardHud = new PbLeaderboardHud();
+    }
+
+    public static final class PbLeaderboardHud {
+        @Expose
+        @ConfigOption(name = "PB Leaderboard HUD", desc = "Show the slayer PB leaderboard HUD.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "PB Leaderboard Rows", desc = "How many of the fastest times the HUD lists.")
+        @ConfigEditorSlider(minValue = 3, maxValue = 10, minStep = 1)
+        public int rows = 5;
+
+        @Expose
+        @ConfigOption(name = "PB Leaderboard: Show", desc = "When the HUD shows.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.slayer.SlayerPbHud.Show show = com.epic60869.skyballs.features.slayer.SlayerPbHud.Show.QUEST;
+
+        @Expose
+        @ConfigOption(name = "PB Leaderboard Boss", desc = "Leave empty (or Auto) for your current or last slayer boss, or pin one, e.g. Revenant Horror V or Voidgloom Seraph IV.")
+        @ConfigEditorText
+        public String boss = "Auto";
     }
 
     public static final class PersonalBest {

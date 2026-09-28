@@ -36,6 +36,9 @@ public final class SlayerTimes {
     /** Minecraft username (lowercase) -> boss key ("Revenant Horror V") -> best kill time in ms. */
     private static final Map<String, Map<String, Long>> BESTS = new ConcurrentHashMap<>();
     private static Path file;
+    private static Path lastBossFile;
+    /** Your current or most recent boss key, kept after the kill and between game sessions (for the PB HUD). */
+    private static volatile String lastBoss;
 
     private static long questStartedAt;
     private static long spawnedAt;
@@ -47,6 +50,7 @@ public final class SlayerTimes {
 
     public static void init(Path configDir) {
         file = configDir.resolve("skyballs").resolve("slayer-personal-bests.json");
+        lastBossFile = configDir.resolve("skyballs").resolve("slayer-last-boss.txt");
         load();
         SkyBallsChat.onChat(message -> onChat(message.text().trim()));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
@@ -72,7 +76,23 @@ public final class SlayerTimes {
         if (killed) return;
         if (spawnedAt == 0) spawnedAt = System.currentTimeMillis();
         Matcher m = BOSS.matcher(healthLine);
-        if (m.find()) boss = m.group(2) == null ? m.group(1) : m.group(1) + " " + m.group(2);
+        if (m.find()) {
+            boss = m.group(2) == null ? m.group(1) : m.group(1) + " " + m.group(2);
+            if (!boss.equals(lastBoss)) {
+                lastBoss = boss;
+                saveLastBoss();
+            }
+        }
+    }
+
+    /** Your current boss key, or if none is alive, the last one you fought; null if you haven't fought one yet. */
+    public static String lastBoss() {
+        return lastBoss;
+    }
+
+    /** When your current boss spawned (System.currentTimeMillis), or 0 when none is being timed. */
+    public static long bossSpawnedAt() {
+        return spawnedAt;
     }
 
     private static void onChat(String text) {
@@ -174,6 +194,14 @@ public final class SlayerTimes {
 
     private static void load() {
         try {
+            if (Files.exists(lastBossFile)) {
+                String boss = Files.readString(lastBossFile, StandardCharsets.UTF_8).trim();
+                if (!boss.isEmpty()) lastBoss = boss;
+            }
+        } catch (Exception e) {
+            System.err.println("[SkyBalls] Could not read slayer-last-boss.txt: " + e.getMessage());
+        }
+        try {
             if (!Files.exists(file)) return;
             JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
             for (var player : root.entrySet()) {
@@ -183,6 +211,16 @@ public final class SlayerTimes {
             }
         } catch (Exception e) {
             System.err.println("[SkyBalls] Could not read slayer-personal-bests.json: " + e.getMessage());
+        }
+    }
+
+    private static void saveLastBoss() {
+        String boss = lastBoss;
+        try {
+            Files.createDirectories(lastBossFile.getParent());
+            Files.writeString(lastBossFile, boss == null ? "" : boss, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println("[SkyBalls] Could not save slayer-last-boss.txt: " + e.getMessage());
         }
     }
 
