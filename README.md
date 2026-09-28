@@ -29,7 +29,6 @@ These talk to the SkyBalls server (`tastyfish.org/mod-api`). The mod logs in wit
 - **Items:** `/sb share [message]`, the *Share Item* key (unbound by default; it works while hovering an item in a GUI), or `[item]` in a message. Shared items show as a hoverable `[Item Name]`; click one to see it.
 - **Ignore:** `/sb ignore <player>` · `/sb ignore discord <name>` · `/sb ignore list` · `/sb unignore <player>`.
 - **Players:** `/sb who` (a list screen, or chat if *Who List Screen* is off) · `/sb friend add|remove|accept|deny <player>` · `/sb friends` (list, requests and privacy settings: who sees your location, friend requests, online notifications). Your area, server and AFK status are shared unless *Share Your Status* is off.
-- **Profile viewer:** `/sb pv [player] [profile]`: overview, skills, slayers, dungeons, pets and every inventory, with item tooltips.
 - **Casino:** `/sb casino` (blackjack, coinflip, dice, roulette, slots, higher/lower, daily reward, stats and leaderboards) · `/sb casino daily`.
 - **Cosmetics:** badges and supporter symbols before names, and capes. Pick yours with `/sb cosmetics`. Nickname styles now include Gradient and Chroma.
 - **Settings sync:** `/sb settings upload|download|list|delete [slot]`, or the buttons in *Settings Cloud Sync*. Downloading keeps your old settings in `skyballs-mod.json.bak`.
@@ -40,7 +39,6 @@ These talk to the SkyBalls server (`tastyfish.org/mod-api`). The mod logs in wit
 
 - **Item Cooldowns** (Misc): ability cooldowns on the item's slot, read from its lore, plus an optional HUD.
 - **Event Calendar** (Misc): `/sb calendar`, an optional HUD, and reminders before the events you choose (with minutes-before and a Jacob's crop filter).
-- **Accessory Helper** (Misc): next to the Accessory Bag, the missing accessories and upgrades with the best magical power per coin first. Open every page of the bag once first.
 - **Pest Highlight** (Farming, Garden only): outlines pests, with an optional line and beam to the nearest one and a pests/plots HUD.
 
 ## Credits

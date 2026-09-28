@@ -115,7 +115,7 @@ public final class FeatureConfigs {
 
     public static final class RareDrops {
         @Expose
-        @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard. What was copied shows in chat, using Copy Chat's preview settings.")
+        @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard (RARE, VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, rare crops, rare rewards and outstanding catches). What was copied shows in chat, using Copy Chat's preview settings.")
         @ConfigEditorBoolean
         public boolean copy = true;
 
@@ -447,7 +447,6 @@ public final class FeatureConfigs {
 
     public static final class Terminals {
         @Expose @ConfigOption(name = "Terminal Solver", desc = "Which terminal solver to use. Odin: covers the terminal and shows what to click. NoammAddons: its big centred panel with the terminal's name, slot styles and colours.") @ConfigEditorDropdown public TerminalStyle solverStyle = TerminalStyle.ODIN;
-        @Expose @ConfigOption(name = "Hide Menu", desc = "While a terminal is solved, only the solver is drawn: the chest, its items, your inventory and item tooltips are hidden, like other terminal solvers.") @ConfigEditorBoolean public boolean hideMenu = true;
         @Expose @ConfigOption(name = "NoammAddons: Scale", desc = "Size of the NoammAddons terminal panel.") @ConfigEditorSlider(minValue = 0.3f, maxValue = 2f, minStep = 0.05f) public float noammScale = 1f;
         @Expose @ConfigOption(name = "NoammAddons: Slot Style", desc = "How solution slots are drawn in the NoammAddons panel.") @ConfigEditorDropdown public NoammSlotStyle noammSlotStyle = NoammSlotStyle.RECT;
         @Expose @ConfigOption(name = "NoammAddons: Show Numbers", desc = "Show the number on each slot in Click in order!") @ConfigEditorBoolean public boolean noammShowNumbers = false;
@@ -460,9 +459,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Rubix Left Clicks Only", desc = "Only use left clicks for the rubix terminal instead of the fewest clicks.") @ConfigEditorBoolean public boolean rubixLeftClicksOnly = false;
         @Expose @ConfigOption(name = "Melody Solver", desc = "Show the melody solver.") @ConfigEditorBoolean public boolean melodySolver = true;
         @Expose @ConfigOption(name = "Odin Device Solvers", desc = "Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: Skyblocker's.") @ConfigEditorBoolean public boolean odinDevices = true;
-        @Expose @ConfigOption(name = "SS Block Wrong Clicks", desc = "Simon Says: ignore clicks on the wrong button. Hold shift to click anyway.") @ConfigEditorBoolean public boolean ssBlockWrong = true;
-        @Expose @ConfigOption(name = "SS Skip Helper", desc = "Simon Says skip: count your start button clicks (shown above the button) and block clicks past the limit below, like Odin's Block Wrong on Start. Hold shift to click anyway.") @ConfigEditorBoolean public boolean ssLimitStartClicks = true;
-        @Expose @ConfigOption(name = "SS Skip Start Clicks", desc = "How many start button clicks to allow for SS skip.") @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1) public int ssMaxStartClicks = 4;
+        @Expose @ConfigOption(name = "SS Block Wrong Clicks", desc = "Simon Says: ignore clicks on any button but the next one. Hold shift to click anyway.") @ConfigEditorBoolean public boolean ssBlockWrong = true;
         @Expose @ConfigOption(name = "SS Announce Progress", desc = "Send \"SS n/5\" to party chat when you click the last button of a round.") @ConfigEditorBoolean public boolean ssAnnounce = false;
         @Expose @ConfigOption(name = "SS First", desc = "") @ConfigEditorColour public String ssFirstColor = "0:128:85:255:85";
         @Expose @ConfigOption(name = "SS Second", desc = "") @ConfigEditorColour public String ssSecondColor = "0:128:255:170:0";

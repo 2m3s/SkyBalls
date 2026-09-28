@@ -226,9 +226,7 @@ public final class SbcSocial {
             MutableComponent hover = Component.literal(p.username()).withStyle(ChatFormatting.WHITE);
             if (p.onlineSince() > 0) hover.append(Component.literal("\nOnline for " + Sbc.duration(System.currentTimeMillis() - p.onlineSince())).withStyle(ChatFormatting.GRAY));
             if (!p.modVersion().isBlank()) hover.append(Component.literal("\nSkyBalls " + p.modVersion()).withStyle(ChatFormatting.GRAY));
-            hover.append(Component.literal("\nClick to view their profile").withStyle(ChatFormatting.DARK_GRAY));
-            line.withStyle(s -> s.withHoverEvent(new HoverEvent.ShowText(hover))
-                .withClickEvent(new ClickEvent.RunCommand("/sb pv " + p.username())));
+            line.withStyle(s -> s.withHoverEvent(new HoverEvent.ShowText(hover)));
             out.append(line);
         }
         Sbc.say(out);

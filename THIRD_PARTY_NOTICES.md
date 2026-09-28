@@ -167,3 +167,9 @@ SkyBalls's Held Item (the `com.epic60869.skyballs.features.helditem` package and
 SkyBalls's tooltip scroll (`features/misc/ScrollableTooltips.java`, `SkyBallsTooltipMixin`, `SkyBallsTooltipScrollMixin`) is a Java port of Skysoft's Tooltip Scroll (src/main/kotlin/com/skysoft/gui/tooltip/TooltipViewport.kt and TooltipPanSession.kt, com/skysoft/config/TooltipScrollConfig.kt, and the tooltip positioner / mouse scroll mixins): the pan session with smooth movement, the keyboard and mouse wheel controls, and the settings.
 
 - License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## Skyblocker Accessory Tooltip
+
+SkyBalls's accessory tooltip (`features/misc/AccessoryTooltip.java`) is a 1:1 port of Skyblocker's AccessoriesHelper and AccessoryTooltip (https://github.com/SkyblockerMod/Skyblocker), with accessory data from Aaron's Mod via hysky.de.
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)

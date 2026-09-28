@@ -11,8 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Feature flags from the mod server: {@code flags {flags: {"casino.slots": {enabled: false, message: "..."}}}}, sent
  * after hello and on every change. A flag the server hasn't mentioned is on, so the mod keeps working when the server
- * is down. Flag names used by the mod: chat.replies, chat.reactions, chat.items, casino, casino.&lt;game&gt;, pv,
- * friends, cosmetics, cosmetics.capes, calendar, accessoryHelper, pestHighlight, itemCooldowns, settingsSync,
+ * is down. Flag names used by the mod: chat.replies, chat.reactions, chat.items, casino, casino.&lt;game&gt;,
+ * friends, cosmetics, cosmetics.capes, calendar, pestHighlight, itemCooldowns, settingsSync,
  * crashReports.
  */
 public final class Flags {

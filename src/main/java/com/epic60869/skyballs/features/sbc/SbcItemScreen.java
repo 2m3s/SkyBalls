@@ -12,12 +12,12 @@ import java.util.List;
 
 /** An item shared in SkyBalls chat (click its [Item Name]): the item, big, with its full tooltip. */
 public final class SbcItemScreen extends Screen {
-    private final ItemStack stack;
+    private final JsonObject item;
     private final List<Component> tooltip;
 
     public SbcItemScreen(JsonObject item) {
         super(Component.literal("Shared Item"));
-        this.stack = SbcItems.stack(item);
+        this.item = item;
         this.tooltip = SbcItems.tooltip(item);
     }
 
@@ -36,7 +36,8 @@ public final class SbcItemScreen extends Screen {
         g.pose().pushMatrix();
         g.pose().translate(left, top);
         g.pose().scale(3f, 3f);
-        g.item(stack, 0, 0);
+        // Its real icon, even off Hypixel (where most items would otherwise be paper).
+        SbcItemIcons.draw(g, item, 0, 0);
         g.pose().popMatrix();
         g.fill(left + 56, top - 4, left + 64 + width, top + height + 2, 0xF0100010);
         g.outline(left + 56, top - 4, width + 8, height + 6, 0xFF5000A0);

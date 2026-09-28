@@ -30,7 +30,6 @@ public final class Sbc {
         SbcChat.init();
         SbcChatOverlay.init();
         SbcSocial.init();
-        SbcProfileViewer.init();
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) return;
             net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
@@ -65,7 +64,6 @@ public final class Sbc {
                 case "updateAvailable", "announcement", "motd" -> SbcServer.handle(type, packet);
                 case "reactions", "reactionError", "chatBlocked", "muted", "unmuted" -> SbcChat.handle(type, packet);
                 case "cosmetics", "cosmeticsProfile", "cosmeticsError", "badgeEarned" -> SbcCosmetics.handle(type, packet);
-                case "pvResult" -> SbcProfileViewer.handle(packet);
                 case "online", "whoResult", "friends", "friendEvent", "socialSettings", "ignoreResult", "ignoreList", "socialError" -> SbcSocial.handle(type, packet);
                 case "settingsSaved", "settings", "settingsSlots", "settingsDeleted", "settingsError" -> SbcSettingsSync.handle(type, packet);
                 default -> {

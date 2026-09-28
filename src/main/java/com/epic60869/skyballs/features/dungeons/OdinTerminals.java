@@ -184,11 +184,11 @@ public final class OdinTerminals {
         return true;
     }
 
-    /** True when the solver replaces the whole terminal menu (Hide Menu on), so only the solver is drawn. */
+    /** True when the solver replaces the whole terminal menu (always, except Melody with its solver off), so only the solver is drawn. */
     public static boolean hidesMenu(AbstractContainerScreen<?> screen) {
         Handler handler = current;
         FeatureConfigs.Terminals config = config();
-        if (handler == null || config == null || !config.hideMenu || screen.getMenu() != handler.menu) return false;
+        if (handler == null || config == null || screen.getMenu() != handler.menu) return false;
         return handler.type() != Type.MELODY || config.melodySolver;
     }
 
@@ -257,11 +257,52 @@ public final class OdinTerminals {
         return (float) (3.0 * (config == null ? 1f : config.noammScale) / Math.max(1.0, guiScale));
     }
 
-    /** Top-left of the panel (in panel units) for this window size. */
-    private static float[] noammOrigin(int guiWidth, int guiHeight, int windowSize, float scale) {
-        float width = 9 * 18;
-        float height = windowSize / 9f * 18;
-        return new float[]{guiWidth / scale / 2 - width / 2, guiHeight / scale / 2 - height / 2};
+    /**
+     * The part of the chest NoammAddons draws for each terminal (its gridSize): only the playable cells, packed
+     * together with no gaps, not the whole 9-wide chest. {col, row, width, height} of the chest area it covers.
+     */
+    private static int[] noammGrid(Type type) {
+        return switch (type) {
+            case PANES -> new int[]{2, 1, 5, 3};
+            case RUBIX -> new int[]{3, 1, 3, 3};
+            case NUMBERS -> new int[]{1, 1, 7, 2};
+            case STARTS_WITH -> new int[]{1, 1, 7, 3};
+            case SELECT -> new int[]{1, 1, 7, 4};
+            // The five lanes and, right next to them, the button column (chest column 7).
+            case MELODY -> new int[]{1, 0, 6, 5};
+        };
+    }
+
+    /** Where a chest slot is in the NoammAddons grid ({x, y} in cells), or null if it isn't shown. */
+    private static int[] noammCell(Type type, int slot) {
+        int[] grid = noammGrid(type);
+        int col = slot % 9;
+        int row = slot / 9;
+        if (type == Type.MELODY) {
+            if (col == 7) col = 6;
+            else if (col < 1 || col > 5) return null;
+        }
+        int x = col - grid[0];
+        int y = row - grid[1];
+        return x < 0 || y < 0 || x >= grid[2] || y >= grid[3] ? null : new int[]{x, y};
+    }
+
+    /** The chest slot under a cell of the NoammAddons grid. */
+    private static int noammSlotAt(Type type, int x, int y) {
+        int[] grid = noammGrid(type);
+        int col = x + grid[0];
+        if (type == Type.MELODY && x == 5) col = 7;
+        return (y + grid[1]) * 9 + col;
+    }
+
+    private static final int NOAMM_CELL = 16;
+    private static final int NOAMM_PADDING = 2;
+    private static final int NOAMM_WRONG = 0x82FF0000;
+
+    /** Top-left of the grid (in panel units): centred on the screen, like NoammAddons. */
+    private static float[] noammOrigin(int guiWidth, int guiHeight, Type type, float scale) {
+        int[] grid = noammGrid(type);
+        return new float[]{guiWidth / scale / 2 - grid[2] * NOAMM_CELL / 2f, guiHeight / scale / 2 - grid[3] * NOAMM_CELL / 2f};
     }
 
     private static String noammTitle(Type type) {
@@ -281,50 +322,56 @@ public final class OdinTerminals {
         if (handler == null || config == null) return;
         Minecraft mc = Minecraft.getInstance();
         var font = mc.font;
+        Type type = handler.type();
         g.nextStratum();
-        // Dim the screen behind the panel (with Hide Menu on, the vanilla menu itself isn't drawn, see hidesMenu).
-        g.fill(0, 0, g.guiWidth(), g.guiHeight(), 0xC0000000);
 
         float scale = noammScale();
-        int windowSize = handler.type().windowSize;
-        float[] origin = noammOrigin(g.guiWidth(), g.guiHeight(), windowSize, scale);
-        int width = 9 * 18;
-        int height = windowSize / 9 * 18;
+        int[] grid = noammGrid(type);
+        float[] origin = noammOrigin(g.guiWidth(), g.guiHeight(), type, scale);
+        int width = grid[2] * NOAMM_CELL;
+        int height = grid[3] * NOAMM_CELL;
         g.pose().pushMatrix();
         g.pose().scale(scale, scale);
         g.pose().translate(origin[0], origin[1]);
 
-        String title = noammTitle(handler.type());
+        String title = noammTitle(type);
         g.pose().pushMatrix();
-        g.pose().translate(width / 2f, -15);
+        g.pose().translate(width / 2f, -15 - NOAMM_PADDING);
         g.pose().scale(1.2f, 1.2f);
         g.text(font, title, -font.width(title) / 2, 0, 0xFFFFFFFF, true);
         g.pose().popMatrix();
 
-        g.fill(0, 0, width, height, 0x64000000);
-        g.outline(0, 0, width, height, 0xFFFFFFFF);
+        g.fill(-NOAMM_PADDING, -NOAMM_PADDING, width + NOAMM_PADDING, height + NOAMM_PADDING, 0x64000000);
+        g.outline(-NOAMM_PADDING, -NOAMM_PADDING, width + NOAMM_PADDING * 2, height + NOAMM_PADDING * 2, 0xFFFFFFFF);
 
-        if (handler.type() == Type.MELODY) {
-            for (int slot = 0; slot < windowSize; slot++) {
-                Render r = handler.solution.contains(slot) ? handler.render(slot) : null;
-                if (r == null) continue;
-                boolean column = (slot / 9) == 0 || (slot / 9) == 4;
-                noammSlot(g, config, slot % 9 * 18, slot / 9 * 18, column ? NOAMM_MELODY_COLUMN : NOAMM_MELODY_INDICATOR);
-            }
+        if (type == Type.MELODY) {
+            // The right lane: the whole column; the moving pane: its cell; the buttons: green on the one to press.
+            int pane = handler.solution.isEmpty() ? -1 : handler.solution.getFirst();
+            int magenta = handler.solution.size() > 1 ? handler.solution.get(1) : -1;
+            int press = handler.solution.size() > 2 ? handler.solution.get(2) : -1;
+            int[] column = magenta < 0 ? null : noammCell(type, magenta);
+            if (column != null) noammSlot(g, config, column[0] * NOAMM_CELL, 0, NOAMM_CELL, height, NOAMM_MELODY_COLUMN);
+            int[] cell = pane < 0 ? null : noammCell(type, pane);
+            if (cell != null) noammSlot(g, config, cell[0] * NOAMM_CELL, cell[1] * NOAMM_CELL, NOAMM_CELL, NOAMM_CELL, NOAMM_MELODY_INDICATOR);
             for (int slot : new int[]{16, 25, 34, 43}) {
-                if (slot < windowSize) noammSlot(g, config, slot % 9 * 18, slot / 9 * 18, NOAMM_SOLUTION);
+                int[] button = noammCell(type, slot);
+                if (button == null) continue;
+                int colour = press < 0 ? 0x40FFFFFF : slot == press ? NOAMM_SOLUTION : NOAMM_WRONG;
+                noammSlot(g, config, button[0] * NOAMM_CELL, button[1] * NOAMM_CELL, NOAMM_CELL, NOAMM_CELL, colour);
             }
         } else {
             List<Integer> distinct = new ArrayList<>(new java.util.LinkedHashSet<>(handler.solution));
             for (int index = 0; index < distinct.size(); index++) {
                 int slot = distinct.get(index);
-                int x = slot % 9 * 18;
-                int y = slot / 9 * 18;
-                switch (handler.type()) {
+                int[] cell = noammCell(type, slot);
+                if (cell == null) continue;
+                int x = cell[0] * NOAMM_CELL;
+                int y = cell[1] * NOAMM_CELL;
+                switch (type) {
                     case NUMBERS -> {
                         if (index > 2) continue;
-                        // The Numbers 1-3 colours, at NoammAddons' transparency.
-                        noammSlot(g, config, x, y, (handler.render(slot).colour() & 0x00FFFFFF) | (NOAMM_NUMBERS[index] & 0xFF000000));
+                        // The Numbers 1-3 colours, at the NoammAddons transparency.
+                        noammSlot(g, config, x, y, NOAMM_CELL, NOAMM_CELL, (handler.render(slot).colour() & 0x00FFFFFF) | (NOAMM_NUMBERS[index] & 0xFF000000));
                         if (config.noammShowNumbers) {
                             Render r = handler.render(slot);
                             if (r != null && r.text() != null) g.text(font, r.text(), x + 8 - font.width(r.text()) / 2, y + 4, 0xFFFFFFFF, true);
@@ -334,28 +381,28 @@ public final class OdinTerminals {
                         Render r = handler.render(slot);
                         if (r == null) continue;
                         boolean positive = !r.text().startsWith("-");
-                        noammSlot(g, config, x, y, positive ? NOAMM_RUBIX_PLUS : NOAMM_RUBIX_MINUS);
+                        noammSlot(g, config, x, y, NOAMM_CELL, NOAMM_CELL, positive ? NOAMM_RUBIX_PLUS : NOAMM_RUBIX_MINUS);
                         g.text(font, r.text(), x + 8 - font.width(r.text()) / 2, y + 4, 0xFFFFFFFF, true);
                     }
-                    default -> noammSlot(g, config, x, y, NOAMM_SOLUTION);
+                    default -> noammSlot(g, config, x, y, NOAMM_CELL, NOAMM_CELL, NOAMM_SOLUTION);
                 }
             }
         }
         g.pose().popMatrix();
     }
 
-    private static void noammSlot(GuiGraphicsExtractor g, FeatureConfigs.Terminals config, int x, int y, int colour) {
+    private static void noammSlot(GuiGraphicsExtractor g, FeatureConfigs.Terminals config, int x, int y, int w, int h, int colour) {
         switch (config.noammSlotStyle) {
-            case RECT -> g.fill(x, y, x + 16, y + 16, colour);
+            case RECT -> g.fill(x, y, x + w, y + h, colour);
             case BORDERED -> {
-                g.fill(x, y, x + 16, y + 16, (colour & 0x00FFFFFF) | 0x28000000);
-                g.outline(x, y, 16, 16, colour | 0xFF000000);
+                g.fill(x, y, x + w, y + h, (colour & 0x00FFFFFF) | 0x28000000);
+                g.outline(x, y, w, h, colour | 0xFF000000);
             }
             case BUTTON -> {
                 int solid = colour | 0xFF000000;
-                g.fill(x, y, x + 16, y + 16, darker(solid));
-                g.fill(x, y, x + 15, y + 15, solid);
-                g.fill(x + 1, y + 1, x + 15, y + 15, darker(solid));
+                g.fill(x, y, x + w, y + h, darker(solid));
+                g.fill(x, y, x + w - 1, y + h - 1, solid);
+                g.fill(x + 1, y + 1, x + w - 1, y + h - 1, darker(solid));
             }
         }
     }
@@ -373,13 +420,14 @@ public final class OdinTerminals {
         if (handler == null) return;
         Minecraft mc = Minecraft.getInstance();
         float scale = noammScale();
-        int windowSize = handler.type().windowSize;
-        float[] origin = noammOrigin(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight(), windowSize, scale);
-        int col = (int) Math.floor((mouseX / scale - origin[0]) / 18);
-        int row = (int) Math.floor((mouseY / scale - origin[1]) / 18);
-        if (col < 0 || col > 8 || row < 0) return;
-        int slot = col + row * 9;
-        if (slot >= windowSize) return;
+        Type type = handler.type();
+        int[] grid = noammGrid(type);
+        float[] origin = noammOrigin(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight(), type, scale);
+        int x = (int) Math.floor((mouseX / scale - origin[0]) / NOAMM_CELL);
+        int y = (int) Math.floor((mouseY / scale - origin[1]) / NOAMM_CELL);
+        if (x < 0 || y < 0 || x >= grid[2] || y >= grid[3]) return;
+        int slot = noammSlotAt(type, x, y);
+        if (slot >= type.windowSize) return;
         int button = mouseButton == 1 ? 1 : 0;
         switch (handler.type()) {
             case NUMBERS -> {

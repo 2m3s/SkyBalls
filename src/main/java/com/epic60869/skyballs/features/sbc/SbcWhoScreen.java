@@ -11,8 +11,8 @@ import java.util.List;
 
 /**
  * /sb who: SkyBalls players online right now (friends first) with their styled nickname, rank, badge, where they
- * are (when they share it), AFK, how long they've been on and their SkyBalls version. Hover a row for Profile and
- * Add Friend.
+ * are (when they share it), AFK, how long they've been on and their SkyBalls version. Hover a row to add them as a
+ * friend.
  */
 public final class SbcWhoScreen extends Screen {
     private static final int ROW = 22;
@@ -103,9 +103,8 @@ public final class SbcWhoScreen extends Screen {
                 g.text(font, since, right - 6 - font.width(since), y + 2, 0xFF9AA5B8, false);
                 g.text(font, version, right - 6 - font.width(version), y + 12, 0xFF666666, false);
             } else {
-                drawButton(g, "Profile", right - 100, y + 4, mouseX, mouseY);
                 if (!p.friend() && p.uuid() != null && !p.uuid().equals(Sbc.self())) drawButton(g, "+Friend", right - 52, y + 4, mouseX, mouseY);
-                if (!p.username().isBlank() && mouseX < right - 100) {
+                if (!p.username().isBlank() && mouseX < right - 52) {
                     List<Component> tip = new java.util.ArrayList<>();
                     tip.add(Component.literal(p.username()));
                     if (!since.isEmpty()) tip.add(Component.literal("Online for " + since).withStyle(s -> s.withColor(0xAAAAAA)));
@@ -136,10 +135,6 @@ public final class SbcWhoScreen extends Screen {
                 SbcSocial.Player p = players.get(index);
                 int rowY = top() + 2 + (index - scroll) * ROW;
                 if (y >= rowY + 4 && y < rowY + 18) {
-                    if (x >= right - 100 && x < right - 54) {
-                        SbcProfileViewer.open(p.username(), null);
-                        return true;
-                    }
                     if (x >= right - 52 && x < right - 6 && !p.friend()) {
                         SbcSocial.friend("friendRequest", p.username());
                         return true;

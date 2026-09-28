@@ -317,11 +317,6 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Event Calendar", desc = "Upcoming SkyBlock events with countdowns (/sb calendar), a HUD and reminders before the events you pick.")
         public com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar eventCalendar = new com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Accessory Helper", desc = "A list next to the Accessory Bag of the accessories and upgrades you're missing, cheapest magical power first.")
-        public com.epic60869.skyballs.features.sbc.SbcConfig.AccessoryHelper accessoryHelper = new com.epic60869.skyballs.features.sbc.SbcConfig.AccessoryHelper();
     }
 
     private static final Gson LEGACY_GSON = new Gson();

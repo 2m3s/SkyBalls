@@ -2,6 +2,25 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.6 — unreleased
+
+### Removed
+- The SS skip helper (start-click counter and limit) from the Simon Says solver.
+- The accessory helper next to the Accessory Bag.
+- The profile viewer (`/sb pv`), and the Profile buttons in `/sb who` and the friends list.
+- The Hide Menu terminal option: the vanilla terminal menu is now always hidden while a solver shows (Melody too, unless its solver is off).
+
+### Fixed
+- Simon Says: the SS skip reordering could highlight the wrong buttons and block the right one; a quick correct click on the next button was blocked until the server showed the previous press. Every highlighted button now shows its number in the sequence.
+- Terminals: the NoammAddons style looked the same as Odin's. It now draws like NoammAddons: only the terminal's own cells in a compact grid, with its title, padding and border.
+- Cocoon alerts now fire for Special Zealots and other elusive mobs (and names with an apostrophe).
+- Items shared in SkyBalls chat show their real icon when clicked (off Hypixel too) instead of paper or a barrier.
+- Copy Rare Drops (and the big drop animation) now work for every rare drop line: VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, the Garden's RARE CROP lines, RARE REWARD, OUTSTANDING CATCH and Diana's "You dug out a ..." drops.
+- The slayer boss phase display only shows your boss's health (or its hits), not nearby pets or damage numbers.
+
+### Changed
+- The accessory tooltip is now a 1:1 port of Skyblocker's: it also remembers recombobulated accessories, and shows nothing until your SkyBlock profile is known. As in Skyblocker, "↑ Upgradable" means you own that accessory and a higher tier of it exists.
+
 ## 1.3.5 — 2026-09-28
 
 ### Added

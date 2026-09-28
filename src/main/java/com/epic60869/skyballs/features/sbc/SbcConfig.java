@@ -12,7 +12,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 /**
  * Settings for the features that talk to the SkyBalls server (the "SkyBalls Online" category) and for the SkyBlock
- * helpers added with them (item cooldowns, event calendar, accessory helper, pest highlight).
+ * helpers added with them (item cooldowns, event calendar, pest highlight).
  */
 public final class SbcConfig {
     private SbcConfig() {}
@@ -281,23 +281,6 @@ public final class SbcConfig {
         @Expose @ConfigOption(name = "Elections: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int electionsMinutes = 5;
         @Expose @ConfigOption(name = "Mayor Events", desc = "Marina's Fishing Festival and Diana's Mythological Ritual.") @ConfigEditorBoolean public boolean mayorEvents = true;
         @Expose @ConfigOption(name = "Mayor Events: Minutes Before", desc = "") @ConfigEditorSlider(minValue = 0, maxValue = 30, minStep = 1) public int mayorEventsMinutes = 5;
-    }
-
-    public static final class AccessoryHelper {
-        @Expose
-        @ConfigOption(name = "Enabled", desc = "In the Accessory Bag, show a list of the accessories and upgrades you're missing, cheapest magical power first. Open every page of the bag once so it knows what you have.")
-        @ConfigEditorBoolean
-        public boolean enabled = true;
-
-        @Expose
-        @ConfigOption(name = "Show Upgrades", desc = "Also list upgrades of accessories you already have.")
-        @ConfigEditorBoolean
-        public boolean upgrades = true;
-
-        @Expose
-        @ConfigOption(name = "Max Price", desc = "Hide accessories that cost more than this many million coins (0 = no limit).")
-        @ConfigEditorSlider(minValue = 0, maxValue = 500, minStep = 5)
-        public int maxPriceMillions = 0;
     }
 
     public static final class PestHighlight {

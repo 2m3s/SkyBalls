@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Slayer boss phase display: your boss's nametag lines (health, hits, attunement, timer) in a HUD. */
+/** Slayer boss phase display: your boss's health (or hits while Voidgloom's shield is up) from its nametag, in a HUD. */
 public final class SlayerFeatures {
     /** How far from you your own boss is looked for. */
     private static final double SEARCH_RANGE = 48;
@@ -45,7 +45,7 @@ public final class SlayerFeatures {
         SkyBallsHuds.register("slayer_phase", "Slayer Boss Phase",
             () -> config() != null && config().phaseDisplay,
             () -> bossLines,
-            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED), Component.literal("15 Hits").withStyle(ChatFormatting.LIGHT_PURPLE)),
+            List.of(Component.literal("☠ Voidgloom Seraph 45M❤").withStyle(ChatFormatting.RED)),
             8, 220);
     }
 
@@ -101,14 +101,29 @@ public final class SlayerFeatures {
         AABB area = owner.getBoundingBox().inflate(1.5, 3, 1.5);
         List<Entity> tags = mc.level.getEntities((Entity) null, area, e -> nametag(e) != null);
         tags.sort(Comparator.comparingDouble((Entity e) -> e.getY()).reversed());
+        // Only the boss's own health line: the other tags around it are pets and floating damage numbers.
         List<Component> lines = new ArrayList<>();
         for (Entity tagEntity : tags) {
             for (Component line : splitLines(nametag(tagEntity))) {
-                String text = line.getString();
-                if (!text.isBlank() && !text.contains("Spawned by:")) lines.add(line);
+                if (isBossHealth(SkyBallsLocation.strip(line.getString()))) {
+                    lines.add(line);
+                    break;
+                }
             }
+            if (!lines.isEmpty()) break;
         }
         bossLines = lines;
+    }
+
+    private static final List<String> BOSSES = List.of("Revenant Horror", "Atoned Horror", "Tarantula Broodfather",
+        "Conjoined Brood", "Sven Packmaster", "Voidgloom Seraph", "Inferno Demonlord", "Riftstalker Bloodfiend");
+
+    /** "☠ Voidgloom Seraph IV 45M❤" (or "... 15 Hits" while its shield is up). */
+    private static boolean isBossHealth(String text) {
+        if (!text.contains("❤") && !text.contains(" Hits")) return false;
+        if (text.contains("☠")) return true;
+        for (String boss : BOSSES) if (text.contains(boss)) return true;
+        return false;
     }
 
     /** Splits a nametag on its line breaks, keeping each part's colours. */

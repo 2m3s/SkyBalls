@@ -31,10 +31,19 @@ public final class CombatFeatures {
     private static final Pattern ARROW_ADDED = Pattern.compile("You've added (?<type>.*) x(?<amount>[\\d,]+) to your quiver!");
     private static final Pattern ARROW_SELECT = Pattern.compile("You set your selected arrow type to (?<arrow>.*)!");
     private static final Pattern ARROW_RAN_OUT = Pattern.compile("QUIVER! You have run out of (?<type>.*)s!");
-    private static final Pattern COCOON = Pattern.compile("CAUGHT! You cocooned an? (?<name>[\\w ]+)!");
+    /** Any name, apostrophes included ("Arachne's Keeper"), with or without "a"/"an"/"the" before it. */
+    private static final Pattern COCOON = Pattern.compile("CAUGHT! You cocooned (?:an? |the )?(?<name>.+?)!");
     private static final Pattern COCOON_BOSS = Pattern.compile("\\s*YOU COCOONED YOUR SLAYER BOSS");
+    /**
+     * Every rare drop line: RARE / VERY RARE / CRAZY RARE / INSANE / PRAY TO RNGESUS / PET / RNG METER drops, the
+     * Garden's RARE CROP lines, RARE REWARD and OUTSTANDING CATCH, with or without spaces before them.
+     */
     private static final Pattern RARE_DROP = Pattern.compile(
-        "^(?<type>(?:VERY |CRAZY |INSANE |PRAY TO RNGESUS )?RARE DROP!|PET DROP!|INSANE DROP!)\\s+\\(?(?<item>.+?)\\)?(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?.*Magic Find\\))?\\s*$");
+        "^\\s*(?<type>(?:(?:VERY |CRAZY |INSANE |INCREDIBLY )?RARE|PRAY TO RNGESUS|INSANE|PET|RNG METER|LEGENDARY) (?:DROP|CROP|REWARD)!|OUTSTANDING CATCH!)"
+            // The "(+241% ✯ Magic Find)" or "(+100 ☘ Farming Fortune)" after the item isn't part of its name.
+            + "\\s+\\(?(?<item>.+?)\\)?(?:\\s+x(?<amount>[\\d,]+))?(?:\\s+\\(\\+[\\d,.]+%? ?[^)]*\\))?\\s*$");
+    /** "You dug out a Minos Relic!", "You found a Recombobulator 3000!": just the item. */
+    private static final Pattern DROP_WORDS = Pattern.compile("^(?:You (?:dug out|found|caught|got)(?: an?)? )?(?<item>.+?)!?$");
     private static final double LEGION_RANGE = 30;
 
     private static String arrowType;
@@ -167,8 +176,21 @@ public final class CombatFeatures {
             }
         }
 
-        if ((m = RARE_DROP.matcher(text)).find()) onRareDrop(config.rareDrops, text, m.group("item").trim());
+        if ((m = RARE_DROP.matcher(text)).find()) {
+            Matcher words = DROP_WORDS.matcher(m.group("item").trim());
+            String item = words.matches() ? words.group("item").trim() : m.group("item").trim();
+            int amount = m.group("amount") == null ? 1 : Integer.parseInt(m.group("amount").replace(",", ""));
+            // "2x Item" as well as "Item x2".
+            Matcher prefixed = AMOUNT_FIRST.matcher(item);
+            if (prefixed.matches()) {
+                amount = Integer.parseInt(prefixed.group("amount"));
+                item = prefixed.group("item").trim();
+            }
+            onRareDrop(config.rareDrops, text.trim(), item, amount);
+        }
     }
+
+    private static final Pattern AMOUNT_FIRST = Pattern.compile("^(?<amount>\\d+)\\s*x\\s+(?<item>.+)$", Pattern.CASE_INSENSITIVE);
 
     /** Mobs worth a cocoon alert: slayer bosses and minibosses, elusive mobs and important bosses. */
     private static final List<String> IMPORTANT_MOBS = List.of(
@@ -181,7 +203,10 @@ public final class CombatFeatures {
         "Pack Enforcer", "Sven Follower", "Sven Alpha",
         "Voidling Devotee", "Voidling Radical", "Voidcrazed Maniac",
         "Flare Demon", "Kindleheart Demon", "Burningsoul Demon",
-        // Diana and other elusive mobs
+        // Elusive and rare mobs
+        "Special Zealot", "Voidling Extremist", "Soul of the Alpha", "Old Wolf", "Arachne's Keeper", "Scatha",
+        "Golden Goblin", "Diamond Goblin", "Star Sentry", "Mimic", "Corleone",
+        // Diana
         "Minos Inquisitor", "Minos Champion", "King Minos", "Manticore", "Sphinx", "Vanquisher",
         "Thunder", "Lord Jawbus", "Water Hydra", "Sea Emperor", "The Loch Emperor", "Great White Shark", "Phantom Fisher",
         "Grim Reaper", "Yeti", "Reindrake", "Plhlegblast", "Ragnarok", "Wiki Tiki", "Titanoboa", "Abyssal Miner",
@@ -200,7 +225,7 @@ public final class CombatFeatures {
         return false;
     }
 
-    private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item) {
+    private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount) {
         Minecraft mc = Minecraft.getInstance();
         if (config.copy) {
             mc.execute(() -> {
@@ -209,10 +234,11 @@ public final class CombatFeatures {
             });
         }
         if (config.animation) {
+            int count = Math.max(1, amount);
             ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {
-                if (value != null && value >= config.thresholdMillions * 1_000_000d) {
+                if (value != null && value * count >= config.thresholdMillions * 1_000_000d) {
                     SkyBallsAlerts.dropAnimation(Component.literal(item + "!").withStyle(ChatFormatting.BOLD), 0xFFAA00);
-                    SkyBallsAlerts.chat(Component.literal(item + " is worth " + formatCoins(value) + " coins!").withStyle(ChatFormatting.GOLD));
+                    SkyBallsAlerts.chat(Component.literal(item + " is worth " + formatCoins(value * count) + " coins!").withStyle(ChatFormatting.GOLD));
                 }
             });
         }

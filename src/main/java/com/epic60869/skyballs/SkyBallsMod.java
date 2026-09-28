@@ -92,7 +92,6 @@ public final class SkyBallsMod implements ClientModInitializer {
         SkyBallsPriceTooltip.init();
         com.epic60869.skyballs.features.misc.MuseumTooltip.init(configDir);
         com.epic60869.skyballs.features.misc.AccessoryTooltip.init(configDir);
-        com.epic60869.skyballs.features.misc.AccessoryHelper.init();
         com.epic60869.skyballs.features.misc.ItemCooldowns.init();
         com.epic60869.skyballs.features.misc.EventCalendar.init();
         com.epic60869.skyballs.features.garden.PestHighlight.init();

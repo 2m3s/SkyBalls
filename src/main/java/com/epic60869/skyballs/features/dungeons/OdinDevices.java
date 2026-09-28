@@ -45,9 +45,8 @@ import java.util.regex.Pattern;
  * Floor 7 device solvers, ported from Odin's SimonSays, ArrowAlign and ArrowsDevice
  * (https://github.com/odtheking/Odin, BSD-3-Clause).
  * <ul>
- *     <li>Simon Says: boxes the buttons in order (green, gold, red) and handles SS skip: while the start button
- *     is spammed at the start, the first lanterns show up out of order and are put back in the right order.
- *     Optionally blocks wrong buttons and limits start button clicks to the SS skip amount.</li>
+ *     <li>Simon Says: boxes the buttons in order (green, gold, then red) with each button's number, and optionally
+ *     blocks clicks on any button but the next one.</li>
  *     <li>Arrow Align: clicks left on each frame, and blocks clicks on frames that are already right.</li>
  *     <li>Sharp Shooter (i4): the lit target, blocks already hit, and optionally the best places to aim.</li>
  * </ul>
@@ -87,7 +86,6 @@ public final class OdinDevices {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> reset());
         SkyBallsLocation.onAreaChange(area -> reset());
         WorldEvents.BLOCK_STATE_UPDATE.register(OdinDevices::onBlockUpdate);
-        ServerTickCallback.EVENT.register(OdinDevices::onServerTick);
         ClientTickEvents.END_CLIENT_TICK.register(OdinDevices::arrowAlignTick);
         SkyBallsChat.onChat(message -> onChat(message.text()));
         UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
@@ -99,8 +97,6 @@ public final class OdinDevices {
 
     private static void reset() {
         resetSimon();
-        firstPhase = true;
-        startClicks = 0;
         marked.clear();
         target = null;
         aims = List.of();
@@ -111,11 +107,7 @@ public final class OdinDevices {
     }
 
     private static void onChat(String text) {
-        if (text.equals("[BOSS] Goldor: Who dares trespass into my domain?")) {
-            startClicks = 0;
-            firstPhase = true;
-            resetSimon();
-        }
+        if (text.equals("[BOSS] Goldor: Who dares trespass into my domain?")) resetSimon();
         Matcher m = DEVICE_COMPLETE.matcher(text);
         if (m.matches() && !i4Complete && inI4Room()) {
             var player = Minecraft.getInstance().player;
@@ -130,40 +122,24 @@ public final class OdinDevices {
         i4BlockUpdate(pos, old, updated);
     }
 
-    private static void onServerTick() {
-        if (!inF7Boss() || !firstPhase) return;
-        var level = Minecraft.getInstance().level;
-        if (level == null) return;
-        if (lastLanternTick++ > 10) {
-            int buttons = 0;
-            for (BlockPos p : GRID) if (level.getBlockState(p).is(Blocks.STONE_BUTTON)) buttons++;
-            if (buttons > 8) {
-                firstPhase = false;
-                startClicks = 0;
-            }
-        }
-    }
-
     /** @return true to cancel the click. */
     private static boolean onUseBlock(BlockPos pos) {
         FeatureConfigs.Terminals config = config();
         if (config == null || !config.odinDevices || !inF7Boss()) return false;
-        if (pos.equals(START_BUTTON) && firstPhase && config.ssLimitStartClicks) {
-            if (startClicks++ >= config.ssMaxStartClicks && !sneaking()) {
+        if (pos.getX() == 110 && pos.getY() >= 120 && pos.getY() <= 123 && pos.getZ() >= 92 && pos.getZ() <= 95) {
+            BlockPos lantern = pos.east();
+            BlockPos needed = clickNeeded < clickOrder.size() ? clickOrder.get(clickNeeded) : null;
+            if (config.ssBlockWrong && !sneaking() && needed != null && !lantern.equals(needed)) {
                 SkyBallsAlerts.play(SoundEvents.BLAZE_HURT, 1f);
                 return true;
             }
-        }
-        if (pos.getX() == 110 && pos.getY() >= 120 && pos.getY() <= 123 && pos.getZ() >= 92 && pos.getZ() <= 95) {
-            if (config.ssAnnounce && !clickOrder.isEmpty() && pos.east().equals(clickOrder.getLast())) {
+            if (config.ssAnnounce && !clickOrder.isEmpty() && lantern.equals(clickOrder.getLast())) {
                 var connection = Minecraft.getInstance().getConnection();
                 if (connection != null) connection.sendCommand("pc SS " + clickOrder.size() + "/5");
             }
-            BlockPos needed = clickNeeded < clickOrder.size() ? clickOrder.get(clickNeeded) : null;
-            if (config.ssBlockWrong && !sneaking() && needed != null && !pos.east().equals(needed)) {
-                SkyBallsAlerts.play(SoundEvents.BLAZE_HURT, 1f);
-                return true;
-            }
+            // Move on to the next button straight away: waiting for the server to show the press blocked a quick
+            // correct click on the next button.
+            if (lantern.equals(needed)) clickNeeded++;
         }
         return false;
     }
@@ -195,33 +171,26 @@ public final class OdinDevices {
     static {
         for (int y = 120; y <= 123; y++) for (int z = 92; z <= 95; z++) GRID.add(new BlockPos(110, y, z));
     }
+    /** The lanterns in the order they flashed; each round flashes the whole sequence again, one longer. */
     private static final List<BlockPos> clickOrder = new ArrayList<>();
-    private static int lastLanternTick = -1;
+    /** How many buttons of this round have been pressed. */
     private static int clickNeeded;
-    private static boolean firstPhase = true;
-    private static int startClicks;
 
     private static void resetSimon() {
         clickOrder.clear();
         clickNeeded = 0;
-        lastLanternTick = -1;
     }
 
     private static void simonBlockUpdate(BlockPos pos, BlockState old, BlockState updated) {
         if (pos.equals(START_BUTTON) && updated.is(Blocks.STONE_BUTTON) && updated.getValue(BlockStateProperties.POWERED)) {
             resetSimon();
-            firstPhase = true;
             return;
         }
         if (pos.getY() < 120 || pos.getY() > 123 || pos.getZ() < 92 || pos.getZ() > 95) return;
         if (pos.getX() == 111) {
+            // A lantern flashing: the next button of the sequence (the round replays the ones already known).
             if (updated.is(Blocks.OBSIDIAN) && old.is(Blocks.SEA_LANTERN) && !clickOrder.contains(pos)) {
                 clickOrder.add(pos.immutable());
-                lastLanternTick = 0;
-                if (!firstPhase) return;
-                // SS skip: spamming start makes the first lanterns show out of order.
-                if (clickOrder.size() == 2) Collections.reverse(clickOrder);
-                else if (clickOrder.size() == 3) clickOrder.remove(clickOrder.size() - 2);
             }
         } else if (pos.getX() == 110) {
             var level = Minecraft.getInstance().level;
@@ -230,22 +199,17 @@ public final class OdinDevices {
                 if (level != null) for (BlockPos p : GRID) if (level.getBlockState(p).isAir()) air++;
                 if (air > 8) resetSimon();
             } else if (old.is(Blocks.STONE_BUTTON) && updated.is(Blocks.STONE_BUTTON) && updated.getValue(BlockStateProperties.POWERED)) {
-                clickNeeded = clickOrder.indexOf(pos.east()) + 1;
-                if (clickNeeded >= clickOrder.size()) {
-                    resetSimon();
-                    firstPhase = false;
-                }
+                // The server showing a press: never go back (a click may already have moved on), only forward.
+                int index = clickOrder.indexOf(pos.east());
+                if (index >= 0) clickNeeded = Math.max(clickNeeded, index + 1);
+                // The round is done: the next one flashes the whole sequence again.
+                if (!clickOrder.isEmpty() && clickNeeded >= clickOrder.size()) resetSimon();
             }
         }
     }
 
     private static void renderSimon(PrimitiveCollector collector, FeatureConfigs.Terminals config) {
         if (!config.simonSays) return;
-        if (config.ssLimitStartClicks && firstPhase && clickOrder.isEmpty() && startClicks > 0) {
-            ChatFormatting colour = startClicks >= config.ssMaxStartClicks ? ChatFormatting.GREEN : ChatFormatting.YELLOW;
-            collector.submitText(Component.literal("SS Skip: " + Math.min(startClicks, config.ssMaxStartClicks) + "/" + config.ssMaxStartClicks).withStyle(colour),
-                Vec3.atCenterOf(START_BUTTON).add(0, 0.8, 0), 1.2f, true);
-        }
         if (clickNeeded >= clickOrder.size()) return;
         float[] first = colour(config.ssFirstColor, new float[]{0.33f, 1f, 0.33f, 0.5f});
         float[] second = colour(config.ssSecondColor, new float[]{1f, 0.67f, 0f, 0.5f});
@@ -256,6 +220,9 @@ public final class OdinDevices {
             AABB box = new AABB(p.getX() + 0.05, p.getY() + 0.37, p.getZ() + 0.3, p.getX() - 0.15, p.getY() + 0.63, p.getZ() + 0.7);
             collector.submitFilledBox(box, c, c[3], true);
             collector.submitOutlinedBox(box, c, 1f, 2f, true);
+            // Its place in the sequence, so every button past the first two can be told apart too.
+            collector.submitText(Component.literal(String.valueOf(i + 1)).withStyle(i == clickNeeded ? ChatFormatting.GREEN : ChatFormatting.WHITE),
+                new Vec3(p.getX() - 0.07, p.getY() + 0.5, p.getZ() + 0.5), 1f, true);
         }
     }
 

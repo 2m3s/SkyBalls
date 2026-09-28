@@ -200,7 +200,6 @@ public final class SbcFriendsScreen extends Screen {
                 String detail = f.online() ? "Online" + (where.isEmpty() ? "" : " · " + where) + (f.afk() ? " · AFK" : "")
                     : "Last seen " + Sbc.ago(f.lastSeen());
                 List<RowButton> buttons = new ArrayList<>();
-                buttons.add(new RowButton("Profile", 0, 46, () -> SbcProfileViewer.open(f.username(), null)));
                 boolean confirming = confirmRemove.equals(f.username()) && System.currentTimeMillis() - confirmRemoveAt < 4000;
                 buttons.add(new RowButton(confirming ? "Sure?" : "Remove", 0, 46, () -> {
                     if (confirmRemove.equals(f.username()) && System.currentTimeMillis() - confirmRemoveAt < 4000) {
