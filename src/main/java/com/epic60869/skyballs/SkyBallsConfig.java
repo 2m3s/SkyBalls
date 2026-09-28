@@ -213,7 +213,7 @@ public final class SkyBallsConfig extends Config {
         public boolean timeToKill = true;
 
         @Expose
-        @ConfigOption(name = "Time to Kill Personal Bests", desc = "Say in chat when you beat your fastest kill of that boss and tier, or what your personal best is. Saved per Minecraft account.")
+        @ConfigOption(name = "Time to Kill Personal Bests", desc = "Your fastest kill of that boss and tier, in brackets after the kill time: (PB: 30.10s), or (NEW PERSONAL BEST!) when you beat it. Saved per Minecraft account.")
         @ConfigEditorBoolean
         public boolean personalBests = true;
 

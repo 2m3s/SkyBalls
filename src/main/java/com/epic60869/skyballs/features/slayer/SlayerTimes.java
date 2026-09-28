@@ -202,9 +202,22 @@ public final class SlayerTimes {
         boolean compact = config.compactTimes;
         String took = format(time);
         if (config.timeToKill) {
-            SkyBallsAlerts.chat(compact
+            // One line: the time, then the personal best in brackets.
+            MutableComponent line = compact
                 ? red(name).append(yellow(" took ")).append(aqua(took))
-                : yellow("It took ").append(aqua(took)).append(yellow(" to kill ")).append(red(name)));
+                : yellow("It took ").append(aqua(took)).append(yellow(" to kill ")).append(red(name));
+            if (config.personalBests) {
+                if (newBest) {
+                    line.append(yellow(" ("))
+                        .append(Component.literal(compact ? "NEW PB!" : "NEW PERSONAL BEST!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD))
+                        .append(Component.literal(previous == null ? "" : " Previous: " + format(previous)).withStyle(ChatFormatting.GRAY))
+                        .append(yellow(")"));
+                } else {
+                    line.append(yellow(" (PB: ")).append(Component.literal(format(previous)).withStyle(ChatFormatting.GOLD)).append(yellow(")"));
+                }
+            }
+            SkyBallsAlerts.chat(line);
+            return;
         }
         if (!config.personalBests) return;
         MutableComponent bold = Component.literal(compact ? "NEW PB! " : "NEW PERSONAL BEST! ").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
