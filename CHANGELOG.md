@@ -8,6 +8,10 @@ All notable changes to SkyBalls are listed here, newest first.
 - RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins".
 - Slayer time messages (SkyHanni's): how long your boss took to kill, your personal best for that boss and tier ("NEW PERSONAL BEST!"), and how long the whole quest took. Each can be turned off, and there's a compact style.
 - The slayer boss phase display shows your Tarantula's egg sacs (time left and hits) under its health.
+- Slayer kill time leaderboard: your slayer personal bests are shared with the SkyBalls leaderboard (Slayers → Share Slayer PBs, on by default; bests from before this update are sent the next time you connect). `/sb leaderboard slayer` shows every boss and tier with its record holder and your time and rank (click a row for its top 10), and `/sb leaderboard slayer <boss>` shows the top 10 for one boss, e.g. `Revenant Horror V`. Without a connection it shows your own times. The board is also in Discord (`/leaderboard slayer`).
+
+### Changed
+- `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
 ### Fixed
 - Storage overview: smooth-scrolling mice and touchpads barely scrolled (each small wheel step was rounded to nothing).

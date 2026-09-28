@@ -458,6 +458,11 @@ public final class SkyBallsGlobalChat {
                     return;
                 }
 
+                if (type.startsWith("slayerPb")) {
+                    Minecraft.getInstance().execute(() -> com.epic60869.skyballs.features.slayer.SlayerLeaderboard.handle(type, packet));
+                    return;
+                }
+
                 if ("accountStatus".equals(type) || "nickResult".equals(type)) {
                     Minecraft.getInstance().execute(() -> SkyBallsNickCommand.handle(type, packet));
                     return;
