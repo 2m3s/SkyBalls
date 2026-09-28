@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
 /**
  * Profit per slayer boss: "Profit: -10k" in chat after each kill, with a hover listing each drop and its value, the
  * drops' total, the quest's cost and what's left, and the same in the Boss Profit HUD. Drops are what came into your
- * inventory since your boss spawned, plus what went straight into your sacks (Hypixel's "[Sacks]" messages). The
+ * inventory since your boss spawned, plus what went straight into your sacks (Hypixel's "[Sacks]" messages), and only
+ * items that boss drops (SkyHanni's slayer drop lists), so mob drops and pickups meanwhile don't count. The
  * chat line goes out as soon as the "[Sacks]" message after the kill comes, or 2 seconds after the kill without one;
  * the HUD shows from the moment the boss dies and fills in as later drops arrive, for up to 30 seconds. The cost is
  * what your purse went down by when the quest started, or Hypixel's price for that boss and tier.
@@ -83,7 +84,83 @@ public final class SlayerBossProfit {
 
     private SlayerBossProfit() {}
 
-    public static void init() {
+    // ---------------------------------------------------------------- which items a boss drops
+
+    /** SkyHanni's list of each slayer's drops (the one its slayer profit tracker uses). */
+    private static final String DROPS_URL = "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/constants/SlayerProfitTrackerItems.json";
+    /** Slayer ("Revenant Horror") -> the keys its drops can show up as (see {@link #keys}). Empty until loaded. */
+    private static volatile Map<String, java.util.Set<String>> drops = Map.of();
+
+    /** Downloads the drop lists (kept on disk for when GitHub can't be reached). */
+    private static void loadDrops(java.nio.file.Path configDir) {
+        java.nio.file.Path cache = configDir.resolve("skyballs").resolve("slayer-drops.json");
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            String json = null;
+            try {
+                var client = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).build();
+                var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(DROPS_URL)).timeout(java.time.Duration.ofSeconds(15))
+                    .header("User-Agent", "SkyBalls").GET().build();
+                var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200) {
+                    json = response.body();
+                    java.nio.file.Files.createDirectories(cache.getParent());
+                    java.nio.file.Files.writeString(cache, json, java.nio.charset.StandardCharsets.UTF_8);
+                }
+            } catch (Exception e) {
+                System.err.println("[SkyBalls] Could not download slayer drops: " + e.getMessage());
+            }
+            try {
+                if (json == null && java.nio.file.Files.exists(cache)) json = java.nio.file.Files.readString(cache, java.nio.charset.StandardCharsets.UTF_8);
+                if (json == null) return;
+                com.google.gson.JsonObject slayers = com.google.gson.JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("slayers");
+                Map<String, java.util.Set<String>> loaded = new HashMap<>();
+                slayers.entrySet().forEach(e -> {
+                    java.util.Set<String> keys = new java.util.HashSet<>();
+                    for (var item : e.getValue().getAsJsonArray()) keys.addAll(keys(item.getAsString()));
+                    loaded.put(e.getKey(), keys);
+                });
+                drops = loaded;
+            } catch (Exception e) {
+                System.err.println("[SkyBalls] Could not read slayer drops: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * The ids a listed drop can have here: NEU's "SMITE;6" is the book ENCHANTMENT_SMITE_6, "BITE_RUNE;1" the rune
+     * BITE_RUNE_1, "GHOUL;3" a Ghoul pet (LVL_..._GHOUL); plain ids are themselves.
+     */
+    private static List<String> keys(String neuId) {
+        int semi = neuId.indexOf(';');
+        if (semi < 0) return List.of(neuId);
+        String base = neuId.substring(0, semi), level = neuId.substring(semi + 1);
+        return List.of(neuId, base, "ENCHANTMENT_" + base + "_" + level, base + "_" + level, "PET:" + base);
+    }
+
+    /** "Revenant Horror V" / "Atoned Horror" -> "Revenant Horror", the slayer the drop list is under. */
+    private static String slayer(String boss) {
+        String name = boss.replaceFirst(" [IVX]+$", "");
+        return switch (name) {
+            case "Atoned Horror" -> "Revenant Horror";
+            case "Conjoined Brood" -> "Tarantula Broodfather";
+            default -> name;
+        };
+    }
+
+    /** Whether {@code id} (a price id, or a pet's LVL_n_TIER_TYPE) is one of the boss's drops; all count before the list loads. */
+    private static boolean isBossDrop(String boss, String id) {
+        java.util.Set<String> keys = drops.get(slayer(boss));
+        if (keys == null || keys.isEmpty()) return true;
+        if (id == null) return false;
+        if (keys.contains(id)) return true;
+        Matcher pet = PET_ID.matcher(id);
+        return pet.matches() && keys.contains("PET:" + pet.group(1));
+    }
+
+    private static final Pattern PET_ID = Pattern.compile("^LVL_\\d+_[A-Z]+_(.+)$");
+
+    public static void init(java.nio.file.Path configDir) {
+        loadDrops(configDir);
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 == 0) tick();
         });
@@ -246,12 +323,15 @@ public final class SlayerBossProfit {
             int gained = e.getValue() - k.baseline.getOrDefault(e.getKey(), 0);
             if (gained <= 0) continue;
             String id = e.getKey();
+            // Only the boss's own drops: not mob drops or anything else picked up meanwhile.
+            if (!isBossDrop(k.boss, id)) continue;
             String name = RepoItems.displayName(id);
             String plain = name == null ? null : ChatFormatting.stripFormatting(name);
             lines.add(new Line(plain == null ? id : plain, gained, SkyBallsPriceTooltip.unitPrice(id) * gained));
         }
         for (Map.Entry<String, Long> e : k.sacks.entrySet()) {
             String id = RepoItems.idByName(e.getKey());
+            if (!isBossDrop(k.boss, id)) continue;
             double each = id == null ? 0 : SkyBallsPriceTooltip.unitPrice(id);
             lines.add(new Line(e.getKey(), e.getValue(), each * e.getValue()));
         }
