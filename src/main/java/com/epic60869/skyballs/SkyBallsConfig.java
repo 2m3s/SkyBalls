@@ -142,6 +142,13 @@ public final class SkyBallsConfig extends Config {
         public boolean rngMeterValue = true;
 
         @Expose
+        @Accordion
+        @ConfigOption(name = "Personal Best", desc = "Slayer kill times, personal bests and quest times in chat.")
+        public PersonalBest personalBest = new PersonalBest();
+    }
+
+    public static final class PersonalBest {
+        @Expose
         @ConfigOption(name = "Time to Kill", desc = "Say in chat how long your slayer boss took to kill.")
         @ConfigEditorBoolean
         public boolean timeToKill = true;

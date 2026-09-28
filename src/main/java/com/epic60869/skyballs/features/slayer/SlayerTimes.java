@@ -52,14 +52,14 @@ public final class SlayerTimes {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> reset());
     }
 
-    private static SkyBallsConfig.Slayers config() {
+    private static SkyBallsConfig.PersonalBest config() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c == null ? null : c.slayers;
+        return c == null ? null : c.slayers.personalBest;
     }
 
     /** Whether the boss scan in {@link SlayerFeatures} has to run for these messages. */
     static boolean enabled() {
-        SkyBallsConfig.Slayers config = config();
+        SkyBallsConfig.PersonalBest config = config();
         return config != null && (config.timeToKill || config.personalBests);
     }
 
@@ -84,7 +84,7 @@ public final class SlayerTimes {
             case "NICE! SLAYER BOSS SLAIN!" -> onKill();
             case "SLAYER QUEST COMPLETE!" -> {
                 onKill();
-                SkyBallsConfig.Slayers config = config();
+                SkyBallsConfig.PersonalBest config = config();
                 if (config != null && config.questComplete && questStartedAt > 0) {
                     String took = format(System.currentTimeMillis() - questStartedAt);
                     SkyBallsAlerts.chat(config.compactTimes
@@ -111,7 +111,7 @@ public final class SlayerTimes {
         spawnedAt = 0;
         boss = null;
         killed = true;
-        SkyBallsConfig.Slayers config = config();
+        SkyBallsConfig.PersonalBest config = config();
         if (config == null) return;
 
         Map<String, Long> bests = BESTS.computeIfAbsent(player(), p -> new ConcurrentHashMap<>());
