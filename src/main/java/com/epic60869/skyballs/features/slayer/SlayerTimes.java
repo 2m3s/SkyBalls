@@ -24,7 +24,8 @@ import java.util.regex.Pattern;
 
 /**
  * Slayer time messages and personal bests, following SkyHanni's SlayerTimeMessages: how long your boss took to kill
- * (from its "Spawned by: you" nametag appearing to "NICE! SLAYER BOSS SLAIN!"), your personal best for that boss and
+ * (from its "Spawned by: you" nametag appearing to "NICE! SLAYER BOSS SLAIN!", or to "YOU COCOONED YOUR SLAYER BOSS"
+ * when it's cocooned, since the slain message only comes once the cocoon hatches), your personal best for that boss and
  * tier (saved per Minecraft account), and how long the whole quest took.
  */
 public final class SlayerTimes {
@@ -114,7 +115,10 @@ public final class SlayerTimes {
                 questStartedAt = 0;
             }
             case "SLAYER QUEST FAILED!" -> reset();
-            default -> {}
+            default -> {
+                // A cocooned boss is dead when it's cocooned: "NICE! SLAYER BOSS SLAIN!" only comes once it hatches.
+                if (text.startsWith("YOU COCOONED YOUR SLAYER BOSS")) onKill();
+            }
         }
     }
 
