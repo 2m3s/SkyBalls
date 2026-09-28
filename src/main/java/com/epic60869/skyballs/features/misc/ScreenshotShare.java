@@ -97,7 +97,7 @@ public final class ScreenshotShare {
         say(Component.literal("Uploading " + name + "...").withStyle(ChatFormatting.GRAY));
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                String link = send(file, host);
+                String link = sendWithRetry(file, host);
                 MutableComponent message = Component.literal("Screenshot uploaded: ").withStyle(ChatFormatting.GREEN)
                     .append(Component.literal(link).withStyle(s -> s.withColor(ChatFormatting.AQUA).withUnderlined(true)
                         .withClickEvent(new ClickEvent.OpenUrl(URI.create(link)))))
@@ -109,10 +109,25 @@ public final class ScreenshotShare {
                         .withHoverEvent(new HoverEvent.ShowText(Component.literal("Copy the link")))));
                 say(message);
             } catch (Exception e) {
-                say(Component.literal("Couldn't upload the screenshot: " + e.getMessage()).withStyle(ChatFormatting.RED));
+                say(Component.literal("Couldn't upload the screenshot: " + reason(e, host)).withStyle(ChatFormatting.RED)
+                    .append(Component.literal("  [Retry]").withStyle(s -> s.withColor(ChatFormatting.YELLOW).withBold(true)
+                        .withClickEvent(new ClickEvent.RunCommand("/sb screenshot upload " + name))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal("Try uploading it again.\n").withStyle(ChatFormatting.GRAY)
+                            .append(Component.literal("If " + host + " keeps failing, pick another host under Misc > Screenshot Upload Host.")
+                                .withStyle(ChatFormatting.GRAY)))))));
             }
         });
         return 1;
+    }
+
+    /** Litterbox and Catbox often fail for a moment (HTTP 500, a timeout): try once more before giving up. */
+    private static String sendWithRetry(Path file, Host host) throws Exception {
+        try {
+            return send(file, host);
+        } catch (Exception first) {
+            Thread.sleep(2_000);
+            return send(file, host);
+        }
     }
 
     /** Multipart upload to Litterbox (temporary) or Catbox (permanent); both answer with the file's link. */
@@ -134,9 +149,20 @@ public final class ScreenshotShare {
         HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         String text = response.body().trim();
         if (response.statusCode() != 200 || !text.startsWith("https://")) {
-            throw new IllegalStateException(text.isEmpty() ? "HTTP " + response.statusCode() : text);
+            // Error pages are whole HTML documents: only a short plain-text answer is worth showing.
+            boolean readable = !text.isEmpty() && text.length() <= 200 && !text.contains("<");
+            throw new IllegalStateException(host + " answered HTTP " + response.statusCode()
+                + (readable ? ": " + text : response.statusCode() >= 500 ? " (its server is having problems, try again in a bit)" : ""));
         }
         return text;
+    }
+
+    /** A one-line reason for chat. */
+    private static String reason(Exception e, Host host) {
+        if (e instanceof IllegalStateException && e.getMessage() != null) return e.getMessage();
+        if (e instanceof java.net.http.HttpTimeoutException) return host + " took too long to answer";
+        if (e instanceof java.io.IOException) return "couldn't reach " + host;
+        return e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage());
     }
 
     private static void field(ByteArrayOutputStream body, String boundary, String name, String value) throws java.io.IOException {

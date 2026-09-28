@@ -15,6 +15,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
 ### Fixed
+- Screenshot upload: when the host failed (e.g. Litterbox's HTTP 500) its whole error web page was pasted into chat. It now tries once more, then says what went wrong in one line with a [Retry] button.
 - Storage overview: smooth-scrolling mice and touchpads barely scrolled (each small wheel step was rounded to nothing).
 - Storage overlay and overview: Retain Scroll Position was lost the first time you opened them after starting the game.
 
