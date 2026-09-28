@@ -180,21 +180,25 @@ public final class DungeonFeatures {
         OdinPuzzleSolvers.init();
         ThreeByThree.init();
 
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("dungeon_splits", () -> config() != null && config().timers.splits);
         SkyBallsHuds.register("dungeon_splits", "Dungeon Splits",
             () -> config() != null && config().timers.splits && !SPLITS.isEmpty() && SPLITS.getFirst().time != 0,
             DungeonFeatures::splitLines,
             List.of(kv("§2Blood Open: ", "24.51s"), kv("§bBlood Clear: ", "1m 10.20s"), kv("§dPortal Entry: ", "12.03s"), kv("§9Boss Entry: ", "1m 46.74s"), kv("§5Maxor: ", "38.10s")),
             8, 740);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("tick_timers", () -> config() != null && config().timers.tickTimers);
         SkyBallsHuds.register("tick_timers", "Tick Timers",
             () -> config() != null && config().timers.tickTimers && (stormStartTick >= 0 || goldorStartTick >= 0),
             DungeonFeatures::tickLines,
             List.of(kv("Storm pillars: ", "12 ticks")),
             200, 740);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("mask_timers", () -> config() != null && config().timers.maskTimers);
         SkyBallsHuds.register("mask_timers", "Mask Timers",
             () -> config() != null && config().timers.maskTimers && SkyBallsLocation.inDungeon(),
             DungeonFeatures::maskLines,
             List.of(maskPreview("Spirit Mask", "✔", ChatFormatting.GREEN, true), maskPreview("Bonzo's Mask", "2.45s", ChatFormatting.GOLD, false), maskPreview("Phoenix", "41.20s", ChatFormatting.RED, false)),
             200, 780);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("dungeon_score", () -> config() != null && config().score.display);
         SkyBallsHuds.register("dungeon_score", "Dungeon Score",
             () -> config() != null && config().score.display && SkyBallsLocation.inDungeon() && ScoreCalculator.started(),
             DungeonFeatures::scoreLines,

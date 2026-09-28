@@ -67,17 +67,17 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Compact Chat", desc = "Compact repeated chat messages into one message with an occurrence counter.")
         @ConfigEditorBoolean
-        public boolean compactChat = true;
+        public boolean compactChat = false;
 
         @Expose
         @ConfigOption(name = "Chat Emoji", desc = "Replace :emoji: shortcodes with SkyBalls emoji sprites and provide emoji autocomplete while typing chat.")
         @ConfigEditorBoolean
-        public boolean chatEmoji = true;
+        public boolean chatEmoji = false;
 
         @Expose
         @ConfigOption(name = "Hypixel Item Emojis", desc = "In any chat (all, party, guild, private, SkyBalls), :item_id: shows that SkyBlock item's icon, like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond:. Client side: everyone with SkyBalls sees the icon, others see the text. Hover the icon for the item's name.")
         @ConfigEditorBoolean
-        public boolean itemEmojis = true;
+        public boolean itemEmojis = false;
 
         @Expose
         @ConfigOption(name = "Emoji Autocomplete", desc = "Suggest emojis (with a picture of each) while you type :name in chat. Turn off to hide the emoji suggestions.")
@@ -87,7 +87,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Current Chat Display", desc = "Show which chat you are typing in (All, Party, Guild, Officer, Co-op, a private conversation or SkyBalls chat) just above the chat box while it is open.")
         @ConfigEditorBoolean
-        public boolean currentChatDisplay = true;
+        public boolean currentChatDisplay = false;
     }
 
     public static final class Farming {
@@ -134,17 +134,17 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Kills Since Rare Drop", desc = "Show the kills-since-drop counter.")
         @ConfigEditorBoolean
-        public boolean killsSinceDrop = true;
+        public boolean killsSinceDrop = false;
 
         @Expose
         @ConfigOption(name = "RNG Meter Value", desc = "In an RNG Meter menu, show each drop's price and how many coins one Slayer XP (or dungeon Score) of meter progress is worth.")
         @ConfigEditorBoolean
-        public boolean rngMeterValue = true;
+        public boolean rngMeterValue = false;
 
         @Expose
         @ConfigOption(name = "Miniboss Alert", desc = "A title, a ding and a chat line when a slayer miniboss (Revenant Champion, Tarantula Beast, Voidcrazed Maniac, ...) spawns near you during a slayer quest.")
         @ConfigEditorBoolean
-        public boolean minibossAlert = true;
+        public boolean minibossAlert = false;
 
         @Expose
         @Accordion
@@ -166,7 +166,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "PB Leaderboard HUD", desc = "Show the slayer PB leaderboard HUD.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "PB Leaderboard Rows", desc = "How many of the fastest times the HUD lists.")
@@ -188,12 +188,12 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Chat Message", desc = "After each slayer boss, \"Profit: +50k\" in chat: hover it for each drop and its value, the drops' total, the quest's cost and what's left. It goes out once the boss's drops have landed on the ground (or Hypixel's [Sacks] message with them comes); the HUD shows straight away.")
         @ConfigEditorBoolean
-        public boolean chat = true;
+        public boolean chat = false;
 
         @Expose
         @ConfigOption(name = "HUD", desc = "When a boss dies, its profit (+84.2k or -15.0k) on screen, then it hides until the next boss. Move it in /sb hud.")
         @ConfigEditorBoolean
-        public boolean hud = true;
+        public boolean hud = false;
 
         @Expose
         @ConfigOption(name = "HUD Time (seconds)", desc = "How long the HUD stays up once the boss's drops are in, before it hides until the next boss.")
@@ -210,17 +210,17 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Time to Kill", desc = "Say in chat how long your slayer boss took to kill.")
         @ConfigEditorBoolean
-        public boolean timeToKill = true;
+        public boolean timeToKill = false;
 
         @Expose
         @ConfigOption(name = "Time to Kill Personal Bests", desc = "Your fastest kill of that boss and tier, in brackets after the kill time: (PB: 30.10s), or (NEW PERSONAL BEST!) when you beat it. Saved per Minecraft account.")
         @ConfigEditorBoolean
-        public boolean personalBests = true;
+        public boolean personalBests = false;
 
         @Expose
         @ConfigOption(name = "Quest Complete", desc = "Say in chat how long the whole slayer quest (spawn and kill) took.")
         @ConfigEditorBoolean
-        public boolean questComplete = true;
+        public boolean questComplete = false;
 
         @Expose
         @ConfigOption(name = "Compact Time Messages", desc = "Shorter Time to Kill, Personal Best and Quest Complete messages.")
@@ -314,12 +314,12 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Join Commands", desc = "Quick commands to join dungeons and Kuudra: /f0 (Entrance) to /f7, /m1 to /m7, and /t1 to /t5 for Kuudra (Basic to Infernal). Applies next time you join a server.")
         @ConfigEditorBoolean
-        public boolean joinCommands = true;
+        public boolean joinCommands = false;
 
         @Expose
         @ConfigOption(name = "Screenshot Sharing", desc = "After F2, the screenshot message gets an [Upload] button that gives you a link to post in /sbc, like Skysoft. Uploads are public to anyone with the link.")
         @ConfigEditorBoolean
-        public boolean screenshotSharing = true;
+        public boolean screenshotSharing = false;
 
         @Expose
         @ConfigOption(name = "Screenshot Upload Host", desc = "Where screenshots are uploaded. Litterbox deletes them after the chosen time; Catbox keeps them.")
@@ -329,17 +329,17 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Sign Calculator", desc = "On SkyBlock's number signs (auction prices, bazaar amounts, ...) show what you typed as a number above the sign, e.g. 15m = 15,000,000, and send that number, so sums like 2.5m*3 work. Suffixes: k, m, b, s (64), e (160).")
         @ConfigEditorBoolean
-        public boolean signCalculator = true;
+        public boolean signCalculator = false;
 
         @Expose
         @ConfigOption(name = "Hypixel Button", desc = "A Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.")
         @ConfigEditorBoolean
-        public boolean hypixelButton = true;
+        public boolean hypixelButton = false;
 
         @Expose
         @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay (ported from Firmament): /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /sb storage opens it even with this off.")
         @ConfigEditorBoolean
-        public boolean storageOverlay = true;
+        public boolean storageOverlay = false;
 
         @Expose
         @Accordion
@@ -349,7 +349,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Recipe HUD", desc = "While a /sb recipe is selected, show a movable HUD with the item and the base ingredients you still need (like SkyOcean's craft helper overlay). Move it in /sb gui.")
         @ConfigEditorBoolean
-        public boolean recipeHud = true;
+        public boolean recipeHud = false;
 
         @Expose
         @ConfigOption(name = "Recipe HUD Hide Completed", desc = "Hide ingredients you already have enough of in the Recipe HUD.")
@@ -359,12 +359,12 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Calendar Time to Real Time", desc = "When enabled, hovering a SkyBlock calendar date adds the equivalent real-world date and time in your computer's local time zone.")
         @ConfigEditorBoolean
-        public boolean calendarTimeToRealTime = true;
+        public boolean calendarTimeToRealTime = false;
 
         @Expose
         @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip, like NoFrills.")
         @ConfigEditorBoolean
-        public boolean pricePaid = true;
+        public boolean pricePaid = false;
 
         @Expose
         @ConfigOption(name = "Update Notifications", desc = "Tell you in chat when a newer SkyBalls version is out (\"New SkyBalls Mod Version 1.2.3 --> 1.2.5\"), with a download link.")
@@ -374,7 +374,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Collection Tracker", desc = "While you mine, farm, forage or fish, show the collection you're gathering, what you've gained this session and per hour, like SkyHanni's farming display. Move it in /sb gui.")
         @ConfigEditorBoolean
-        public boolean collectionTracker = true;
+        public boolean collectionTracker = false;
 
         @Expose
         @ConfigOption(name = "Collection Tracker Elite Rank", desc = "Also show your rank on the Elite (elitebot.dev) collection leaderboard and how much you need to pass the next player.")
@@ -392,7 +392,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub instead of /warp dhub (and the same for every name in the list below). Applies next time you join a server.")
         @ConfigEditorBoolean
-        public boolean warpShortcuts = true;
+        public boolean warpShortcuts = false;
 
         @Expose
         @ConfigOption(name = "Warp Shortcut List", desc = "Warps that get their own command, separated by commas.")
@@ -480,7 +480,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Allow tooltips to be moved with the mouse wheel and movement keys.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Enable Scroll Wheel", desc = "Move tooltips with the mouse wheel.")
@@ -566,14 +566,14 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Show Customize Button", desc = "Show a button in the inventory that opens the item and armor customization screen.")
         @ConfigEditorBoolean
-        public boolean showCustomizeButton = true;
+        public boolean showCustomizeButton = false;
     }
 
     public static final class SlotLocking {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Slot locking and slot binding. Locked slots can't be clicked, moved or dropped; bound slots swap with a shift-click (Odin's Slot Binds).")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Lock Key", desc = "Press over a slot in your inventory to lock or unlock it.")
@@ -603,7 +603,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Copy chat messages, like NoFrills' Chat Tweaks: with chat open, press the Copy Message Key over a message to copy it. SkyBalls rank prefixes aren't copied.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         /** A keyboard key, or a mouse button stored the MoulConfig way (-100 + button; right click is -99). */
         @Expose
@@ -653,7 +653,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show the commission HUD when commission data is present in the tab list.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Background", desc = "Draw a dark background behind the commission HUD.")
@@ -680,7 +680,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show the farming RNG/progress overlay.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Background", desc = "Draw a background behind the farming RNG HUD.")
@@ -722,7 +722,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show the active pet HUD.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Overflow Pet Levels", desc = "Show pet XP beyond the normal maximum level.")
@@ -778,7 +778,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show item prices in tooltips.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Bazaar Prices", desc = "For items sold on the bazaar instead of the auction house, show the bazaar insta-buy and insta-sell price where the lowest BIN and 3 day average would be (for the whole stack, or the whole sack in the Sacks menu).")
@@ -805,19 +805,19 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Museum", desc = "Show whether the item is donated to your museum. Open your Museum's category menus once to fill this in; it's saved per profile.")
         @ConfigEditorBoolean
-        public boolean museum = true;
+        public boolean museum = false;
 
         @Expose
         @ConfigOption(name = "Accessories", desc = "Show whether you're missing an accessory, already have it, or whether it's an upgrade or downgrade of the one you have from the same family. Open each page of your Accessory Bag once to fill this in; it's saved per profile.")
         @ConfigEditorBoolean
-        public boolean accessories = true;
+        public boolean accessories = false;
     }
 
     public static final class ItemRarity {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show a background behind SkyBlock items in your inventory, containers and hotbar using the item's rarity color.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Style", desc = "The shape of the item rarity background.")
@@ -906,7 +906,7 @@ public final class SkyBallsConfig extends Config {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Enable automatic mouse reset for selected menus.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Accessory Bag", desc = "Reset the cursor when the Accessory Bag opens.")

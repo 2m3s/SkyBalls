@@ -176,7 +176,7 @@ public final class SbcConfig {
         @Expose
         @ConfigOption(name = "Daily Reward Reminder", desc = "Remind you in chat when your casino daily reward can be claimed.")
         @ConfigEditorBoolean
-        public boolean dailyReminder = true;
+        public boolean dailyReminder = false;
     }
 
     public static final class Server {
@@ -216,7 +216,7 @@ public final class SbcConfig {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show item ability cooldowns (read from the item's \"Cooldown: Xs\") on the item's slot.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Cooldown Bar", desc = "A bar at the bottom of the slot, like item durability.")
@@ -253,7 +253,7 @@ public final class SbcConfig {
         @Expose
         @ConfigOption(name = "Reminders", desc = "Popups and a sound before the events turned on below.")
         @ConfigEditorBoolean
-        public boolean reminders = true;
+        public boolean reminders = false;
 
         @Expose
         @ConfigOption(name = "Reminder Sound", desc = "Play a sound with each reminder.")
@@ -287,7 +287,7 @@ public final class SbcConfig {
         @Expose
         @ConfigOption(name = "Enabled", desc = "In the Garden only: outline pests so they're easy to find. Off everywhere else.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Colour", desc = "The outline colour.")

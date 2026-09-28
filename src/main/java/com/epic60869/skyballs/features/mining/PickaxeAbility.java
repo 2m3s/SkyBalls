@@ -47,6 +47,7 @@ public final class PickaxeAbility {
     }
 
     public static void init() {
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("pickaxe_ability", () -> config() != null && config().pickaxeAbilityHud);
         SkyBallsHuds.register("pickaxe_ability", "Pickaxe Ability",
             () -> config() != null && config().pickaxeAbilityHud && inMiningArea(),
             PickaxeAbility::lines,

@@ -64,11 +64,13 @@ public final class CombatFeatures {
         });
         SkyBallsChat.onChat(CombatFeatures::onChat);
 
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("arrows", () -> config() != null && config().arrowCounter);
         SkyBallsHuds.register("arrows", "Arrow Counter",
             () -> config() != null && config().arrowCounter && SkyBallsLocation.onSkyblock(),
             CombatFeatures::arrowLines,
             List.of(line("Arrows: ", "Flint Arrow ", ChatFormatting.WHITE).append(Component.literal("x1,234").withStyle(ChatFormatting.GREEN))),
             8, 120);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("legion", () -> config() != null && config().legionDisplay);
         SkyBallsHuds.register("legion", "Legion Display",
             () -> config() != null && config().legionDisplay && SkyBallsLocation.onSkyblock(),
             () -> List.of(line("Legion: ", legionCount + (legionCount == 1 ? " player" : " players"), ChatFormatting.AQUA)),

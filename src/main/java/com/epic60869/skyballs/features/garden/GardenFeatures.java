@@ -47,16 +47,19 @@ public final class GardenFeatures {
         });
         SkyBallsChat.onChat(GardenFeatures::onChat);
 
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("yaw_pitch", () -> config() != null && config().yawPitch);
         SkyBallsHuds.register("yaw_pitch", "Yaw and Pitch",
             () -> config() != null && config().yawPitch && SkyBallsLocation.inGarden(),
             GardenFeatures::yawPitchLines,
             List.of(kv("Yaw: ", "123.96"), kv("Pitch: ", "0.00"), kv("Facing: ", "West")),
             8, 300);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("pest_cooldown", () -> config() != null && config().pestCooldown);
         SkyBallsHuds.register("pest_cooldown", "Pest Cooldown",
             () -> config() != null && config().pestCooldown && SkyBallsLocation.inGarden(),
             GardenFeatures::pestLines,
             List.of(kv("Pest cooldown: ", "3:21")),
             8, 340);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("bps", () -> config() != null && config().blocksPerSecond);
         SkyBallsHuds.register("bps", "Blocks Per Second",
             () -> config() != null && config().blocksPerSecond && SkyBallsLocation.inGarden(),
             GardenFeatures::bpsLines,

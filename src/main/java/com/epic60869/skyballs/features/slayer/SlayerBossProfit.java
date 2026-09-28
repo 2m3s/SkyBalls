@@ -177,6 +177,7 @@ public final class SlayerBossProfit {
         SkyBallsChat.onGameMessage((component, overlay) -> {
             if (!overlay) onMessage(component);
         });
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("slayer_boss_profit", () -> config() != null && config().hud);
         SkyBallsHuds.register("slayer_boss_profit", "Slayer Boss Profit", SlayerBossProfit::hudVisible, SlayerBossProfit::hudLines,
             List.of(
                 Component.literal("Revenant Horror V ").withStyle(ChatFormatting.GOLD)

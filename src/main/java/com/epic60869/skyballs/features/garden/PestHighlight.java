@@ -84,6 +84,7 @@ public final class PestHighlight {
             if (c.tracer) collector.submitLineFromCursor(nearest.add(0, 0.3, 0), rgb, 1f, 2f);
             if (c.beacon) collector.submitFilledBoxWithBeaconBeam(new AABB(nearest.subtract(0.3, 0, 0.3), nearest.add(0.3, 0.6, 0.3)), rgb, 0.4f, false);
         });
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("pestHighlight", () -> config().enabled && config().hud);
         SkyBallsHuds.register("pestHighlight", "Pests", () -> active() && config().hud, PestHighlight::hudLines,
             List.of(Component.literal("Pests: ").withStyle(ChatFormatting.GOLD).append(Component.literal("3 alive · Plots 2, 7").withStyle(ChatFormatting.WHITE))), 8, 60);
     }

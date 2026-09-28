@@ -29,12 +29,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Arrow Counter", desc = "HUD showing the selected arrow type and how many arrows are left in your quiver.")
         @ConfigEditorBoolean
-        public boolean arrowCounter = true;
+        public boolean arrowCounter = false;
 
         @Expose
         @ConfigOption(name = "Zealot Tracker", desc = "Tracker for the Zealots you kill in the End and the Summoning Eyes you drop, for this session or in total.")
         @ConfigEditorBoolean
-        public boolean zealotCounter = true;
+        public boolean zealotCounter = false;
 
         @Expose
         @ConfigOption(name = "Legion Display", desc = "HUD showing how many players are within Legion range (30 blocks).")
@@ -110,19 +110,19 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show an on-screen alert when you cocoon a slayer boss, slayer miniboss, elusive mob or important boss.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
     }
 
     public static final class RareDrops {
         @Expose
         @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard (RARE, VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, rare crops, rare rewards and outstanding catches). What was copied shows in chat, using Copy Chat's preview settings.")
         @ConfigEditorBoolean
-        public boolean copy = true;
+        public boolean copy = false;
 
         @Expose
         @ConfigOption(name = "Big Drop Animation", desc = "Play an animation when a rare drop is worth more than the threshold.")
         @ConfigEditorBoolean
-        public boolean animation = true;
+        public boolean animation = false;
 
         @Expose
         @ConfigOption(name = "Animation Threshold (millions)", desc = "Minimum drop value, in millions of coins, for the animation.")
@@ -132,14 +132,14 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "RNG Drop Totem Animation", desc = "Skyblocker's special effect: big RNG drops (slayer, Diana and fishing RNG items, and any PRAY TO RNGESUS or RNG METER drop) pop up like a Totem of Undying, with particles and a sound.")
         @ConfigEditorBoolean
-        public boolean totemAnimation = true;
+        public boolean totemAnimation = false;
     }
 
     public static final class Slayer {
         @Expose
         @ConfigOption(name = "Boss Phase Display", desc = "HUD showing your slayer boss's nametag lines, including Voidgloom hits and Inferno attunement.")
         @ConfigEditorBoolean
-        public boolean phaseDisplay = true;
+        public boolean phaseDisplay = false;
     }
 
     public static final class Garden {
@@ -151,7 +151,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Pest Cooldown", desc = "HUD counting down from the last pest spawn.")
         @ConfigEditorBoolean
-        public boolean pestCooldown = true;
+        public boolean pestCooldown = false;
 
         @Expose
         @ConfigOption(name = "Pest Cooldown (seconds)", desc = "Your pest spawn cooldown in seconds.")
@@ -161,34 +161,34 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Blocks Per Second", desc = "HUD showing how many blocks per second you are breaking.")
         @ConfigEditorBoolean
-        public boolean blocksPerSecond = true;
+        public boolean blocksPerSecond = false;
 
         @Expose
         @ConfigOption(name = "Special Drop Animation", desc = "Play an animation when you drop a farming dye or a Ray of Helios.")
         @ConfigEditorBoolean
-        public boolean specialDropAnimation = true;
+        public boolean specialDropAnimation = false;
     }
 
     public static final class Fishing {
         @Expose
         @ConfigOption(name = "Stat Display", desc = "HUD with fishing speed, sea creature, trophy fish, double hook and treasure chance from your tab list stats.")
         @ConfigEditorBoolean
-        public boolean statDisplay = true;
+        public boolean statDisplay = false;
 
         @Expose
         @ConfigOption(name = "Hook Timer", desc = "HUD showing the time until your fish bites.")
         @ConfigEditorBoolean
-        public boolean hookTimer = true;
+        public boolean hookTimer = false;
 
         @Expose
         @ConfigOption(name = "Bait Display", desc = "HUD showing your bait and how much is left.")
         @ConfigEditorBoolean
-        public boolean baitDisplay = true;
+        public boolean baitDisplay = false;
 
         @Expose
         @ConfigOption(name = "Rare Sea Creature Alert", desc = "Alert when you catch a rare sea or lava creature.")
         @ConfigEditorBoolean
-        public boolean rareCreatureAlert = true;
+        public boolean rareCreatureAlert = false;
 
         @Expose
         @ConfigOption(name = "Alert Rarity", desc = "Minimum sea creature rarity to alert for.")
@@ -214,12 +214,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Crystal Hollows Map", desc = "HUD map of the Crystal Hollows with your position and the structures you have found.")
         @ConfigEditorBoolean
-        public boolean crystalHollowsMap = true;
+        public boolean crystalHollowsMap = false;
 
         @Expose
         @ConfigOption(name = "Crystal Hollows Waypoints", desc = "Mark Mines of Divan, Jungle Temple, Goblin Queen's Den and other places when you find them, like Skyblocker. /sb crystalwaypoints add|share|remove|clear.")
         @ConfigEditorBoolean
-        public boolean crystalWaypoints = true;
+        public boolean crystalWaypoints = false;
 
         @Expose
         @ConfigOption(name = "Waypoints From Chat", desc = "Turn Crystal Hollows coordinates in chat into waypoints.")
@@ -229,51 +229,51 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Pickaxe Ability HUD", desc = "Cooldown of your pickaxe ability (Mining Speed Boost, Pickobulus, ...) on the mining islands (Gold Mine, Deep Caverns, Dwarven Mines, Crystal Hollows, Mineshafts). Move it in /sb gui.")
         @ConfigEditorBoolean
-        public boolean pickaxeAbilityHud = true;
+        public boolean pickaxeAbilityHud = false;
 
         @Expose
         @ConfigOption(name = "Pickaxe Ability Ready Alert", desc = "Show a title when your pickaxe ability is ready again.")
         @ConfigEditorBoolean
-        public boolean pickaxeAbilityAlert = true;
+        public boolean pickaxeAbilityAlert = false;
 
         @Expose
         @ConfigOption(name = "Mines of Divan Tools Alert", desc = "Alert when you are holding all four scavenged tools for the Jade Crystal.")
         @ConfigEditorBoolean
-        public boolean divanToolsAlert = true;
+        public boolean divanToolsAlert = false;
 
         @Expose
         @ConfigOption(name = "Mineshaft Timer", desc = "HUD with your time in the mineshaft and time until you freeze.")
         @ConfigEditorBoolean
-        public boolean mineshaftTimer = true;
+        public boolean mineshaftTimer = false;
 
         @Expose
         @ConfigOption(name = "Pristine Record", desc = "Keep your highest pristine proc, overall and per gemstone, and alert on a new PB. /sb pristine to see them.")
         @ConfigEditorBoolean
-        public boolean pristineRecord = true;
+        public boolean pristineRecord = false;
     }
 
     public static final class Foraging {
         @Expose
         @ConfigOption(name = "Sweep Display", desc = "HUD showing your Sweep stat and how many logs you will cut.")
         @ConfigEditorBoolean
-        public boolean sweepDisplay = true;
+        public boolean sweepDisplay = false;
     }
 
     public static final class Enchanting {
         @Expose
         @ConfigOption(name = "Chronomatron Solver", desc = "Highlight the Chronomatron pattern.")
         @ConfigEditorBoolean
-        public boolean chronomatron = true;
+        public boolean chronomatron = false;
 
         @Expose
         @ConfigOption(name = "Superpairs Solver", desc = "Show revealed Superpairs cards.")
         @ConfigEditorBoolean
-        public boolean superpairs = true;
+        public boolean superpairs = false;
 
         @Expose
         @ConfigOption(name = "Ultrasequencer Solver", desc = "Highlight the Ultrasequencer order.")
         @ConfigEditorBoolean
-        public boolean ultrasequencer = true;
+        public boolean ultrasequencer = false;
 
         @Expose
         @ConfigOption(name = "Ultrasequencer Numbers", desc = "Show the click order as numbers on every Ultrasequencer slot, instead of only highlighting the next one.")
@@ -285,7 +285,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Valuable Rune Alert", desc = "Alert when you get a rune from the list below.")
         @ConfigEditorBoolean
-        public boolean valuableRuneAlert = true;
+        public boolean valuableRuneAlert = false;
 
         @Expose
         @ConfigOption(name = "Runes", desc = "Comma-separated rune names to alert for.")
@@ -307,7 +307,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Croesus", desc = "Also spin the chests you open at Croesus in the Dungeon Hub, with that run's floor drops.")
         @ConfigEditorBoolean
-        public boolean croesus = true;
+        public boolean croesus = false;
 
         @Expose
         @ConfigOption(name = "Hide Contents In Croesus", desc = "In Croesus's menu for a run, hide what's in the chests that will spin, so the spin shows you.")
@@ -329,7 +329,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show the dungeon map.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Fancy Map", desc = "Show player heads and room colours on the map.")
@@ -353,56 +353,56 @@ public final class FeatureConfigs {
 
     /** Ice Fill, Boulder, Creeper Beams, Three Weirdos, Quiz, Teleport Maze, Water Board and Blaze use Odin's solvers. */
     public static final class Puzzles {
-        @Expose @ConfigOption(name = "Tic Tac Toe", desc = "Show the best move.") @ConfigEditorBoolean public boolean ticTacToe = true;
-        @Expose @ConfigOption(name = "Silverfish", desc = "Show the path.") @ConfigEditorBoolean public boolean silverfish = true;
-        @Expose @ConfigOption(name = "Three Weirdos", desc = "Odin: the chest with the reward in green, wrong chests in red.") @ConfigEditorBoolean public boolean threeWeirdos = true;
-        @Expose @ConfigOption(name = "Creeper Beams", desc = "Odin: each pair of lanterns to connect in its own colour, with a line between them.") @ConfigEditorBoolean public boolean creeperBeams = true;
-        @Expose @ConfigOption(name = "Water Board", desc = "Odin: when to flip each lever, with CLICK ME! and countdowns, and a line to the next lever.") @ConfigEditorBoolean public boolean waterBoard = true;
+        @Expose @ConfigOption(name = "Tic Tac Toe", desc = "Show the best move.") @ConfigEditorBoolean public boolean ticTacToe = false;
+        @Expose @ConfigOption(name = "Silverfish", desc = "Show the path.") @ConfigEditorBoolean public boolean silverfish = false;
+        @Expose @ConfigOption(name = "Three Weirdos", desc = "Odin: the chest with the reward in green, wrong chests in red.") @ConfigEditorBoolean public boolean threeWeirdos = false;
+        @Expose @ConfigOption(name = "Creeper Beams", desc = "Odin: each pair of lanterns to connect in its own colour, with a line between them.") @ConfigEditorBoolean public boolean creeperBeams = false;
+        @Expose @ConfigOption(name = "Water Board", desc = "Odin: when to flip each lever, with CLICK ME! and countdowns, and a line to the next lever.") @ConfigEditorBoolean public boolean waterBoard = false;
         @Expose @ConfigOption(name = "Water Board Optimized", desc = "Use Odin's faster Water Board solutions.") @ConfigEditorBoolean public boolean waterOptimized = false;
         @Expose @ConfigOption(name = "Water Board Path Preview", desc = "Skyblocker: show where the water will flow on the board right now.") @ConfigEditorBoolean public boolean waterPreviewPath = true;
         @Expose @ConfigOption(name = "Water Board Lever Preview", desc = "Skyblocker: while looking at a lever, show which blocks flipping it adds (green) and removes (red).") @ConfigEditorBoolean public boolean waterPreviewLevers = true;
-        @Expose @ConfigOption(name = "Blaze", desc = "Odin: the next three blazes to shoot (green, orange, white) with lines between them.") @ConfigEditorBoolean public boolean blaze = true;
+        @Expose @ConfigOption(name = "Blaze", desc = "Odin: the next three blazes to shoot (green, orange, white) with lines between them.") @ConfigEditorBoolean public boolean blaze = false;
         @Expose @ConfigOption(name = "Show All Blazes", desc = "Also box every other blaze.") @ConfigEditorBoolean public boolean blazeShowAll = false;
-        @Expose @ConfigOption(name = "Boulder", desc = "Odin: the boulder to push next. The box clears when you click its button.") @ConfigEditorBoolean public boolean boulder = true;
+        @Expose @ConfigOption(name = "Boulder", desc = "Odin: the boulder to push next. The box clears when you click its button.") @ConfigEditorBoolean public boolean boulder = false;
         @Expose @ConfigOption(name = "Show All Boulder Clicks", desc = "Show every boulder to push instead of only the next one.") @ConfigEditorBoolean public boolean boulderShowAll = false;
-        @Expose @ConfigOption(name = "Ice Fill", desc = "Odin: the path over each Ice Fill floor.") @ConfigEditorBoolean public boolean iceFill = true;
+        @Expose @ConfigOption(name = "Ice Fill", desc = "Odin: the path over each Ice Fill floor.") @ConfigEditorBoolean public boolean iceFill = false;
         @Expose @ConfigOption(name = "Ice Fill Optimized Patterns", desc = "Use Odin's shorter (harder) Ice Fill paths.") @ConfigEditorBoolean public boolean iceFillOptimized = false;
-        @Expose @ConfigOption(name = "Quiz", desc = "Odin: a box and beam on the right answer.") @ConfigEditorBoolean public boolean trivia = true;
-        @Expose @ConfigOption(name = "Teleport Maze", desc = "Odin: visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean public boolean teleportMaze = true;
+        @Expose @ConfigOption(name = "Quiz", desc = "Odin: a box and beam on the right answer.") @ConfigEditorBoolean public boolean trivia = false;
+        @Expose @ConfigOption(name = "Teleport Maze", desc = "Odin: visited pads in red, the right pad in green (orange while there are several), and a line to the best next pad.") @ConfigEditorBoolean public boolean teleportMaze = false;
     }
 
     public static final class Secrets {
         @Expose
         @ConfigOption(name = "Secret Waypoints", desc = "Show waypoints for each room's secrets.")
         @ConfigEditorBoolean
-        public boolean secretWaypoints = true;
+        public boolean secretWaypoints = false;
 
         @Expose
         @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise Stella's. Record with /sb route start and /sb route stop; share with /sb export; import a Stella (or SecretRoutes) export with /sb route import (clipboard) or /sb route import <file>.")
         @ConfigEditorBoolean
-        public boolean routes = true;
+        public boolean routes = false;
 
         @Expose
         @ConfigOption(name = "Door Highlight", desc = "Outline wither and blood doors: green when your team has the key, red when locked.")
         @ConfigEditorBoolean
-        public boolean doorHighlight = true;
+        public boolean doorHighlight = false;
 
         @Expose
         @ConfigOption(name = "Key Highlight", desc = "Outline dropped Wither and Blood keys, visible through walls.")
         @ConfigEditorBoolean
-        public boolean keyHighlight = true;
+        public boolean keyHighlight = false;
 
         @Expose
         @ConfigOption(name = "Announce Key Spawn", desc = "Show a title when a Wither or Blood key spawns.")
         @ConfigEditorBoolean
-        public boolean announceKeySpawn = true;
+        public boolean announceKeySpawn = false;
     }
 
     public static final class DungeonMobs {
         @Expose
         @ConfigOption(name = "Highlight Starred Mobs", desc = "Draw a box around starred (✯) dungeon mobs you can see. Hidden behind walls.")
         @ConfigEditorBoolean
-        public boolean starredMobs = true;
+        public boolean starredMobs = false;
 
         @Expose
         @ConfigOption(name = "Starred Mob Colour", desc = "Colour of the box around starred mobs.")
@@ -462,8 +462,8 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Account For Server Lag", desc = "Also block clicks until the terminal has been open for the ticks below.") @ConfigEditorBoolean public boolean lagProtection = false;
         @Expose @ConfigOption(name = "Lag Protection Ticks", desc = "Server ticks (50ms each) before clicks go through.") @ConfigEditorSlider(minValue = 7, maxValue = 16, minStep = 1) public int lagProtectionTicks = 8;
         @Expose @ConfigOption(name = "Rubix Left Clicks Only", desc = "Only use left clicks for the rubix terminal instead of the fewest clicks.") @ConfigEditorBoolean public boolean rubixLeftClicksOnly = false;
-        @Expose @ConfigOption(name = "Melody Solver", desc = "Show the melody solver.") @ConfigEditorBoolean public boolean melodySolver = true;
-        @Expose @ConfigOption(name = "Odin Device Solvers", desc = "Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: Skyblocker's.") @ConfigEditorBoolean public boolean odinDevices = true;
+        @Expose @ConfigOption(name = "Melody Solver", desc = "Show the melody solver.") @ConfigEditorBoolean public boolean melodySolver = false;
+        @Expose @ConfigOption(name = "Odin Device Solvers", desc = "Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: Skyblocker's.") @ConfigEditorBoolean public boolean odinDevices = false;
         @Expose @ConfigOption(name = "SS Block Wrong Clicks", desc = "Simon Says: ignore clicks on any button but the next one. Hold shift to click anyway.") @ConfigEditorBoolean public boolean ssBlockWrong = true;
         @Expose @ConfigOption(name = "SS Announce Progress", desc = "Send \"SS n/5\" to party chat when you click the last button of a round.") @ConfigEditorBoolean public boolean ssAnnounce = false;
         @Expose @ConfigOption(name = "SS First", desc = "") @ConfigEditorColour public String ssFirstColor = "0:128:85:255:85";
@@ -471,7 +471,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "SS Rest", desc = "") @ConfigEditorColour public String ssThirdColor = "0:128:255:85:85";
         @Expose @ConfigOption(name = "Arrow Align Block Wrong Clicks", desc = "Arrow Align: ignore clicks on frames that are already right. Hold shift to click anyway.") @ConfigEditorBoolean public boolean arrowAlignBlockWrong = true;
         @Expose @ConfigOption(name = "i4 Aim Positions", desc = "Sharp Shooter: also show the three best places to aim to hit two blocks at once.") @ConfigEditorBoolean public boolean i4AimPositions = false;
-        @Expose @ConfigOption(name = "i4 Complete Alert", desc = "Sharp Shooter: show a title when you complete the device.") @ConfigEditorBoolean public boolean i4CompleteAlert = true;
+        @Expose @ConfigOption(name = "i4 Complete Alert", desc = "Sharp Shooter: show a title when you complete the device.") @ConfigEditorBoolean public boolean i4CompleteAlert = false;
         @Expose @ConfigOption(name = "Background", desc = "") @ConfigEditorColour public String backgroundColor = "0:128:38:38:38";
         @Expose @ConfigOption(name = "Panes", desc = "") @ConfigEditorColour public String panesColor = "0:255:85:255:85";
         @Expose @ConfigOption(name = "Rubix 1", desc = "") @ConfigEditorColour public String rubix1Color = "0:255:85:255:85";
@@ -486,17 +486,17 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Melody Column", desc = "") @ConfigEditorColour public String melodyColumnColor = "0:255:170:0:170";
         @Expose @ConfigOption(name = "Melody Pointer", desc = "") @ConfigEditorColour public String melodyPointerColor = "0:255:85:255:85";
         @Expose @ConfigOption(name = "Melody Background", desc = "The Melody lanes and buttons that aren't lit (Odin style).") @ConfigEditorColour public String melodyBackgroundColor = "0:255:38:38:38";
-        @Expose @ConfigOption(name = "Simon Says", desc = "Highlight the buttons to press.") @ConfigEditorBoolean public boolean simonSays = true;
-        @Expose @ConfigOption(name = "Lights On", desc = "Highlight the levers to flip.") @ConfigEditorBoolean public boolean lightsOn = true;
-        @Expose @ConfigOption(name = "Arrow Align", desc = "Show how many clicks each frame needs.") @ConfigEditorBoolean public boolean arrowAlign = true;
-        @Expose @ConfigOption(name = "Target Practice (i4)", desc = "Highlight the targets to shoot.") @ConfigEditorBoolean public boolean targetPractice = true;
+        @Expose @ConfigOption(name = "Simon Says", desc = "Highlight the buttons to press.") @ConfigEditorBoolean public boolean simonSays = false;
+        @Expose @ConfigOption(name = "Lights On", desc = "Highlight the levers to flip.") @ConfigEditorBoolean public boolean lightsOn = false;
+        @Expose @ConfigOption(name = "Arrow Align", desc = "Show how many clicks each frame needs.") @ConfigEditorBoolean public boolean arrowAlign = false;
+        @Expose @ConfigOption(name = "Target Practice (i4)", desc = "Highlight the targets to shoot.") @ConfigEditorBoolean public boolean targetPractice = false;
     }
 
     public static final class Timers {
         @Expose
         @ConfigOption(name = "Splits", desc = "Odin-style split HUD (Blood Open, Blood Clear, Portal Entry, each boss phase, Total) with personal bests per floor and a chat message after each split.")
         @ConfigEditorBoolean
-        public boolean splits = true;
+        public boolean splits = false;
 
         @Expose
         @ConfigOption(name = "Split Messages", desc = "Send \"<split> took <time>\" with your PB to chat when a split finishes.")
@@ -516,7 +516,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Tick Timers", desc = "HUD for Storm's pillars (20 ticks) and Goldor's death tick (50 ticks by default).")
         @ConfigEditorBoolean
-        public boolean tickTimers = true;
+        public boolean tickTimers = false;
 
         @Expose
         @ConfigOption(name = "Goldor Tick Period", desc = "Server ticks between Goldor's death ticks.")
@@ -526,12 +526,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Mask Timers", desc = "HUD with the Spirit Mask, Bonzo's Mask and Phoenix pet: invincibility time (gold), cooldown (red) or ready (green), counted in server ticks. Your worn mask is marked with a purple bar.")
         @ConfigEditorBoolean
-        public boolean maskTimers = true;
+        public boolean maskTimers = false;
 
         @Expose
         @ConfigOption(name = "Mask Proc Alert", desc = "Show a title and play a sound when a mask or Phoenix procs.")
         @ConfigEditorBoolean
-        public boolean maskAlert = true;
+        public boolean maskAlert = false;
 
         @Expose
         @ConfigOption(name = "Announce Mask Procs", desc = "Send \"<Mask> Procced! (n/3)\" to party chat when one of your masks or Phoenix procs.")
@@ -541,12 +541,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Max Debuff Alert", desc = "Alert when your own Last Breath shots (5), Ice Spray uses (1) and Lethality hits (5) reach the max debuff on an M7 dragon. Counts reset when a new dragon spawns.")
         @ConfigEditorBoolean
-        public boolean debuffAlert = true;
+        public boolean debuffAlert = false;
 
         @Expose
         @ConfigOption(name = "Last Breath Release", desc = "Play a sound and show RELEASE once you have charged Last Breath for the set number of server ticks.")
         @ConfigEditorBoolean
-        public boolean lastBreathRelease = true;
+        public boolean lastBreathRelease = false;
 
         @Expose
         @ConfigOption(name = "Last Breath Ticks", desc = "Server ticks of charging before the release cue.")
@@ -583,17 +583,17 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "270 Score Alert", desc = "Show a title and play a sound when the run reaches 270 score (S).")
         @ConfigEditorBoolean
-        public boolean alert270 = true;
+        public boolean alert270 = false;
 
         @Expose
         @ConfigOption(name = "300 Score Alert", desc = "Show a title and play a sound when the run reaches 300 score (S+).")
         @ConfigEditorBoolean
-        public boolean alert300 = true;
+        public boolean alert300 = false;
 
         @Expose
         @ConfigOption(name = "Score Time Message", desc = "Like NoammAddons: a chat message when the run reaches 270 and 300 score, with how long it took and the floor (\"300 score reached in 6m 12s || M7.\"). Only you see it.")
         @ConfigEditorBoolean
-        public boolean timeMessage = true;
+        public boolean timeMessage = false;
 
         @Expose
         @ConfigOption(name = "Send 270 to Party", desc = "Also send \"[SB] 270 Score Reached!\" to party chat.")
@@ -618,7 +618,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Score Display", desc = "NoammAddons' score HUD: the estimated score, coloured red below 270, yellow below 300 and green at 300.")
         @ConfigEditorBoolean
-        public boolean display = true;
+        public boolean display = false;
 
         @Expose
         @ConfigOption(name = "Detailed Score Display", desc = "Also show secrets, crypts, deaths and mimic/prince under the score, like the info under NoammAddons' map.")
@@ -666,7 +666,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Replace the Spirit Leap / Infinileap menu with four large boxes. Click a box to leap to that teammate.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Top Left Key", desc = "Leap to the teammate in the top left box.")
@@ -714,12 +714,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Move Prediction", desc = "Predict when the Watcher moves after its first spawns and show a Move Timer HUD.")
         @ConfigEditorBoolean
-        public boolean movePrediction = true;
+        public boolean movePrediction = false;
 
         @Expose
         @ConfigOption(name = "Move Message", desc = "Print \"Watcher will move in Xs.\" in chat.")
         @ConfigEditorBoolean
-        public boolean moveMessage = true;
+        public boolean moveMessage = false;
 
         @Expose
         @ConfigOption(name = "Party Move Message", desc = "Send \"Watcher will move in Xs.\" to party chat.")
@@ -729,12 +729,12 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Kill Title", desc = "Show a \"Kill Mobs\" title when it is time to kill the first spawns.")
         @ConfigEditorBoolean
-        public boolean killTitle = true;
+        public boolean killTitle = false;
 
         @Expose
         @ConfigOption(name = "Mob Kill Timers", desc = "Box where each blood mob will land, with a countdown until it spawns (green > 1.5s, gold, red, then aqua once spawned). Like Odin, only heads the Watcher throws are tracked, not the heads on the walls.")
         @ConfigEditorBoolean
-        public boolean killTimers = true;
+        public boolean killTimers = false;
 
         @Expose
         @ConfigOption(name = "Spawn Colour", desc = "Box where the mob will land.")
@@ -796,7 +796,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Send your positional messages to party chat when you reach them. Add them with /sb posmsg add here <radius> <delay ticks> <message>.")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Only in Boss", desc = "Only send and show positional messages in a dungeon boss fight.")
@@ -853,7 +853,7 @@ public final class FeatureConfigs {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Highlight the 3x3 platform on floor 7 once Goldor starts (after Storm).")
         @ConfigEditorBoolean
-        public boolean enabled = true;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Healer Only", desc = "Only show it while you are Healer.")

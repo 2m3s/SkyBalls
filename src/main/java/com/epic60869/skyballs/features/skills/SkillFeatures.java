@@ -47,6 +47,7 @@ public final class SkillFeatures {
             if (++ticks % 20 == 0) tick(mc);
         });
         SkyBallsChat.onChat(SkillFeatures::onChat);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("sweep", () -> config() != null && config().foraging.sweepDisplay);
         SkyBallsHuds.register("sweep", "Sweep Display",
             () -> config() != null && config().foraging.sweepDisplay && sweep != null && holdingAxe(),
             SkillFeatures::sweepLines,

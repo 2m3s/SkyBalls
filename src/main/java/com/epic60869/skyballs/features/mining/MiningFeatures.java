@@ -67,6 +67,7 @@ public final class MiningFeatures {
         SkyBallsHuds.registerCustom("ch_map", "Crystal Hollows Map",
             () -> config() != null && config().crystalHollowsMap,
             new CrystalHollowsMap(), 8, 480);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("mineshaft", () -> config() != null && config().mineshaftTimer);
         SkyBallsHuds.register("mineshaft", "Mineshaft Timer",
             () -> config() != null && config().mineshaftTimer && mineshaftEntered > 0,
             MiningFeatures::mineshaftLines,

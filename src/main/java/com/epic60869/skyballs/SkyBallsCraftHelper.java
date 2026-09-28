@@ -77,6 +77,7 @@ public final class SkyBallsCraftHelper {
 
     public static void init(Path configDir) {
         // SkyOcean's CraftHelperOverlay: "64x Item" and the raw list of base ingredients, movable in /sj gui.
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("craft_helper", () -> SkyBallsConfig.current() != null && SkyBallsConfig.current().misc.recipeHud);
         com.epic60869.skyballs.features.core.SkyBallsHuds.register("craft_helper", "Recipe (Craft Helper)",
             () -> {
                 SkyBallsConfig config = SkyBallsConfig.current();

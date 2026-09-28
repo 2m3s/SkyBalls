@@ -159,6 +159,7 @@ public final class BloodCamp {
                 }
             }
         });
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("blood_move_timer", () -> config() != null && config().movePrediction);
         SkyBallsHuds.register("blood_move_timer", "Watcher Move Timer",
             () -> config() != null && config().movePrediction && moveSeconds > 0,
             () -> List.of(Component.literal(String.format(Locale.US, "Move Timer: %.2fs", moveSeconds)).withStyle(ChatFormatting.RED)),

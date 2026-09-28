@@ -18,6 +18,8 @@ All notable changes to SkyBalls are listed here, newest first.
 - Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/sb hud`. Offline it keeps the last standings it got.
 
 ### Changed
+- New installs start with almost every feature off: turn on what you want in /sb. Options inside a feature keep their defaults, and SBC chat stays on. Existing settings don't change.
+- /sb gui only shows the HUDs whose feature is turned on.
 - Performance: the slayer boss scan only runs during a slayer quest and skips non-boss nametags early; starred mob highlighting checks every 4 ticks; SkyBlock item ids are cached instead of copying each item's data; the pickaxe ability reads the tab list every 4 ticks; settings are checked for changes every 5 seconds outside menus (and saved when the game closes); two chat regexes are built once.
 - Museum tooltip: your donations are also read from Hypixel's museum API (through SBC) when you join and every 10 minutes, so you don't have to open the museum menus first.
 - Auto Welcome's description warns USE AT OWN RISK.

@@ -63,11 +63,13 @@ public final class FishingFeatures {
         });
         SkyBallsChat.onChat(FishingFeatures::onChat);
 
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("fishing_stats", () -> config() != null && config().statDisplay);
         SkyBallsHuds.register("fishing_stats", "Fishing Stats",
             () -> config() != null && config().statDisplay && holdingRod(),
             FishingFeatures::statLines,
             List.of(kv("Fishing Speed: ", "250"), kv("Sea Creature Chance: ", "28%"), kv("Double Hook Chance: ", "12%")),
             8, 380);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("hook_timer", () -> config() != null && config().hookTimer);
         SkyBallsHuds.register("hook_timer", "Fishing Hook Timer",
             () -> config() != null && config().hookTimer && hookText != null,
             () -> List.of(hookText.equals("!!!")
@@ -75,6 +77,7 @@ public final class FishingFeatures {
                 : kv("Hook: ", hookText + "s")),
             List.of(kv("Hook: ", "1.5s")),
             8, 440);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("bait", () -> config() != null && config().baitDisplay);
         SkyBallsHuds.register("bait", "Bait Display",
             () -> config() != null && config().baitDisplay && baitName != null && holdingRod(),
             () -> List.of(kv("Bait: ", baitName + (baitAmount >= 0 ? " x" + baitAmount : ""))),

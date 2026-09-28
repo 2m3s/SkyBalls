@@ -32,6 +32,8 @@ public final class SkyBallsHuds {
     public static final int LINE_HEIGHT = 10;
 
     private static final Map<String, Element> ELEMENTS = new LinkedHashMap<>();
+    /** Whether each HUD's feature is turned on, for HUDs whose {@code enabled} also depends on where you are. */
+    private static final Map<String, BooleanSupplier> SETTINGS = new java.util.HashMap<>();
     private static final Map<String, Placement> PLACEMENTS = new LinkedHashMap<>();
     private static Path file;
     private static final String BACKGROUNDS_OFF = "#backgroundsOff";
@@ -96,6 +98,20 @@ public final class SkyBallsHuds {
             p.y = defaultY;
             return p;
         });
+    }
+
+    /**
+     * Whether a HUD's feature is turned on in the settings: /sb gui only lists those. {@code enabled} is often also
+     * "in a dungeon" or "holding a rod", so HUDs like that register their setting on its own here.
+     */
+    public static void setting(String id, BooleanSupplier turnedOn) {
+        SETTINGS.put(id, turnedOn);
+    }
+
+    /** The HUD's feature is turned on (its registered setting, else its {@code enabled}). */
+    public static boolean turnedOn(Element element) {
+        BooleanSupplier setting = SETTINGS.get(element.id());
+        return safe(setting != null ? setting : element.enabled());
     }
 
     public static List<Element> elements() {

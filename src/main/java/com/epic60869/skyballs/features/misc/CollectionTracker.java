@@ -190,6 +190,7 @@ public final class CollectionTracker {
     public static void init(Path configDir) {
         compactFile = configDir.resolve("skyballs").resolve("compacted-items.json");
         loadCompactCache();
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("collection_tracker", () -> config() != null && config().collectionTracker);
         SkyBallsHuds.registerCustom("collection_tracker", "Collection Tracker", CollectionTracker::enabled, new Hud(), 8, 150);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {

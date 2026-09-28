@@ -145,6 +145,7 @@ public final class ZealotCounter {
             if (COMBAT_XP.matcher(message.text()).find()) lastCombatXp = System.currentTimeMillis();
         });
 
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("zealots", () -> SkyBallsConfig.current() != null && SkyBallsConfig.current().combat.zealotCounter);
         SkyBallsHuds.register("zealots", "Zealot Tracker", ZealotCounter::enabled,
             // While an inventory is open the tracker is drawn over it instead, with the clickable mode switch.
             () -> Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> ? List.of() : lines(false),

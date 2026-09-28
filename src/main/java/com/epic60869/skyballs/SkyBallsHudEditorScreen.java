@@ -35,19 +35,25 @@ public final class SkyBallsHudEditorScreen extends Screen {
 
     private void rebuildElements() {
         elements.clear();
-        elements.add(new EditableHud("RNG HUD", SkyBallsRngHud::x, SkyBallsRngHud::y,
-            SkyBallsRngHud::setPosition, SkyBallsRngHud::width, SkyBallsRngHud::height,
-            SkyBallsRngHud::renderPreview, "rng"));
-        elements.add(new EditableHud("Mining Commissions", SkyBallsCommissionHud::x, SkyBallsCommissionHud::y,
-            SkyBallsCommissionHud::setPosition, SkyBallsCommissionHud::width, SkyBallsCommissionHud::height,
-            SkyBallsCommissionHud::renderPreview, "commissions"));
-
+        // Only HUDs whose feature is turned on; turn one on in /sb to place it.
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config != null) {
+        if (config != null && config.farming.rng.enabled) {
+            elements.add(new EditableHud("RNG HUD", SkyBallsRngHud::x, SkyBallsRngHud::y,
+                SkyBallsRngHud::setPosition, SkyBallsRngHud::width, SkyBallsRngHud::height,
+                SkyBallsRngHud::renderPreview, "rng"));
+        }
+        if (config != null && config.mining.commissions.enabled) {
+            elements.add(new EditableHud("Mining Commissions", SkyBallsCommissionHud::x, SkyBallsCommissionHud::y,
+                SkyBallsCommissionHud::setPosition, SkyBallsCommissionHud::width, SkyBallsCommissionHud::height,
+                SkyBallsCommissionHud::renderPreview, "commissions"));
+        }
+
+        if (config != null && config.pets.display.enabled) {
             elements.add(new EditableHud("Pet Display", () -> config.pets.display.x, () -> config.pets.display.y,
                 (x, y) -> { config.pets.display.x = Math.max(0, x); config.pets.display.y = Math.max(0, y); },
                 SkyBallsNopoFeatures::petHudWidth, SkyBallsNopoFeatures::petHudHeight, SkyBallsNopoFeatures::renderPetHudPreview, "pet"));
-
+        }
+        if (config != null && config.dungeons.map.enabled) {
             var map = config.dungeons.map;
             elements.add(new EditableHud("Dungeon Map", () -> map.x, () -> map.y,
                 (x, y) -> { map.x = Math.max(0, x); map.y = Math.max(0, y); },
@@ -60,6 +66,8 @@ public final class SkyBallsHudEditorScreen extends Screen {
         }
 
         for (var hud : com.epic60869.skyballs.features.core.SkyBallsHuds.elements()) {
+            // Only HUDs whose feature is turned on; turn one on in /sb to place it.
+            if (!com.epic60869.skyballs.features.core.SkyBallsHuds.turnedOn(hud)) continue;
             var placement = com.epic60869.skyballs.features.core.SkyBallsHuds.placement(hud.id());
             elements.add(new EditableHud(hud.name(), () -> placement.x, () -> placement.y,
                 (x, y) -> { placement.x = Math.max(0, x); placement.y = Math.max(0, y); },
@@ -84,6 +92,9 @@ public final class SkyBallsHudEditorScreen extends Screen {
 
         g.text(font, Component.literal("SkyBalls Position Editor"), 18, 18, 0xFFFFFFFF, true);
         g.text(font, Component.literal("Drag to move • Scroll to resize • Right-click toggles background • Arrow keys move"), 18, 36, 0xFFB8BEC9, false);
+        if (elements.isEmpty()) {
+            g.centeredText(font, Component.literal("No HUDs are turned on. Turn one on in /sb to place it here."), width / 2, height / 2 - 20, 0xFFB8BEC9);
+        }
 
         EditableHud hovered = null;
         for (int i = elements.size() - 1; i >= 0; i--) {

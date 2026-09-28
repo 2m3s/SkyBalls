@@ -57,6 +57,7 @@ public final class SlayerPbHud {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 20 == 0) maybeFetch();
         });
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("slayer_pb_leaderboard", () -> config() != null && config().enabled);
         SkyBallsHuds.register("slayer_pb_leaderboard", "Slayer PB Leaderboard", SlayerPbHud::visible, SlayerPbHud::lines,
             List.of(
                 Component.literal("Revenant Horror V PBs").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
