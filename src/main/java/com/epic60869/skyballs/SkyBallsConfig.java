@@ -147,6 +147,11 @@ public final class SkyBallsConfig extends Config {
         public boolean minibossAlert = true;
 
         @Expose
+        @ConfigOption(name = "Boss Profit Message", desc = "After each slayer boss, \"Profit: +50k\" in chat: hover it for each drop and its value, the drops' total, the quest's cost and what's left. Drops are what came into your inventory or sacks from that boss.")
+        @ConfigEditorBoolean
+        public boolean bossProfit = true;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Personal Best", desc = "Slayer kill times, personal bests and quest times in chat.")
         public PersonalBest personalBest = new PersonalBest();
@@ -231,7 +236,7 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Auto Welcome", desc = "Welcome players on your list in guild chat or with /msg when they come online.")
+        @ConfigOption(name = "Auto Welcome", desc = "Welcome players on your list in guild chat or with /msg when they come online.\n§c§lUSE AT OWN RISK")
         public com.epic60869.skyballs.features.FeatureConfigs.AutoWelcome autoWelcome = new com.epic60869.skyballs.features.FeatureConfigs.AutoWelcome();
 
         @Expose

@@ -72,7 +72,7 @@ public final class SlayerTimes {
     /** Whether the boss scan in {@link SlayerFeatures} has to run for these messages. */
     static boolean enabled() {
         SkyBallsConfig.PersonalBest config = config();
-        return config != null && (config.timeToKill || config.personalBests);
+        return config != null && (config.timeToKill || config.personalBests) || SlayerBossProfit.enabled();
     }
 
     /**
@@ -89,7 +89,10 @@ public final class SlayerTimes {
             return;
         }
         if (killed) return;
-        if (spawnedAt == 0) spawnedAt = now;
+        if (spawnedAt == 0) {
+            spawnedAt = now;
+            SlayerBossProfit.onSpawn();
+        }
         if (healthLine.isEmpty() || ZERO_HEALTH.matcher(healthLine).find()) {
             if (diedAt == 0 && lastSeenAt > 0) diedAt = healthLine.isEmpty() ? lastSeenAt : now;
             if (zeroAt == 0 && !healthLine.isEmpty()) zeroAt = now;
@@ -177,6 +180,7 @@ public final class SlayerTimes {
         if (spawnedAt == 0 || boss == null) return;
         long time = (diedAt > 0 ? diedAt : System.currentTimeMillis()) - spawnedAt;
         String name = boss;
+        SlayerBossProfit.onKill(name);
         spawnedAt = 0;
         lastSeenAt = 0;
         diedAt = 0;

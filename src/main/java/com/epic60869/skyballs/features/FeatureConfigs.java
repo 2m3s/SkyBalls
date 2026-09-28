@@ -943,7 +943,7 @@ public final class FeatureConfigs {
         }
 
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Welcome the players on your list when they come online (from the \"Guild > Name joined.\" and \"Friend > Name joined.\" messages).")
+        @ConfigOption(name = "Enabled", desc = "Welcome the players on your list when they come online (from the \"Guild > Name joined.\" and \"Friend > Name joined.\" messages).\n§c§lUSE AT OWN RISK")
         @ConfigEditorBoolean
         public boolean enabled = false;
 

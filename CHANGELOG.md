@@ -5,6 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## test-1.3.7 — 2026-09-28
 
 ### Added
+- Boss Profit Message (Slayers): after each slayer boss, "Profit: +50k" (or "-10k") in chat. Hover it for each drop and its value, the drops' total, the quest's cost (what your purse went down by, or Hypixel's price) and the total.
 - Sign Calculator (Misc), from Skyblocker: on SkyBlock's number signs (auction prices, bazaar amounts) the number you typed shows above the sign, e.g. `15m = 15,000,000`, and sums like `2.5m*3` are worked out and sent as the number.
 - RNG Drop Totem Animation (Combat → Rare Drops), from Skyblocker: big RNG drops pop up like a Totem of Undying, with particles and a sound.
 - Miniboss Alert (Slayers): a title, a ding and a chat line when a slayer miniboss spawns near you during a slayer quest.
@@ -15,6 +16,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/sb hud`. Offline it keeps the last standings it got.
 
 ### Changed
+- Auto Welcome's description warns USE AT OWN RISK.
 - The jumpscare lasts 1 second.
 - `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
