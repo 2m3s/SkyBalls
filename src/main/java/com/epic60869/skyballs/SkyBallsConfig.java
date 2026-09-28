@@ -953,6 +953,18 @@ public final class SkyBallsConfig extends Config {
         }
     }
 
+    private static void saveIfChanged() {
+        if (managed == null) return;
+        String now = snapshot();
+        if (now == null || now.equals(lastSaved)) return;
+        lastSaved = now;
+        try {
+            managed.saveToFile();
+        } catch (Exception e) {
+            System.err.println("[SkyBalls] Failed to save config: " + e.getMessage());
+        }
+    }
+
     public static SkyBallsConfig load(Path path) {
         try {
             migrateLegacy(path);
@@ -987,17 +999,13 @@ public final class SkyBallsConfig extends Config {
         // (for example the item rarity style) when the screen was closed in ways that skip it.
         lastSaved = snapshot();
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (++saveCheckTicks % 20 != 0 || managed == null) return;
-            String now = snapshot();
-            if (now != null && !now.equals(lastSaved)) {
-                lastSaved = now;
-                try {
-                    managed.saveToFile();
-                } catch (Exception e) {
-                    System.err.println("[SkyBalls] Failed to save config: " + e.getMessage());
-                }
-            }
+            // Serialising the whole config to spot a change: every second while a menu (the settings) is open,
+            // every 5 seconds otherwise (commands change settings too, but rarely).
+            int every = client.gui.screen() != null ? 20 : 100;
+            if (++saveCheckTicks % every == 0) saveIfChanged();
         });
+        // A change made just before quitting would otherwise wait for the next check.
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveIfChanged());
 
         return managed.getInstance();
     }

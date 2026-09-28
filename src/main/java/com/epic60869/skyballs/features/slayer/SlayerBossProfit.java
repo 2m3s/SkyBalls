@@ -55,8 +55,9 @@ public final class SlayerBossProfit {
 
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (++inventoryTicks % 5 != 0) return;
             tick();
-            if (++inventoryTicks % 5 == 0) checkInventory();
+            checkInventory();
         });
         SkyBallsChat.onGameMessage((component, overlay) -> {
             if (!overlay) onMessage(component);

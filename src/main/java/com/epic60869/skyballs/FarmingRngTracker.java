@@ -75,9 +75,11 @@ public final class FarmingRngTracker {
         return true;
     }
 
+    private static final Pattern LEGACY_SLUG = Pattern.compile("§([0-9a-f])(?:§[k-or])*Slug");
+
     /** "LEGENDARY" when "Slug" is gold, "EPIC" when purple (the default). */
     private static String slugRarity(Component message) {
-        Matcher legacy = Pattern.compile("§([0-9a-f])(?:§[k-or])*Slug").matcher(message.getString());
+        Matcher legacy = LEGACY_SLUG.matcher(message.getString());
         if (legacy.find()) return legacy.group(1).equals("6") ? "LEGENDARY" : "EPIC";
         String[] found = {null};
         message.visit((style, text) -> {

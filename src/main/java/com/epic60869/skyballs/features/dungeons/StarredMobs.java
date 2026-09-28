@@ -31,8 +31,12 @@ public final class StarredMobs {
         return config == null ? null : config.dungeons.mobs;
     }
 
+    private static int ticks;
+
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            // Every 4 ticks: it reads every nametag and raycasts to each starred mob.
+            if (++ticks % 4 != 0) return;
             FeatureConfigs.DungeonMobs config = config();
             if (config == null || !config.starredMobs || !SkyBallsLocation.inDungeon() || mc.level == null || mc.player == null) {
                 visible = List.of();

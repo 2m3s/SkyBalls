@@ -52,8 +52,13 @@ public final class PickaxeAbility {
             PickaxeAbility::lines,
             List.of(Component.literal("Mining Speed Boost: ").withStyle(ChatFormatting.GOLD).append(Component.literal("Ready").withStyle(ChatFormatting.GREEN))),
             8, 300);
-        ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            // The tab widget only changes about once a second.
+            if (++ticks % 4 == 0) tick();
+        });
     }
+
+    private static int ticks;
 
     private static void tick() {
         if (!SkyBallsLocation.onSkyblock()) return;

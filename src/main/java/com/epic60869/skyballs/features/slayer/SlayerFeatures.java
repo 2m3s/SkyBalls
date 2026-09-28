@@ -60,7 +60,8 @@ public final class SlayerFeatures {
     private static void tick(Minecraft mc) {
         FeatureConfigs.Slayer config = config();
         boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled();
-        if (mc.player == null || mc.level == null || !needed || !SkyBallsLocation.onSkyblock()) {
+        // Only during a slayer quest: no boss can be yours otherwise, and the scan reads every nametag nearby.
+        if (mc.player == null || mc.level == null || !needed || !SkyBallsLocation.onSkyblock() || !onSlayerQuest()) {
             bossLines = List.of();
             SlayerTimes.onBoss(null);
             return;
@@ -79,7 +80,15 @@ public final class SlayerFeatures {
         return null;
     }
 
+    /** The scoreboard shows "Slayer Quest" from starting a quest until it's done (also after rejoining mid-quest). */
+    static boolean onSlayerQuest() {
+        for (String line : SkyBallsLocation.scoreboard()) if (line.contains("Slayer Quest")) return true;
+        return false;
+    }
+
     private static boolean isOwnerTag(String text, String name) {
+        // Most nametags nearby aren't a boss's: skip them before stripping and splitting.
+        if (!text.contains("Spawned by")) return false;
         for (String line : SkyBallsLocation.strip(text).split("\n")) {
             String trimmed = line.trim();
             if (trimmed.startsWith("Spawned by:")

@@ -45,14 +45,8 @@ public final class SlayerMinibossAlert {
         return c != null && c.slayers.minibossAlert;
     }
 
-    /** The scoreboard shows "Slayer Quest" from starting a quest until it's done. */
-    private static boolean onSlayerQuest() {
-        for (String line : SkyBallsLocation.scoreboard()) if (line.contains("Slayer Quest")) return true;
-        return false;
-    }
-
     private static void scan(Minecraft mc) {
-        if (mc.player == null || mc.level == null || !enabled() || !SkyBallsLocation.onSkyblock() || !onSlayerQuest()) {
+        if (mc.player == null || mc.level == null || !enabled() || !SkyBallsLocation.onSkyblock() || !SlayerFeatures.onSlayerQuest()) {
             ALERTED.clear();
             return;
         }
@@ -75,6 +69,7 @@ public final class SlayerMinibossAlert {
 
     /** The miniboss a nametag belongs to ("☠ Revenant Champion 180k❤" -> "Revenant Champion"), or null. */
     private static String miniboss(Component tag) {
+        if (!tag.getString().contains("❤")) return null;
         for (Component line : SlayerFeatures.splitLines(tag)) {
             String text = SkyBallsLocation.strip(line.getString());
             if (!text.contains("❤")) continue;

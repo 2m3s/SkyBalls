@@ -139,8 +139,18 @@ public final class Compat {
 		}
 	}
 
+	/**
+	 * SkyBlock item ids by custom data instance. Custom data is immutable, so an id read once stays right, and the
+	 * weak identity keys drop entries when the item's data goes away. Saves copying the whole tag (enchantments,
+	 * gems, attributes...) on every call from the per-tick inventory scans.
+	 */
+	private static final java.util.concurrent.ConcurrentMap<CustomData, String> NEU_NAMES =
+		new com.google.common.collect.MapMaker().weakKeys().makeMap();
+
 	public static String neuName(ItemStack stack) {
-		return getCustomData(stack).getStringOr("id", "");
+		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+		if (data == null) return "";
+		return NEU_NAMES.computeIfAbsent(data, d -> d.copyTag().getStringOr("id", ""));
 	}
 
 	public static CompoundTag getCustomData(ItemStack stack) {

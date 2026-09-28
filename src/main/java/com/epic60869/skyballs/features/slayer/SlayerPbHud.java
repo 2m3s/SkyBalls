@@ -87,8 +87,7 @@ public final class SlayerPbHud {
 
     /** The scoreboard shows "Slayer Quest" from starting a quest until it's done (also after rejoining mid-quest). */
     private static boolean onSlayerQuest() {
-        for (String line : SkyBallsLocation.scoreboard()) if (line.contains("Slayer Quest")) return true;
-        return false;
+        return SlayerFeatures.onSlayerQuest();
     }
 
     /** The pinned boss, else your current or last slayer boss; null if there's none yet. */
