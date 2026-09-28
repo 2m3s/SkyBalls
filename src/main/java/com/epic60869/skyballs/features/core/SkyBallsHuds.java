@@ -68,6 +68,7 @@ public final class SkyBallsHuds {
         file = configDir.resolve("skyballs-huds.json");
         load();
         HudElementRegistry.addLast(ID, (graphics, delta) -> renderAll(graphics));
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> clientTicks++);
     }
 
     /**
@@ -116,11 +117,11 @@ public final class SkyBallsHuds {
                 try {
                     if (element.custom().visible()) renderCustom(graphics, element, false);
                 } catch (Exception e) {
-                    System.err.println("[SkyBalls] HUD " + element.id() + " failed: " + e);
+                    com.epic60869.skyballs.features.sbc.SbcCrashReports.report(e, "HUD " + element.id());
                 }
                 continue;
             }
-            List<Component> lines = safeLines(element);
+            List<Component> lines = tickLines(element);
             if (lines.isEmpty()) continue;
             Placement p = placement(element.id());
             render(graphics, lines, mapX(p.x, width(lines, p.scale)), mapY(p.y, height(lines, p.scale)), p.scale, p.background);
@@ -133,6 +134,22 @@ public final class SkyBallsHuds {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * The HUD's lines, built once per client tick rather than every frame: they only change as often as the game
+     * state they show, and building them (text, formatting, lookups) every frame cost the most at high frame rates.
+     */
+    private static final Map<String, List<Component>> TICK_LINES = new java.util.HashMap<>();
+    private static long linesTick = -1;
+    private static long clientTicks;
+
+    private static List<Component> tickLines(Element element) {
+        if (linesTick != clientTicks) {
+            TICK_LINES.clear();
+            linesTick = clientTicks;
+        }
+        return TICK_LINES.computeIfAbsent(element.id(), id -> safeLines(element));
     }
 
     private static List<Component> safeLines(Element element) {

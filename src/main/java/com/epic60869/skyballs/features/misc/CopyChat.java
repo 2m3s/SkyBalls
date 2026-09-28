@@ -60,19 +60,28 @@ public final class CopyChat {
         if (c != null && c.trim) text = text.trim();
         Minecraft mc = Minecraft.getInstance();
         mc.keyboardHandler.setClipboard(text);
-        if (c != null && c.preview) {
-            int length = c.previewLength;
-            String shown = length > 0 && text.length() > length ? text.substring(0, length) + "..." : text;
-            Component message = Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE)
-                .append(Component.literal("Message copied" + (length == 0 ? "." : ": ")).withStyle(ChatFormatting.GREEN));
-            if (length != 0) {
-                message = message.copy().append(Component.literal("\"").withStyle(ChatFormatting.GREEN))
-                    .append(Component.literal(shown).withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal("\"").withStyle(ChatFormatting.GREEN));
-            }
-            mc.gui.hud.getChat().addClientSystemMessage(message);
-        }
+        showPreview("Message copied", text);
         return true;
+    }
+
+    /**
+     * Shows "[SB] {what}: "text"" in chat, cut to the Copy Chat preview length. Also used by other features that
+     * copy a message by themselves (Copy Rare Drops). Does nothing when the Copy Chat preview is off.
+     */
+    public static void showPreview(String what, String text) {
+        SkyBallsConfig.CopyChat c = config();
+        if (c == null || !c.preview) return;
+        Minecraft mc = Minecraft.getInstance();
+        int length = c.previewLength;
+        String shown = length > 0 && text.length() > length ? text.substring(0, length) + "..." : text;
+        Component message = Component.literal("[SB] ").withStyle(ChatFormatting.LIGHT_PURPLE)
+            .append(Component.literal(what + (length == 0 ? "." : ": ")).withStyle(ChatFormatting.GREEN));
+        if (length != 0) {
+            message = message.copy().append(Component.literal("\"").withStyle(ChatFormatting.GREEN))
+                .append(Component.literal(shown).withStyle(ChatFormatting.GRAY))
+                .append(Component.literal("\"").withStyle(ChatFormatting.GREEN));
+        }
+        mc.gui.hud.getChat().addClientSystemMessage(message);
     }
 
     /** SkyBalls rank prefixes ("[OWNER] ") aren't part of what the player wrote. */

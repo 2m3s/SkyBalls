@@ -2,13 +2,14 @@ package com.epic60869.skyballs.features.slayer;
 
 import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.features.FeatureConfigs;
-import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsHuds;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -18,35 +19,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Optional;
 
-/**
- * Slayer tracker and boss phase display. Boss XP per tier is
- * from SkyHanni's repo (constants/Slayer.json, MIT).
- */
+/** Slayer boss phase display: your boss's nametag lines (health, hits, attunement, timer) in a HUD. */
 public final class SlayerFeatures {
-    private static final Pattern PROGRESS = Pattern.compile("\\((?<current>[\\d,.]+k?)/(?<max>[\\d,.]+k?)\\) Combat XP");
-    private static final Pattern BOSS = Pattern.compile("(?<boss>Revenant Horror|Tarantula Broodfather|Sven Packmaster|Voidgloom Seraph|Inferno Demonlord|Riftstalker Bloodfiend) (?<tier>[IV]+)");
-    private static final Pattern LEVEL = Pattern.compile("(?<slayer>\\w+) Slayer LVL (?<level>\\d+) - (?:Next LVL in (?<next>[\\d,]+) XP!|LVL MAXED OUT!)");
+    /** How far from you your own boss is looked for. */
+    private static final double SEARCH_RANGE = 48;
 
-    // Boss XP per tier, from SkyHanni's Slayer.json.
-    private static final Map<String, int[]> XP = Map.of(
-        "Revenant Horror", new int[]{5, 25, 100, 500, 1500},
-        "Tarantula Broodfather", new int[]{5, 25, 100, 500, 1500},
-        "Sven Packmaster", new int[]{5, 25, 100, 500},
-        "Voidgloom Seraph", new int[]{5, 25, 100, 500},
-        "Inferno Demonlord", new int[]{5, 25, 100, 500},
-        "Riftstalker Bloodfiend", new int[]{10, 25, 60, 120, 160});
-
-    private static String boss;
-    private static int tier;
-    private static double spawnCurrent = -1, spawnMax = -1, lastSpawnDelta;
-    private static long nextLevelXp = -1;
-    private static int sessionBosses;
-    private static long sessionXp;
-    private static boolean questActive;
     private static List<Component> bossLines = List.of();
 
     private static int ticks;
@@ -62,14 +41,7 @@ public final class SlayerFeatures {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 == 0) tick(mc);
         });
-        SkyBallsChat.onChat(SlayerFeatures::onChat);
 
-        SkyBallsHuds.register("slayer_tracker", "Slayer Tracker",
-            () -> config() != null && config().tracker && boss != null,
-            SlayerFeatures::trackerLines,
-            List.of(title("Revenant Horror IV"), kv("Spawn: ", "1,234/2,400 XP (~20 kills)"),
-                kv("Next LVL: ", "150,000 XP (~300 bosses)"), kv("Session: ", "12 bosses, +6,000 XP")),
-            8, 160);
         SkyBallsHuds.register("slayer_phase", "Slayer Boss Phase",
             () -> config() != null && config().phaseDisplay,
             () -> bossLines,
@@ -77,90 +49,47 @@ public final class SlayerFeatures {
             8, 220);
     }
 
-    private static Component title(String text) {
-        return Component.literal(text).withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
-    }
-
-    private static Component kv(String key, String value) {
-        return Component.literal(key).withStyle(ChatFormatting.GRAY).append(Component.literal(value).withStyle(ChatFormatting.WHITE));
-    }
-
-    private static List<Component> trackerLines() {
-        List<Component> lines = new ArrayList<>();
-        lines.add(title(boss + " " + roman(tier)));
-        if (spawnMax > 0) {
-            String kills = lastSpawnDelta > 0 ? " (~" + (int) Math.ceil((spawnMax - spawnCurrent) / lastSpawnDelta) + " kills)" : "";
-            lines.add(kv("Spawn: ", fmt(spawnCurrent) + "/" + fmt(spawnMax) + " XP" + kills));
-        } else if (questActive) {
-            lines.add(kv("Spawn: ", "Boss spawned"));
-        }
-        int xpPerBoss = xpPerBoss();
-        if (nextLevelXp >= 0 && xpPerBoss > 0) {
-            lines.add(kv("Next LVL: ", fmt(nextLevelXp) + " XP (~" + (long) Math.ceil(nextLevelXp / (double) xpPerBoss) + " bosses)"));
-        }
-        lines.add(kv("Session: ", sessionBosses + " bosses, +" + fmt(sessionXp) + " XP"));
-        return lines;
-    }
-
-    private static int xpPerBoss() {
-        int[] xp = boss == null ? null : XP.get(boss);
-        return xp == null || tier < 1 || tier > xp.length ? 0 : xp[tier - 1];
-    }
-
     private static void tick(Minecraft mc) {
-        if (mc.player == null || !SkyBallsLocation.onSkyblock()) return;
-
-        boolean inQuest = false;
-        double current = -1, max = -1;
-        for (String raw : SkyBallsLocation.scoreboard()) {
-            // Hypixel pads sidebar lines with invisible emoji between the team prefix and suffix.
-            String line = clean(raw);
-            if (line.equals("Slayer Quest")) inQuest = true;
-            Matcher m = BOSS.matcher(line);
-            if (m.find()) {
-                boss = m.group("boss");
-                tier = fromRoman(m.group("tier"));
-            }
-            m = PROGRESS.matcher(line);
-            if (m.find()) {
-                current = parse(m.group("current"));
-                max = parse(m.group("max"));
-            }
-        }
-        if (current >= 0 && spawnCurrent >= 0 && current > spawnCurrent) lastSpawnDelta = current - spawnCurrent;
-        spawnCurrent = current;
-        spawnMax = max;
-        questActive = inQuest;
-
-        updateBossLines(mc);
-    }
-
-    /** Keeps plain text only: drops Hypixel's padding emoji and other invisible characters. */
-    private static String clean(String line) {
-        return line.replaceAll("[^\\x20-\\x7E]", "").replaceAll("\\s+", " ").trim();
-    }
-
-    /** A nametag's text, from an armor stand's custom name or (as Hypixel now uses) a text display. */
-    private static Component nametag(Entity entity) {
-        if (entity instanceof ArmorStand stand && stand.hasCustomName()) return stand.getCustomName();
-        if (entity instanceof Display.TextDisplay display) return display.getText();
-        return null;
-    }
-
-    /**
-     * Nametag lines of your own boss: the nametags stacked above the "Spawned by: you" line. Hypixel draws them
-     * with armor stands or text displays, and a text display can hold several lines.
-     */
-    private static void updateBossLines(Minecraft mc) {
-        if (!questActive || mc.level == null) {
+        FeatureConfigs.Slayer config = config();
+        if (mc.player == null || mc.level == null || config == null || !config.phaseDisplay || !SkyBallsLocation.onSkyblock()) {
             bossLines = List.of();
             return;
         }
-        String name = mc.player.getGameProfile().name();
+        updateBossLines(mc);
+    }
+
+    /**
+     * A nametag's text as the server sent it, from an armor stand's custom name or (as Hypixel now uses) a text
+     * display. The text display's text is read from its synced data rather than getText(), which the nickname
+     * mixin rewrites: with a nickname set, "Spawned by: you" would otherwise never match your username.
+     */
+    private static Component nametag(Entity entity) {
+        if (entity instanceof ArmorStand stand && stand.hasCustomName()) return stand.getCustomName();
+        if (entity instanceof Display.TextDisplay display) return display.getEntityData().get(Display.TextDisplay.DATA_TEXT_ID);
+        return null;
+    }
+
+    private static boolean isOwnerTag(String text, String name) {
+        for (String line : SkyBallsLocation.strip(text).split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("Spawned by:")
+                && trimmed.substring("Spawned by:".length()).trim().toLowerCase(Locale.ROOT).equals(name)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Nametag lines of your own boss: the nametags stacked around the "Spawned by: you" line. Hypixel draws them
+     * with armor stands or text displays, and a text display can hold several lines.
+     */
+    private static void updateBossLines(Minecraft mc) {
+        String name = mc.player.getGameProfile().name().toLowerCase(Locale.ROOT);
+        double rangeSq = SEARCH_RANGE * SEARCH_RANGE;
         Entity owner = null;
         for (Entity entity : mc.level.entitiesForRendering()) {
+            if (entity.distanceToSqr(mc.player) > rangeSq) continue;
             Component tag = nametag(entity);
-            if (tag != null && SkyBallsLocation.strip(tag.getString()).contains("Spawned by: " + name)) {
+            if (tag != null && isOwnerTag(tag.getString(), name)) {
                 owner = entity;
                 break;
             }
@@ -174,63 +103,30 @@ public final class SlayerFeatures {
         tags.sort(Comparator.comparingDouble((Entity e) -> e.getY()).reversed());
         List<Component> lines = new ArrayList<>();
         for (Entity tagEntity : tags) {
-            Component tag = nametag(tagEntity);
-            String text = tag.getString();
-            if (text.isBlank()) continue;
-            if (!text.contains("\n")) {
-                if (!text.contains("Spawned by:")) lines.add(tag);
-                continue;
-            }
-            for (String part : text.split("\n")) {
-                if (!part.isBlank() && !part.contains("Spawned by:")) lines.add(Component.literal(part));
+            for (Component line : splitLines(nametag(tagEntity))) {
+                String text = line.getString();
+                if (!text.isBlank() && !text.contains("Spawned by:")) lines.add(line);
             }
         }
         bossLines = lines;
     }
 
-    private static void onChat(SkyBallsChat.Message message) {
-        String text = message.text();
-        if (clean(text).equals("SLAYER QUEST COMPLETE!")) {
-            sessionBosses++;
-            sessionXp += xpPerBoss();
-            return;
-        }
-        Matcher m = LEVEL.matcher(text);
-        if (m.find()) {
-            nextLevelXp = m.group("next") == null ? 0 : Long.parseLong(m.group("next").replace(",", ""));
-        }
-    }
-
-    private static double parse(String value) {
-        String v = value.replace(",", "").toLowerCase(Locale.ROOT);
-        double mult = v.endsWith("k") ? 1000 : 1;
-        if (v.endsWith("k")) v = v.substring(0, v.length() - 1);
-        return Double.parseDouble(v) * mult;
-    }
-
-    private static String fmt(double value) {
-        return String.format(Locale.US, "%,.0f", value);
-    }
-
-    private static int fromRoman(String roman) {
-        return switch (roman) {
-            case "I" -> 1;
-            case "II" -> 2;
-            case "III" -> 3;
-            case "IV" -> 4;
-            case "V" -> 5;
-            default -> 0;
-        };
-    }
-
-    private static String roman(int value) {
-        return switch (value) {
-            case 1 -> "I";
-            case 2 -> "II";
-            case 3 -> "III";
-            case 4 -> "IV";
-            case 5 -> "V";
-            default -> "";
-        };
+    /** Splits a nametag on its line breaks, keeping each part's colours. */
+    private static List<Component> splitLines(Component tag) {
+        List<Component> lines = new ArrayList<>();
+        MutableComponent[] current = {Component.empty()};
+        tag.visit((style, value) -> {
+            String[] parts = value.split("\n", -1);
+            for (int i = 0; i < parts.length; i++) {
+                if (i > 0) {
+                    lines.add(current[0]);
+                    current[0] = Component.empty();
+                }
+                if (!parts[i].isEmpty()) current[0].append(Component.literal(parts[i]).withStyle(style));
+            }
+            return Optional.empty();
+        }, Style.EMPTY);
+        lines.add(current[0]);
+        return lines;
     }
 }

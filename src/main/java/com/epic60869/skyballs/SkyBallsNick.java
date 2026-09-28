@@ -33,6 +33,20 @@ public final class SkyBallsNick {
 
     public static Component tabDisplayName(Component original, UUID uuid, String actualName) {
         if (original == null || uuid == null || actualName == null || actualName.isBlank()) return original;
+        // Asked for every entry every frame while the tab list shows; the entry's text object only changes when
+        // Hypixel updates it.
+        synchronized (TAB_CACHE) {
+            Component cached = cache(TAB_CACHE).get(original);
+            if (cached != null) return cached;
+        }
+        Component result = tabDisplayNameUncached(original, uuid, actualName);
+        synchronized (TAB_CACHE) {
+            cache(TAB_CACHE).put(original, result);
+        }
+        return result;
+    }
+
+    private static Component tabDisplayNameUncached(Component original, UUID uuid, String actualName) {
 
         Minecraft mc = Minecraft.getInstance();
         boolean local = uuid.equals(mc.getUser().getProfileId())
@@ -44,15 +58,18 @@ public final class SkyBallsNick {
         if (remote == null) {
             // Hypixel tab entries are fake profiles, so match usernames in the text instead.
             // Only the name is replaced; the level, rank and colours around it are kept.
-            if (local) return original;
+            if (local) return insertSymbols(original, uuid, actualName);
             Component result = original;
+            // Only rebuild the entry for names that are actually in it.
+            String plain = original.getString();
             RemoteNick self = localNick();
-            if (self != null) result = replaceExactName(result, mc.getUser().getName(), styled(self));
+            if (self != null && plain.contains(mc.getUser().getName())) result = replaceExactName(result, mc.getUser().getName(), styled(self));
             for (RemoteNick r : REMOTE_NICKS.values()) {
-                if (!r.shown() || r.name.isBlank() || r.username.isBlank() || isLocalUuid(r.uuid)) continue;
+                if (!r.shown() || r.name.isBlank() || r.username.isBlank() || isLocalUuid(r.uuid) || !plain.contains(r.username)) continue;
                 result = replaceExactName(result, r.username, styled(r));
             }
-            return result;
+            result = insertSymbols(result, uuid, actualName);
+            return insertSymbols(result);
         }
 
         // If the name is not in the text, leave the entry alone rather than replacing its formatting.
@@ -66,7 +83,7 @@ public final class SkyBallsNick {
     public static Component nameTag(Component original, UUID uuid, String actualName) {
         if (original == null || uuid == null || actualName == null) return original;
         RemoteNick remote = isLocalUuid(uuid) ? localNick() : shownNick(uuid);
-        if (remote == null) return original;
+        if (remote == null) return insertSymbols(original, uuid, actualName);
         return replaceExactName(original, actualName, styled(remote));
     }
 
@@ -76,6 +93,56 @@ public final class SkyBallsNick {
      */
     public static Component worldText(Component original) {
         if (original == null) return original;
+        // Called for every named entity, twice a frame; Hypixel keeps the same name component until it changes.
+        synchronized (WORLD_CACHE) {
+            Component cached = cache(WORLD_CACHE).get(original);
+            if (cached != null) return cached;
+        }
+        Component result = worldTextUncached(original);
+        synchronized (WORLD_CACHE) {
+            cache(WORLD_CACHE).put(original, result);
+            // The result goes through here again (render state after getNameTag): it's already done.
+            WORLD_CACHE.put(result, result);
+        }
+        return result;
+    }
+
+    /**
+     * Results of the name replacements, by the identity of the text that went in. Emptied when any nickname,
+     * username or cosmetic changes, and every few seconds so settings changes show and old names are let go.
+     */
+    private static final Map<Component, Component> WORLD_CACHE = new java.util.IdentityHashMap<>();
+    private static final Map<Component, Component> TAB_CACHE = new java.util.IdentityHashMap<>();
+    private static volatile int version;
+    private static int worldVersion = -1;
+    private static int tabVersion = -1;
+    private static long worldClearedAt;
+    private static long tabClearedAt;
+
+    /** Something that changes how names look changed (a nickname, a username, cosmetics). */
+    public static void invalidateCache() {
+        version++;
+    }
+
+    private static Map<Component, Component> cache(Map<Component, Component> map) {
+        long now = System.currentTimeMillis();
+        boolean world = map == WORLD_CACHE;
+        int built = world ? worldVersion : tabVersion;
+        long cleared = world ? worldClearedAt : tabClearedAt;
+        if (built != version || now - cleared > 3_000L || map.size() > 4096) {
+            map.clear();
+            if (world) {
+                worldVersion = version;
+                worldClearedAt = now;
+            } else {
+                tabVersion = version;
+                tabClearedAt = now;
+            }
+        }
+        return map;
+    }
+
+    private static Component worldTextUncached(Component original) {
         String plain = original.getString();
         Component result = original;
         Minecraft mc = Minecraft.getInstance();
@@ -101,8 +168,10 @@ public final class SkyBallsNick {
         return nick != null && nick.shown() && !nick.name.isBlank() ? nick : null;
     }
 
+    /** The nickname in its style, after the player's supporter symbol and badge. */
     private static Component styled(RemoteNick nick) {
-        return styled(nick.name, nick.mode, nick.customHex, nick.font);
+        return com.epic60869.skyballs.features.sbc.SbcCosmetics.decorate(nick.uuid,
+            styled(nick.name, nick.mode, nick.customHex, nick.gradientHex, nick.font));
     }
 
     /**
@@ -129,8 +198,9 @@ public final class SkyBallsNick {
         for (RemoteNick remote : REMOTE_NICKS.values()) {
             if (!remote.shown() || remote.name.isBlank() || remote.username.isBlank()) continue;
             if (isLocalUuid(remote.uuid)) continue;
-            result = replaceExactName(result, remote.username, styled(remote.name, remote.mode, remote.customHex, remote.font));
+            result = replaceExactName(result, remote.username, styled(remote));
         }
+        result = insertSymbols(result);
 
         // Fill in missing usernames from the live tab list for older persisted
         // nickname records which were created before usernames were persisted.
@@ -144,7 +214,7 @@ public final class SkyBallsNick {
             if (!remote.username.equals(actualName)) {
                 REMOTE_NICKS.put(uuid, remote.withUsername(actualName));
             }
-            result = replaceExactName(result, actualName, styled(remote.name, remote.mode, remote.customHex, remote.font));
+            result = replaceExactName(result, actualName, styled(remote));
         }
         return result;
     }
@@ -279,7 +349,90 @@ public final class SkyBallsNick {
 
     public static Component displayName(UUID uuid, String actualName) {
         RemoteNick remote = shownNick(uuid);
-        return remote != null ? styled(remote) : displayName(actualName);
+        return remote != null ? styled(remote) : com.epic60869.skyballs.features.sbc.SbcCosmetics.decorate(uuid, displayName(actualName));
+    }
+
+    /** A player's nickname if they show one, or their name, with their symbols ({@code /sb who}, friends list). */
+    public static Component displayName(UUID uuid, String actualName, String nick, boolean enabled, String mode, String hex, String hex2, String font) {
+        RemoteNick remote = shownNick(uuid);
+        if (remote != null) return styled(remote);
+        Component name = enabled && nick != null && !nick.isBlank() && !SkyBallsNickFilter.isBlocked(nick, uuid)
+            ? styled(nick, mode, hex, hex2, font) : Component.literal(actualName);
+        return com.epic60869.skyballs.features.sbc.SbcCosmetics.decorate(uuid, name);
+    }
+
+    /** Usernames of every player the server told us about (nickname or not), for their badges in chat and tab. */
+    private static final Map<UUID, String> USERNAMES = new ConcurrentHashMap<>();
+
+    public static void rememberUsername(UUID uuid, String username) {
+        String clean = cleanUsername(username);
+        if (uuid != null && !clean.isBlank() && !clean.equals(USERNAMES.put(uuid, clean))) invalidateCache();
+    }
+
+    public static String username(UUID uuid) {
+        RemoteNick nick = uuid == null ? null : REMOTE_NICKS.get(uuid);
+        if (nick != null && !nick.username.isBlank()) return nick.username;
+        return uuid == null ? "" : USERNAMES.getOrDefault(uuid, "");
+    }
+
+    /** Puts the player's supporter symbol and badge in front of their name, where their name appears as is. */
+    private static Component insertSymbols(Component message, UUID uuid, String actualName) {
+        if (message == null || uuid == null || actualName == null || actualName.isBlank()) return message;
+        Component symbols = com.epic60869.skyballs.features.sbc.SbcCosmetics.symbols(uuid);
+        return symbols == null ? message : insertBeforeName(message, actualName, symbols);
+    }
+
+    /** Symbols in front of every SkyBalls player without a nickname whose name is in the text. */
+    private static Component insertSymbols(Component message) {
+        if (message == null) return message;
+        String plain = message.getString();
+        Component result = message;
+        for (UUID uuid : com.epic60869.skyballs.features.sbc.SbcCosmetics.decoratedPlayers()) {
+            if (shownNick(uuid) != null) continue;
+            String name = username(uuid);
+            if (name.isBlank() || !plain.contains(name)) continue;
+            result = insertSymbols(result, uuid, name);
+        }
+        return result;
+    }
+
+    private static Component insertBeforeName(Component message, String actualName, Component prefix) {
+        List<StyledRun> runs = new java.util.ArrayList<>();
+        StringBuilder plain = new StringBuilder();
+        message.visit((style, value) -> {
+            if (value != null && !value.isEmpty()) {
+                runs.add(new StyledRun(value, style));
+                plain.append(value);
+            }
+            return java.util.Optional.empty();
+        }, Style.EMPTY);
+        String text = plain.toString();
+        String prefixText = prefix.getString();
+        MutableComponent result = Component.empty();
+        int cursor = 0;
+        int search = 0;
+        boolean changed = false;
+        while (search < text.length()) {
+            int at = text.indexOf(actualName, search);
+            if (at < 0) break;
+            int end = at + actualName.length();
+            boolean leftOk = at == 0 || !isNameChar(text.charAt(at - 1));
+            boolean rightOk = end >= text.length() || !isNameChar(text.charAt(end));
+            // Already has its symbols (the text went through here before).
+            boolean done = at >= prefixText.length() && text.startsWith(prefixText, at - prefixText.length());
+            if (!leftOk || !rightOk || done) {
+                search = at + 1;
+                continue;
+            }
+            appendStyledRange(result, runs, cursor, at);
+            result.append(prefix.copy());
+            changed = true;
+            cursor = at;
+            search = end;
+        }
+        if (!changed) return message;
+        appendStyledRange(result, runs, cursor, text.length());
+        return result;
     }
 
     public static void updateRemote(UUID uuid, boolean enabled, String name, String mode, String customHex) {
@@ -292,44 +445,101 @@ public final class SkyBallsNick {
 
     /** {@code font} null keeps the font already known for this player (message packets may not carry it). */
     public static void updateRemote(UUID uuid, String username, boolean enabled, String name, String mode, String customHex, String font) {
+        updateRemote(uuid, username, enabled, name, mode, customHex, null, font);
+    }
+
+    /** {@code gradientHex} (the Gradient style's second colour) null keeps the one already known. */
+    public static void updateRemote(UUID uuid, String username, boolean enabled, String name, String mode, String customHex, String gradientHex, String font) {
         if (uuid == null) return;
+        rememberUsername(uuid, username);
         // Nicknames with blocked words are not shown; the player's real name is used instead.
         if (!enabled || name == null || name.isBlank() || SkyBallsNickFilter.isBlocked(name, uuid)) {
-            REMOTE_NICKS.remove(uuid);
+            if (REMOTE_NICKS.remove(uuid) != null) invalidateCache();
             return;
         }
         String safeUsername = username == null ? "" : cleanUsername(username);
         RemoteNick previous = REMOTE_NICKS.get(uuid);
         if (safeUsername.isBlank() && previous != null) safeUsername = previous.username;
         String safeFont = font != null ? SkyBallsNickFonts.parse(font).label : previous != null ? previous.font : "Default";
-        REMOTE_NICKS.put(uuid, new RemoteNick(
+        String safeGradient = gradientHex != null ? cleanHex(gradientHex) : previous != null ? previous.gradientHex : "";
+        RemoteNick updated = new RemoteNick(
             uuid,
             safeUsername,
             clean(name),
             cleanMode(mode),
             cleanHex(customHex),
+            safeGradient,
             safeFont,
             true
-        ));
+        );
+        REMOTE_NICKS.put(uuid, updated);
+        // nicknameUpdate is re-sent for everyone every 30 s; only a real change empties the name caches.
+        if (!updated.equals(previous)) invalidateCache();
     }
 
     public static void removeRemote(UUID uuid) {
-        if (uuid != null) REMOTE_NICKS.remove(uuid);
+        if (uuid != null && REMOTE_NICKS.remove(uuid) != null) invalidateCache();
     }
 
     public static void clearRemote() {
         REMOTE_NICKS.clear();
+        invalidateCache();
     }
 
     public static Component styled(String text, String style, String customHex) {
         return styled(text, style, customHex, "Default");
     }
 
-    /** The nickname in its colour (or rainbow) and font. */
     public static Component styled(String text, String style, String customHex, String fontName) {
+        return styled(text, style, customHex, null, fontName);
+    }
+
+    /**
+     * Chroma letters carry this colour with their place in the name (0-255) in the blue channel; the text renderer
+     * turns it into the moving rainbow (SkyBallsChromaTextMixin).
+     */
+    public static final int CHROMA_MARK = 0x0B0B00;
+
+    /** The Chroma colour right now for a letter at {@code offset} (0-1) along the name. */
+    public static int chroma(float offset) {
+        float phase = (System.currentTimeMillis() % 3000) / 3000f;
+        return Color.HSBtoRGB(offset + phase, 0.95f, 1.0f) & 0xFFFFFF;
+    }
+
+    /**
+     * The nickname in its colour, gradient, rainbow or chroma, and font. Gradient fades each letter from
+     * {@code customHex} to {@code gradientHex}; Chroma is a rainbow that moves (see {@link #CHROMA_MARK}).
+     */
+    public static Component styled(String text, String style, String customHex, String gradientHex, String fontName) {
         String safeStyle = style == null ? "Plain" : style;
         SkyBallsNickFonts.NickFont font = SkyBallsNickFonts.parse(fontName);
         String shown = SkyBallsNickFonts.letters(text, font);
+
+        if ("Gradient".equalsIgnoreCase(safeStyle)) {
+            int from = customHex != null && customHex.matches("#[0-9a-fA-F]{6}") ? Integer.parseInt(customHex.substring(1), 16) : 0xFFFFFF;
+            int to = gradientHex != null && gradientHex.matches("#[0-9a-fA-F]{6}") ? Integer.parseInt(gradientHex.substring(1), 16) : from;
+            MutableComponent out = Component.empty();
+            int[] codePoints = shown.codePoints().toArray();
+            int n = codePoints.length;
+            for (int i = 0; i < n; i++) {
+                float t = n == 1 ? 0f : (float) i / (n - 1);
+                out.append(Component.literal(new String(Character.toChars(codePoints[i])))
+                    .setStyle(SkyBallsNickFonts.style(Style.EMPTY.withColor(mix(from, to, t)), font)));
+            }
+            return out;
+        }
+
+        if ("Chroma".equalsIgnoreCase(safeStyle)) {
+            MutableComponent out = Component.empty();
+            int[] codePoints = shown.codePoints().toArray();
+            int n = Math.max(1, codePoints.length);
+            for (int i = 0; i < codePoints.length; i++) {
+                int offset = Math.min(255, Math.round((float) i / n * 256f));
+                out.append(Component.literal(new String(Character.toChars(codePoints[i])))
+                    .setStyle(SkyBallsNickFonts.style(Style.EMPTY.withColor(CHROMA_MARK | offset), font)));
+            }
+            return out;
+        }
 
         if ("Rainbow".equalsIgnoreCase(safeStyle)) {
             MutableComponent out = Component.empty();
@@ -353,6 +563,14 @@ public final class SkyBallsNick {
 
         Style base = rgb == null ? Style.EMPTY : Style.EMPTY.withColor(rgb);
         return Component.literal(shown).setStyle(SkyBallsNickFonts.style(base, font));
+    }
+
+    /** Each channel of {@code from} moved {@code t} of the way to {@code to}, rounded. */
+    private static int mix(int from, int to, float t) {
+        int r = Math.round((from >> 16 & 255) + ((to >> 16 & 255) - (from >> 16 & 255)) * t);
+        int g = Math.round((from >> 8 & 255) + ((to >> 8 & 255) - (from >> 8 & 255)) * t);
+        int b = Math.round((from & 255) + ((to & 255) - (from & 255)) * t);
+        return r << 16 | g << 8 | b;
     }
 
     private static String clean(String value) {
@@ -384,9 +602,9 @@ public final class SkyBallsNick {
 
     private record StyledRun(String text, Style style) {}
 
-    private record RemoteNick(UUID uuid, String username, String name, String mode, String customHex, String font, boolean enabled) {
+    private record RemoteNick(UUID uuid, String username, String name, String mode, String customHex, String gradientHex, String font, boolean enabled) {
         private RemoteNick withUsername(String value) {
-            return new RemoteNick(uuid, value, name, mode, customHex, font, enabled);
+            return new RemoteNick(uuid, value, name, mode, customHex, gradientHex, font, enabled);
         }
 
         private boolean shown() {

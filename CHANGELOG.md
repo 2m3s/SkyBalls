@@ -2,6 +2,33 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.5 — 2026-09-28
+
+### Added
+- Museum tooltip (from Skyblocker): item tooltips say whether the item is donated to your museum, and which museum category it's in. Look through your Museum's category menus once and it's remembered per profile.
+- Accessory tooltip (from Skyblocker): accessory tooltips say whether you're missing it, already have it, or whether it's an upgrade or downgrade of the one you have from the same family, with the tiers, e.g. "✦ Upgrade (2→3/4)". Look through each page of your Accessory Bag once and it's remembered per profile.
+
+- SkyBalls Online (new settings category): replies and a ↩ button in SkyBalls chat, highlighted mentions with a ping, @name completion, emoji reactions (hover a message with chat open), item sharing (`/sb share`, the Share Item key, `[item]`), and clear notices when a message is refused or you're muted.
+- `/sb ignore`, `/sb unignore`, `/sb friend add|remove|accept|deny`, and `/sb friends` with requests and privacy settings. Popups when friends come online.
+- `/sb who` is now a screen with nicknames, ranks, badges, friends, location, AFK, time online and mod version. Your area, server and AFK status are shared (you can turn this off).
+- Casino: coinflip, dice, roulette, slots and higher/lower next to blackjack, plus the daily reward (with a reminder), stats and leaderboards (`/sb casino`, `/sb casino daily`).
+- Profile viewer: `/sb pv [player] [profile]`.
+- Gradient and Chroma nickname styles, badges and supporter symbols before names, capes, and `/sb cosmetics`.
+- Update notices from the SkyBalls server (required ones on every join and on the title screen), announcements and the message of the day, feature flags, crash reports (can be turned off) and settings cloud sync (`/sb settings`).
+- Item cooldowns on item slots, the event calendar with reminders (`/sb calendar`), the accessory helper next to the Accessory Bag, and pest highlight in the Garden.
+- `/sb help` lists every command.
+
+### Changed
+- Copy Rare Drops shows what was copied in chat, using Copy Chat's preview settings.
+- SkyBalls chat logs in on every connection and reconnects with a growing delay, saying "SBC offline" once instead of on every retry. Casino actions are queued to the server's limit of 5 a second.
+- Performance: nicknames in nametags and the tab list are worked out once per name change instead of every frame, and HUD text is built once per tick instead of every frame.
+
+### Removed
+- The Slayer Tracker HUD.
+
+### Fixed
+- The slayer boss phase display never showed when you had a nickname set, because it looked for your nickname instead of your username on the boss's "Spawned by" line. It also no longer needs the sidebar to show your slayer quest, and keeps the colours of multi-line nametags.
+
 ## 1.3.4.5 — 2026-09-27
 
 ### Fixed

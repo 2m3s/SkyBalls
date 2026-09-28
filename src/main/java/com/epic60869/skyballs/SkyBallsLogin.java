@@ -72,7 +72,7 @@ public final class SkyBallsLogin {
     /** Runs {@code then} on the game thread once logged in (now, if already). Logs in if needed. */
     public static void whenLoggedIn(Runnable then) {
         if (loggedIn()) {
-            then.run();
+            if (then != null) then.run();
             return;
         }
         if (then != null) WAITING.add(then);
@@ -105,7 +105,7 @@ public final class SkyBallsLogin {
                 return;
             }
             JsonObject auth = new JsonObject();
-            auth.addProperty("type", "casinoAuth");
+            auth.addProperty("type", "auth");
             auth.addProperty("serverId", serverId);
             auth.addProperty("username", mc.getUser().getName());
             if (!SkyBallsGlobalChat.send(auth)) {

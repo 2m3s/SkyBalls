@@ -42,6 +42,8 @@ Each ported source file keeps a Skyblocker attribution line. SkyBalls replaces S
 
 SkyBalls's Item Price Tooltip follows Skyblocker's AvgBinTooltip, LBinTooltip and NpcPriceTooltip (src/main/java/de/hysky/skyblocker/skyblock/item/tooltip/adders/) and reads auction prices from the same API (hysky.de). The container menu mixin that notifies slot listeners (used by the Chronomatron solver) follows Skyblocker's AbstractContainerMenuMixin.
 
+SkyBalls's museum and accessory tooltips (`features/misc/MuseumTooltip` and `features/misc/AccessoryTooltip`) follow Skyblocker's MuseumTooltip, MuseumItemCache, AccessoryTooltip and AccessoriesHelper (src/main/java/de/hysky/skyblocker/skyblock/museum/, skyblock/accessories/ and skyblock/item/tooltip/adders/): the tooltip text and colours, the accessory family and tier report, and reading your accessories from the Accessory Bag. The accessory list comes from the same API (hysky.de) and the museum item data from NEU's constants/museum.json. Instead of Skyblocker's signed-in Hypixel API proxy, donated museum items are read from the museum menus.
+
 Mouse Lock (`SkyBallsMouseLock`) follows Skyblocker's garden mouse lock (src/main/java/de/hysky/skyblocker/skyblock/garden/LowerSensitivity.java): its farming tool list (FarmingHudWidget.FARMING_TOOLS) and the barn area where the lock pauses.
 
 ## CommandKeys

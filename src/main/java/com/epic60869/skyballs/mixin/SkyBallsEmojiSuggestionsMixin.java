@@ -41,6 +41,10 @@ public abstract class SkyBallsEmojiSuggestionsMixin {
 
     @Inject(method = "updateCommandInfo", at = @At("TAIL"), cancellable = true)
     private void skyballs$emojiSuggestions(CallbackInfo ci) {
+        if (skyballs$mentionSuggestions()) {
+            ci.cancel();
+            return;
+        }
         if (!com.epic60869.skyballs.features.misc.ItemEmojis.autocompleteEnabled()) return;
 
         String text = input.getValue();
@@ -72,6 +76,32 @@ public abstract class SkyBallsEmojiSuggestionsMixin {
     private int skyballs$emojiPreviewWidth(net.minecraft.client.gui.Font font, String text, com.llamalad7.mixinextras.injector.wrapoperation.Operation<Integer> original) {
         int width = original.call(font, text);
         return com.epic60869.skyballs.features.misc.ItemEmojis.isEmojiSuggestion(text) ? width + com.epic60869.skyballs.features.misc.ItemEmojis.PREVIEW_WIDTH : width;
+    }
+
+    /** "@na" completes the names of SkyBalls players (in /sbc, or anywhere while in the SkyBalls channel). */
+    @Unique
+    private boolean skyballs$mentionSuggestions() {
+        if (!com.epic60869.skyballs.features.sbc.Sbc.config().chat.mentionCompletion) return false;
+        String text = input.getValue();
+        boolean sbc = text.startsWith("/sbc ") || text.startsWith("/sb chat ") || text.startsWith("/skyballs chat ")
+            || (com.epic60869.skyballs.SkyBallsGlobalChat.isInSkyBallsChannel() && !text.startsWith("/"));
+        if (!sbc) return false;
+        int cursor = input.getCursorPosition();
+        if (cursor <= 0 || cursor > text.length()) return false;
+        String uptoCursor = text.substring(0, cursor);
+        int whitespace = lastWhitespaceEnd(uptoCursor);
+        String token = uptoCursor.substring(whitespace);
+        if (!token.startsWith("@")) return false;
+        String typed = token.substring(1).toLowerCase(java.util.Locale.ROOT);
+        SuggestionsBuilder builder = new SuggestionsBuilder(uptoCursor, whitespace);
+        for (String name : com.epic60869.skyballs.features.sbc.SbcChat.mentionNames()) {
+            if (name.toLowerCase(java.util.Locale.ROOT).startsWith(typed)) builder.suggest("@" + name);
+        }
+        pendingSuggestions = builder.buildFuture();
+        pendingSuggestions.thenRun(() -> {
+            if (pendingSuggestions != null && pendingSuggestions.isDone()) showSuggestions(false);
+        });
+        return true;
     }
 
     @Unique

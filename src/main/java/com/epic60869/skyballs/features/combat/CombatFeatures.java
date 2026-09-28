@@ -203,7 +203,10 @@ public final class CombatFeatures {
     private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item) {
         Minecraft mc = Minecraft.getInstance();
         if (config.copy) {
-            mc.execute(() -> mc.keyboardHandler.setClipboard(text));
+            mc.execute(() -> {
+                mc.keyboardHandler.setClipboard(text);
+                com.epic60869.skyballs.features.misc.CopyChat.showPreview("Drop copied", text);
+            });
         }
         if (config.animation) {
             ItemPriceResolver.valueByNameAsync(item).thenAccept(value -> {

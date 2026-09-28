@@ -64,5 +64,6 @@ public abstract class SkyBallsChatScreenMixin {
         var finder = new net.minecraft.client.gui.ActiveTextCollector.ClickableStyleFinder(mc.font, mouseX, mouseY);
         mc.gui.hud.getChat().captureClickableText(finder, mc.getWindow().getGuiScaledHeight(), mc.gui.hud.getGuiTicks(), displayMode);
         com.epic60869.skyballs.SkyBallsImagePreview.render(graphics, finder.result(), mouseX, mouseY);
+        com.epic60869.skyballs.features.sbc.SbcChatOverlay.render(graphics, ((ChatScreen) (Object) this).height, mouseX, mouseY);
     }
 }

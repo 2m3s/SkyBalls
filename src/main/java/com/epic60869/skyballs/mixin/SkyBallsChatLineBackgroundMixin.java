@@ -15,6 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class SkyBallsChatLineBackgroundMixin {
     @Shadow @Final private GuiGraphicsExtractor graphics;
 
+    /** SBC mentions: the highlight behind the line. */
+    @Inject(method = "handleMessage", at = @At("HEAD"))
+    private void skyballs$mentionHighlight(int textTop, float opacity, FormattedCharSequence content, CallbackInfoReturnable<Boolean> cir) {
+        com.epic60869.skyballs.features.sbc.SbcChatOverlay.drawLineBackground(graphics, textTop, opacity, content);
+    }
+
     @Inject(method = "handleMessage", at = @At("TAIL"))
     private void skyballs$itemEmojis(int textTop, float opacity, FormattedCharSequence content, CallbackInfoReturnable<Boolean> cir) {
         ItemEmojis.drawChatIcons(graphics, content, textTop, opacity);

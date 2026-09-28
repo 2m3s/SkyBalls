@@ -37,9 +37,13 @@ public final class SkyBallsGlobalChat {
     private static final AtomicLong REQUEST_IDS = new AtomicLong();
     private static volatile WebSocket socket;
     private static volatile long reconnectAt = 0L;
+    /** Failed connection attempts in a row; the wait before the next one doubles each time (5 s up to 2 min). */
+    private static volatile int failures = 0;
+    /** "Connection failed" is said once per outage, not on every retry. */
+    private static volatile boolean toldOffline = false;
     private static volatile String username = "Unknown";
     private static volatile int relayIndex = 0;
-    private static final Queue<String> PENDING_MESSAGES = new ArrayDeque<>();
+    private static final Queue<JsonObject> PENDING_MESSAGES = new ArrayDeque<>();
     private static volatile boolean inSkyBallsChannel = false;
 
     public static boolean isInSkyBallsChannel() { return inSkyBallsChannel; }
@@ -66,58 +70,9 @@ public final class SkyBallsGlobalChat {
         connect();
     }
 
-    private static volatile long whoAskedAt;
-
-    /**
-     * /sb who: asks the chat server who is online with the mod. The server answers
-     * {"type":"online","players":[{"username":"...","nickname":"..."}]}.
-     */
+    /** /sb who: the online list (a screen, or chat when the screen is turned off). */
     public static void requestWho() {
-        WebSocket ws = socket;
-        if (ws == null || ws.isInputClosed() || ws.isOutputClosed()) {
-            connect();
-            mcMessage(Component.literal("[SB] Connecting to SkyBalls chat, try again in a moment.").withStyle(Style.EMPTY.withColor(0xFFFF55)));
-            return;
-        }
-        JsonObject packet = new JsonObject();
-        packet.addProperty("type", "who");
-        ws.sendText(GSON.toJson(packet), true);
-        long asked = System.currentTimeMillis();
-        whoAskedAt = asked;
-        java.util.concurrent.CompletableFuture.delayedExecutor(5, java.util.concurrent.TimeUnit.SECONDS).execute(() -> {
-            if (whoAskedAt == asked) {
-                whoAskedAt = 0;
-                mcMessage(Component.literal("[SB] The SkyBalls chat server didn't answer; it may not support /sb who yet.").withStyle(Style.EMPTY.withColor(0xAAAAAA)));
-            }
-        });
-    }
-
-    private static void showWho(JsonObject packet) {
-        whoAskedAt = 0;
-        com.google.gson.JsonArray players = packet.has("players") && packet.get("players").isJsonArray() ? packet.getAsJsonArray("players") : new com.google.gson.JsonArray();
-        MutableComponent message = Component.literal("[SB] ").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE)
-            .append(Component.literal(players.size() + " online with SkyBalls: ").withStyle(net.minecraft.ChatFormatting.YELLOW));
-        boolean first = true;
-        for (var element : players) {
-            String username;
-            String nickname = "";
-            if (element.isJsonObject()) {
-                JsonObject o = element.getAsJsonObject();
-                username = o.has("username") ? o.get("username").getAsString() : "?";
-                if (o.has("nickname") && !o.get("nickname").isJsonNull()) nickname = o.get("nickname").getAsString();
-            } else {
-                username = element.getAsString();
-            }
-            username = username.replaceAll("[^A-Za-z0-9_]", "");
-            if (!first) message.append(Component.literal(", ").withStyle(net.minecraft.ChatFormatting.GRAY));
-            first = false;
-            MutableComponent name = Component.literal(username).withStyle(net.minecraft.ChatFormatting.WHITE);
-            if (!nickname.isBlank() && !nickname.equalsIgnoreCase(username) && !SkyBallsNickFilter.isBlocked(nickname)) {
-                name.append(Component.literal(" (" + nickname + ")").withStyle(net.minecraft.ChatFormatting.GRAY));
-            }
-            message.append(name);
-        }
-        mcMessage(message);
+        com.epic60869.skyballs.features.sbc.SbcSocial.requestWho(true);
     }
 
     public static void sendBotCommand(String command) {
@@ -143,32 +98,32 @@ public final class SkyBallsGlobalChat {
     public static void send(String message) {
         String clean = String.valueOf(message == null ? "" : message).trim();
         if (clean.isEmpty()) return;
+        // The reply being written and an [item] in the text go with the message.
+        JsonObject packet = com.epic60869.skyballs.features.sbc.SbcChat.outgoing(clean);
+        if (packet != null) sendPacket(packet);
+    }
+
+    /** Sends a SkyBalls chat "message" packet (text, reply, item), or queues it until connected. */
+    public static void sendPacket(JsonObject packet) {
+        packet.addProperty("type", "message");
+        packet.addProperty("username", username);
+        packet.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
+        int[] level = ownLevel();
+        if (level != null) {
+            packet.addProperty("level", level[0]);
+            packet.addProperty("levelColor", String.format("#%06X", level[1] & 0xFFFFFF));
+        }
 
         WebSocket ws = socket;
         if (ws == null || ws.isInputClosed() || ws.isOutputClosed()) {
             synchronized (PENDING_MESSAGES) {
                 if (PENDING_MESSAGES.size() >= 20) PENDING_MESSAGES.poll();
-                PENDING_MESSAGES.offer(clean.substring(0, Math.min(clean.length(), 500)));
+                PENDING_MESSAGES.offer(packet);
             }
             connect();
-            mcMessage(Component.literal("[SB] Global chat is connecting; your message will be sent when connected.")
+            mcMessage(Component.literal("[SB] SBC offline: your message will be sent when SkyBalls chat reconnects.")
                 .withStyle(Style.EMPTY.withColor(0xFFFF55)));
             return;
-        }
-
-        sendNow(ws, clean);
-    }
-
-    private static void sendNow(WebSocket ws, String clean) {
-        JsonObject packet = new JsonObject();
-        packet.addProperty("type", "message");
-        packet.addProperty("username", username);
-        packet.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
-        packet.addProperty("message", clean.substring(0, Math.min(clean.length(), 500)));
-        int[] level = ownLevel();
-        if (level != null) {
-            packet.addProperty("level", level[0]);
-            packet.addProperty("levelColor", String.format("#%06X", level[1] & 0xFFFFFF));
         }
         ws.sendText(GSON.toJson(packet), true);
     }
@@ -203,7 +158,7 @@ public final class SkyBallsGlobalChat {
     private static void flushPending(WebSocket ws) {
         synchronized (PENDING_MESSAGES) {
             while (!PENDING_MESSAGES.isEmpty()) {
-                sendNow(ws, PENDING_MESSAGES.poll());
+                ws.sendText(GSON.toJson(PENDING_MESSAGES.poll()), true);
             }
         }
     }
@@ -293,15 +248,23 @@ public final class SkyBallsGlobalChat {
                     if (relayIndex + 1 < RELAY_URLS.length) {
                         relayIndex++;
                     }
-                    mcMessage(Component.literal("[SB] Global chat connection failed: "
-                        + shortError(error) + " — retrying.")
-                        .withStyle(Style.EMPTY.withColor(0xFF5555)));
+                    if (!toldOffline) {
+                        toldOffline = true;
+                        mcMessage(Component.literal("[SB] SBC offline: global chat connection failed ("
+                            + shortError(error) + "). Retrying in the background.")
+                            .withStyle(Style.EMPTY.withColor(0xFF5555)));
+                    }
                     scheduleReconnect();
                     return;
                 }
 
                 relayIndex = 0;
                 socket = ws;
+                failures = 0;
+                if (toldOffline) {
+                    toldOffline = false;
+                    mcMessage(Component.literal("[SB] Reconnected to SkyBalls chat.").withStyle(Style.EMPTY.withColor(0x55FF55)));
+                }
 
                 JsonObject hello = new JsonObject();
                 hello.addProperty("type", "hello");
@@ -310,11 +273,18 @@ public final class SkyBallsGlobalChat {
                 JsonArray features = new JsonArray();
                 features.add("rankAnnounce");
                 features.add("leaderboards");
+                features.add("chatBlocked");
+                features.add("announcements");
                 hello.add("features", features);
                 hello.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
-                hello.addProperty("modVersion", net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("skyballs")
-                    .map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse("dev"));
+                hello.addProperty("modVersion", com.epic60869.skyballs.features.sbc.SbcInfo.modVersion());
+                hello.addProperty("mcVersion", com.epic60869.skyballs.features.sbc.SbcInfo.mcVersion());
                 ws.sendText(GSON.toJson(hello), true);
+                // Log in on every connection, right after hello: friends, casino, settings and cosmetics need it.
+                Minecraft.getInstance().execute(() -> {
+                    SkyBallsLogin.whenLoggedIn(null);
+                    com.epic60869.skyballs.features.sbc.Sbc.onConnected();
+                });
                 flushPending(ws);
             });
     }
@@ -327,7 +297,14 @@ public final class SkyBallsGlobalChat {
     }
 
     private static void scheduleReconnect() {
-        reconnectAt = System.currentTimeMillis() + 5000L;
+        long delay = Math.min(120_000L, 5000L << Math.min(5, failures));
+        failures++;
+        reconnectAt = System.currentTimeMillis() + delay;
+    }
+
+    /** Whether the SkyBalls chat server is connected. */
+    public static boolean isOnline() {
+        return currentConnection() != null;
     }
 
     public static void tick() {
@@ -453,6 +430,7 @@ public final class SkyBallsGlobalChat {
         public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
             if (socket == webSocket) socket = null;
             scheduleReconnect();
+            Minecraft.getInstance().execute(com.epic60869.skyballs.features.sbc.Sbc::onDisconnected);
             return null;
         }
 
@@ -460,6 +438,7 @@ public final class SkyBallsGlobalChat {
         public void onError(WebSocket webSocket, Throwable error) {
             if (socket == webSocket) socket = null;
             scheduleReconnect();
+            Minecraft.getInstance().execute(com.epic60869.skyballs.features.sbc.Sbc::onDisconnected);
         }
 
         private void handle(String raw) {
@@ -495,11 +474,6 @@ public final class SkyBallsGlobalChat {
                     return;
                 }
 
-                if ("online".equals(type) || "whoResult".equals(type)) {
-                    showWho(packet);
-                    return;
-                }
-
                 if ("nicknameUpdate".equals(type)) {
                     try {
                         UUID uuid = UUID.fromString(packet.get("minecraftUuid").getAsString());
@@ -509,7 +483,9 @@ public final class SkyBallsGlobalChat {
                         String mode = packet.has("mode") ? packet.get("mode").getAsString() : "Plain";
                         String hex = packet.has("customHex") ? packet.get("customHex").getAsString() : "";
                         String font = packet.has("font") ? packet.get("font").getAsString() : "Default";
-                        SkyBallsNick.updateRemote(uuid, username, enabled, name, mode, hex, font);
+                        String gradient = packet.has("gradientHex") && !packet.get("gradientHex").isJsonNull() ? packet.get("gradientHex").getAsString() : "";
+                        SkyBallsNick.rememberUsername(uuid, username);
+                        SkyBallsNick.updateRemote(uuid, username, enabled, name, mode, hex, gradient, font);
                     } catch (Exception ignored) {}
                     return;
                 }
@@ -553,7 +529,11 @@ public final class SkyBallsGlobalChat {
                     return;
                 }
 
-                if (!"message".equals(type)) return;
+                if (!"message".equals(type)) {
+                    // Everything newer (friends, reactions, cosmetics, flags, pv, ...) is handled by the SBC client.
+                    Minecraft.getInstance().execute(() -> com.epic60869.skyballs.features.sbc.Sbc.handle(type, packet));
+                    return;
+                }
 
                 String name = packet.has("username") ? packet.get("username").getAsString() : "Unknown";
                 String displayName = packet.has("nickname") ? packet.get("nickname").getAsString() : name;
@@ -564,7 +544,8 @@ public final class SkyBallsGlobalChat {
                     displayName = "SkyBalls";
                     message = message.replace("[SJ]", "[SB]").replace("SkyJew", "SkyBalls");
                 }
-                if (message.isBlank()) return;
+                boolean hasItem = packet.has("item") && packet.get("item").isJsonObject();
+                if (message.isBlank() && !hasItem) return;
 
                 UUID messageUuid = null;
                 try {
@@ -584,7 +565,9 @@ public final class SkyBallsGlobalChat {
                         // nickname that was already synced from the relay.
                         if (nickEnabled) {
                             String nickFont = packet.has("nicknameFont") ? packet.get("nicknameFont").getAsString() : null;
-                            SkyBallsNick.updateRemote(messageUuid, messageUsername, true, displayName, nickMode, nickHex, nickFont);
+                            String nickHex2 = packet.has("nicknameHex2") && !packet.get("nicknameHex2").isJsonNull()
+                                ? packet.get("nicknameHex2").getAsString() : null;
+                            SkyBallsNick.updateRemote(messageUuid, messageUsername, true, displayName, nickMode, nickHex, nickHex2, nickFont);
                         }
                     }
                 } catch (Exception ignored) {}
@@ -604,8 +587,9 @@ public final class SkyBallsGlobalChat {
                 }
                 Component messageComponent = com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(Component.literal(message)));
                 // [SB] in dark green, like Hypixel's "Guild >"; messages from Discord add a blue [Discord] after it.
+                long messageId = packet.has("id") && !packet.get("id").isJsonNull() ? packet.get("id").getAsLong() : 0;
                 MutableComponent line = Component.empty()
-                    .append(Component.literal("[SB]").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE))
+                    .append(com.epic60869.skyballs.features.sbc.SbcChat.prefix(messageId))
                     .append(Component.literal(" "));
                 if (!"[SB]".equals(prefix)) {
                     line.append(Component.literal(prefix).withStyle(net.minecraft.ChatFormatting.BLUE)).append(Component.literal(" "));
@@ -637,7 +621,7 @@ public final class SkyBallsGlobalChat {
                     .append(linkify(messageComponent));
                 SkyBallsConfig chatConfig = SkyBallsConfig.current();
                 if (chatConfig != null && !chatConfig.chat.customChat.showSjChat) return;
-                mcMessage(line);
+                mcMessage(com.epic60869.skyballs.features.sbc.SbcChat.decorate(packet, line, message));
                 // Optional ping for other players' messages.
                 java.util.UUID self = Minecraft.getInstance().getUser().getProfileId();
                 if (chatConfig != null && chatConfig.chat.customChat.pingSound && (messageUuid == null || !messageUuid.equals(self))) {

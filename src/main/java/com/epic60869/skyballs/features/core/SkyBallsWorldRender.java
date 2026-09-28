@@ -33,7 +33,7 @@ public final class SkyBallsWorldRender {
             try {
                 renderer.accept(COLLECTOR);
             } catch (Exception e) {
-                System.err.println("[SkyBalls] World renderer failed: " + e);
+                com.epic60869.skyballs.features.sbc.SbcCrashReports.report(e, "world renderer");
             }
         }
     }

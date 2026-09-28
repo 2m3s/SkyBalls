@@ -39,6 +39,11 @@ public final class SkyBallsUpdateChecker {
 
     private SkyBallsUpdateChecker() {}
 
+    /** The SkyBalls server already announced this version; don't announce it again from GitHub. */
+    public static void markAnnounced(String version) {
+        announced = version;
+    }
+
     public static void init() {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> check());
         // Keep checking while you play (every CHECK_EVERY_MS), not only when you join.

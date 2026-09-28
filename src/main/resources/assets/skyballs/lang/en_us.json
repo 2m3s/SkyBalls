@@ -1,6 +1,7 @@
 {
   "key.category.skyballs.main": "SkyBalls",
   "key.skyballs.search": "Open Item Search",
+  "key.skyballs.share_item": "Share Item in SkyBalls Chat",
   "key.skyballs.toggle_sprint": "Toggle Sprint",
   "skyballs.customAnimatedDyes.added": "Set a custom animated dye for your currently held item!",
   "skyballs.customAnimatedDyes.neverHad": "This item doesn't have a custom animated dye set, but why not add one? ;)",

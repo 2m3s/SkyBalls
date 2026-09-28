@@ -115,7 +115,7 @@ public final class FeatureConfigs {
 
     public static final class RareDrops {
         @Expose
-        @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard.")
+        @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard. What was copied shows in chat, using Copy Chat's preview settings.")
         @ConfigEditorBoolean
         public boolean copy = true;
 
@@ -131,11 +131,6 @@ public final class FeatureConfigs {
     }
 
     public static final class Slayer {
-        @Expose
-        @ConfigOption(name = "Slayer Tracker", desc = "HUD with slayer XP earned, bosses to the next level and progress to spawning the boss.")
-        @ConfigEditorBoolean
-        public boolean tracker = true;
-
         @Expose
         @ConfigOption(name = "Boss Phase Display", desc = "HUD showing your slayer boss's nametag lines, including Voidgloom hits and Inferno attunement.")
         @ConfigEditorBoolean

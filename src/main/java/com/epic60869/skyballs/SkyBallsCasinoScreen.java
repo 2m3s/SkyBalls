@@ -78,6 +78,11 @@ public final class SkyBallsCasinoScreen extends Screen {
             .bounds(left + 200, bottom - 27, 92, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Refresh"), b -> SkyBallsCasino.refreshLeaderboard())
             .bounds(left + TABLE_W + GAP + 8, bottom - 27, BOARD_W - 16, 20).build());
+        // Back to the other games (coinflip, dice, roulette, slots, higher/lower, daily reward).
+        addRenderableWidget(Button.builder(Component.literal("◀ Other games"), b -> {
+            SkyBallsCasinoGamesScreen.tab = SkyBallsCasinoGamesScreen.Tab.COINFLIP;
+            minecraft.gui.setScreen(new SkyBallsCasinoGamesScreen());
+        }).bounds(left, top() - 24, 100, 18).build());
     }
 
     private void deal() {
@@ -95,6 +100,7 @@ public final class SkyBallsCasinoScreen extends Screen {
     @Override
     public void tick() {
         SkyBallsCasino.ensureReady();
+        SkyBallsCasino.tick();
         // Keep the leaderboard fresh while the table is open.
         long now = System.currentTimeMillis();
         if (now - leaderboardAt > 30_000L) {

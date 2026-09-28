@@ -86,9 +86,16 @@ public final class SkyBallsMod implements ClientModInitializer {
         SkyBallsNopoFeatures.init(configDir);
         SkyBallsNick.init(config);
         SkyBallsMouseLock.init(config);
+        com.epic60869.skyballs.features.sbc.Sbc.init();
         SkyBallsGlobalChat.init();
         SkyBallsCurrentChat.init(configDir);
         SkyBallsPriceTooltip.init();
+        com.epic60869.skyballs.features.misc.MuseumTooltip.init(configDir);
+        com.epic60869.skyballs.features.misc.AccessoryTooltip.init(configDir);
+        com.epic60869.skyballs.features.misc.AccessoryHelper.init();
+        com.epic60869.skyballs.features.misc.ItemCooldowns.init();
+        com.epic60869.skyballs.features.misc.EventCalendar.init();
+        com.epic60869.skyballs.features.garden.PestHighlight.init();
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 
         registerCommands();
@@ -129,8 +136,13 @@ public final class SkyBallsMod implements ClientModInitializer {
             .then(ClientCommands.literal("notes").executes(context -> openNotes()))
             .then(ClientCommands.literal("search").executes(context -> openStorageSearch()))
             .then(SkyBallsRecipeCommand.command())
-            .then(ClientCommands.literal("casino").executes(context ->
-                com.epic60869.skyballs.custom.util.Compat.queueOpenScreen(new SkyBallsCasinoScreen())))
+            .then(ClientCommands.literal("casino")
+                .executes(context -> !com.epic60869.skyballs.features.sbc.Flags.check("casino") ? 1
+                    : com.epic60869.skyballs.custom.util.Compat.queueOpenScreen(new SkyBallsCasinoGamesScreen()))
+                .then(ClientCommands.literal("daily").executes(context -> {
+                    SkyBallsCasino.claimDaily();
+                    return 1;
+                })))
             .then(ClientCommands.literal("calc")
                 .then(ClientCommands.argument("calculation", StringArgumentType.greedyString())
                     .executes(context -> calculate(StringArgumentType.getString(context, "calculation")))))

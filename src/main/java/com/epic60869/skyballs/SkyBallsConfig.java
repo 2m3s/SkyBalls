@@ -106,6 +106,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Garden", desc = "Yaw/pitch, pest cooldown, blocks per second and special drop animations.")
         public com.epic60869.skyballs.features.FeatureConfigs.Garden garden = new com.epic60869.skyballs.features.FeatureConfigs.Garden();
 
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Pest Highlight", desc = "Outline pests in the Garden, with an optional line or beacon to the nearest one and a pests/plots HUD.")
+        public com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight pestHighlight = new com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight();
+
     }
 
     public static final class Mining {
@@ -123,7 +128,7 @@ public final class SkyBallsConfig extends Config {
     public static final class Slayers {
         @Expose
         @Accordion
-        @ConfigOption(name = "Slayer HUDs", desc = "Slayer tracker and boss phase HUDs.")
+        @ConfigOption(name = "Slayer HUDs", desc = "Slayer boss phase HUD.")
         public com.epic60869.skyballs.features.FeatureConfigs.Slayer huds = new com.epic60869.skyballs.features.FeatureConfigs.Slayer();
 
         @Expose
@@ -174,6 +179,11 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Item Price Tooltip", desc = "Add prices to SkyBlock item tooltips, like Skyblocker.")
         public PriceTooltip priceTooltip = new PriceTooltip();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Museum & Accessory Tooltips", desc = "Show in item tooltips whether you've donated the item to your museum and whether you're missing an accessory, like Skyblocker.")
+        public CollectionTooltips collectionTooltips = new CollectionTooltips();
 
         @Expose
         @Accordion
@@ -297,6 +307,21 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Toggle Sprint HUD", desc = "Show [Sprinting (Toggled)] while toggle sprint is on. Move it in /sb gui.")
         @ConfigEditorBoolean
         public boolean toggleSprintHud = true;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Item Cooldowns", desc = "Show item ability cooldowns on the item's slot (and optionally a HUD).")
+        public com.epic60869.skyballs.features.sbc.SbcConfig.ItemCooldowns itemCooldowns = new com.epic60869.skyballs.features.sbc.SbcConfig.ItemCooldowns();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Event Calendar", desc = "Upcoming SkyBlock events with countdowns (/sb calendar), a HUD and reminders before the events you pick.")
+        public com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar eventCalendar = new com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Accessory Helper", desc = "A list next to the Accessory Bag of the accessories and upgrades you're missing, cheapest magical power first.")
+        public com.epic60869.skyballs.features.sbc.SbcConfig.AccessoryHelper accessoryHelper = new com.epic60869.skyballs.features.sbc.SbcConfig.AccessoryHelper();
     }
 
     private static final Gson LEGACY_GSON = new Gson();
@@ -312,11 +337,15 @@ public final class SkyBallsConfig extends Config {
     public Chat chat = new Chat();
 
     @Expose
+    @Category(name = "SkyBalls Online", desc = "SkyBalls chat replies, reactions and item sharing, friends, cosmetics, the casino and cloud settings.")
+    public com.epic60869.skyballs.features.sbc.SbcConfig.Online online = new com.epic60869.skyballs.features.sbc.SbcConfig.Online();
+
+    @Expose
     @Category(name = "Combat", desc = "Arrow counter, legion display, cocoon alerts and rare drops.")
     public com.epic60869.skyballs.features.FeatureConfigs.Combat combat = new com.epic60869.skyballs.features.FeatureConfigs.Combat();
 
     @Expose
-    @Category(name = "Slayers", desc = "Slayer tracker, boss phases and drop tracking.")
+    @Category(name = "Slayers", desc = "Slayer boss phases and drop tracking.")
     public Slayers slayers = new Slayers();
 
     @Expose
@@ -671,6 +700,18 @@ public final class SkyBallsConfig extends Config {
         public boolean threeDayAverage = true;
     }
 
+    public static final class CollectionTooltips {
+        @Expose
+        @ConfigOption(name = "Museum", desc = "Show whether the item is donated to your museum. Open your Museum's category menus once to fill this in; it's saved per profile.")
+        @ConfigEditorBoolean
+        public boolean museum = true;
+
+        @Expose
+        @ConfigOption(name = "Accessories", desc = "Show whether you're missing an accessory, already have it, or whether it's an upgrade or downgrade of the one you have from the same family. Open each page of your Accessory Bag once to fill this in; it's saved per profile.")
+        @ConfigEditorBoolean
+        public boolean accessories = true;
+    }
+
     public static final class ItemRarity {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show a background behind SkyBlock items in your inventory, containers and hotbar using the item's rarity color.")
@@ -889,6 +930,48 @@ public final class SkyBallsConfig extends Config {
 
     public static SkyBallsConfig current() {
         return managed == null ? null : managed.getInstance();
+    }
+
+    /** The saved config file as JSON, for settings cloud sync (saves first so it's up to date). */
+    public static JsonObject exportJson() {
+        if (managed == null) return null;
+        try {
+            managed.saveToFile();
+            return LEGACY_GSON.fromJson(Files.readString(managed.getFile().toPath(), StandardCharsets.UTF_8), JsonObject.class);
+        } catch (Exception e) {
+            System.err.println("[SkyBalls] Couldn't read the config for upload: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Replaces every setting with {@code settings} (from settings cloud sync). The current file is kept as
+     * skyballs-mod.json.bak, and put back if the new settings can't be loaded.
+     */
+    public static boolean importJson(JsonObject settings) {
+        if (managed == null || settings == null) return false;
+        Path path = managed.getFile().toPath();
+        Path backup = path.resolveSibling(path.getFileName() + ".bak");
+        try {
+            managed.saveToFile();
+            Files.copy(path, backup, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            Files.writeString(path, LEGACY_GSON.toJson(settings), StandardCharsets.UTF_8);
+            migrateConfigShape(path);
+            managed.reloadFromFile();
+        } catch (Exception e) {
+            System.err.println("[SkyBalls] Couldn't load downloaded settings: " + e.getMessage());
+            try {
+                Files.copy(backup, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                managed.reloadFromFile();
+            } catch (Exception ignored) {}
+            return false;
+        }
+        managed.getInstance().saveRunnables.add(managed::saveToFile);
+        // The open editor shows the old instance; build a new one next time.
+        editor = null;
+        managed.saveToFile();
+        lastSaved = snapshot();
+        return true;
     }
 
     /**

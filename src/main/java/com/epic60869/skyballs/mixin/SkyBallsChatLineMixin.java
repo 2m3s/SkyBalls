@@ -23,6 +23,7 @@ public abstract class SkyBallsChatLineMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void skyballs$newFrame(CallbackInfo ci) {
         CopyChat.beginFrame();
+        com.epic60869.skyballs.features.sbc.SbcChatOverlay.beginFrame();
     }
 
     @Inject(method = "handleMessage", at = @At("HEAD"))
@@ -30,6 +31,8 @@ public abstract class SkyBallsChatLineMixin {
         Vector2f top = graphics.pose().transformPosition(new Vector2f(0, textTop));
         Vector2f bottom = graphics.pose().transformPosition(new Vector2f(0, textTop + 9));
         CopyChat.recordLine(content, top.y, bottom.y);
+        com.epic60869.skyballs.features.sbc.SbcChatOverlay.recordLine(content, top.y, bottom.y);
+        com.epic60869.skyballs.features.sbc.SbcChatOverlay.drawLineBackground(graphics, textTop, opacity, content);
     }
 
     /** Item emojis: their icons go into the gaps left for them in the line. */

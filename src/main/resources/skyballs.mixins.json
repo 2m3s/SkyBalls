@@ -61,6 +61,11 @@
     "SkyBallsBossBarMixin",
     "SkyBallsLevelExtractorMixin",
     "SkyBallsTooltipMixin",
-    "SkyBallsToggleSprintMixin"
+    "SkyBallsToggleSprintMixin",
+    "SkyBallsChromaTextMixin",
+    "SkyBallsCapeMixin",
+    "SkyBallsItemCooldownMixin",
+    "SkyBallsPestGlowMixin",
+    "SkyBallsPestGlowColourMixin"
   ]
 }

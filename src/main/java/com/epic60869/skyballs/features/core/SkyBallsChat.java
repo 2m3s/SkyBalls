@@ -41,7 +41,7 @@ public final class SkyBallsChat {
             try {
                 listener.onMessage(component, overlay);
             } catch (Exception e) {
-                System.err.println("[SkyBalls] Chat listener failed: " + e);
+                com.epic60869.skyballs.features.sbc.SbcCrashReports.report(e, "chat listener");
             }
         }
         dispatch(overlay ? ACTION_BAR : CHAT, component);
@@ -54,7 +54,7 @@ public final class SkyBallsChat {
             try {
                 listener.onMessage(message);
             } catch (Exception e) {
-                System.err.println("[SkyBalls] Chat listener failed: " + e);
+                com.epic60869.skyballs.features.sbc.SbcCrashReports.report(e, "chat listener");
             }
         }
     }

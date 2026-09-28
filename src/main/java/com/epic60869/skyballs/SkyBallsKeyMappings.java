@@ -11,6 +11,8 @@ public final class SkyBallsKeyMappings {
 
     public static KeyMapping.Category CATEGORY;
     public static KeyMapping SEARCH;
+    /** Shares the held (or hovered) item in SkyBalls chat. Unbound until you pick a key. */
+    public static KeyMapping SHARE_ITEM;
 
     private static boolean initialized;
 
@@ -34,6 +36,15 @@ public final class SkyBallsKeyMappings {
                 "key.skyballs.search",
                 InputConstants.Type.KEYSYM,
                 InputConstants.KEY_O,
+                CATEGORY
+            )
+        );
+
+        SHARE_ITEM = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping(
+                "key.skyballs.share_item",
+                InputConstants.Type.KEYSYM,
+                InputConstants.UNKNOWN.getValue(),
                 CATEGORY
             )
         );
