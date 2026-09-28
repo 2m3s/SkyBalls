@@ -72,6 +72,16 @@ public final class SkyBallsPriceTooltip {
         return npc == null ? 0 : npc;
     }
 
+    /** Starts loading the prices (if they're old or not loaded yet) without asking for one. */
+    public static void warmup() {
+        refreshIfStale();
+    }
+
+    /** Whether any market prices (bazaar or auction) have loaded yet. */
+    public static boolean pricesLoaded() {
+        return !bazaarSell.isEmpty() || !lowestBins.isEmpty();
+    }
+
     private static void refreshIfStale() {
         if (System.currentTimeMillis() - lastRefresh < REFRESH_MS || !REFRESHING.compareAndSet(false, true)) return;
         CompletableFuture.runAsync(() -> {

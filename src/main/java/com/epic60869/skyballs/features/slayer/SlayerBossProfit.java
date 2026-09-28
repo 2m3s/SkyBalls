@@ -206,6 +206,8 @@ public final class SlayerBossProfit {
             // The fee is taken when you click Maddox's menu, just before this message; the scoreboard can lag behind.
             questStartedAt = System.currentTimeMillis();
             questPaid = -1;
+            // Prices load on first use: get them now so they're there when the boss dies.
+            SkyBallsPriceTooltip.warmup();
         } else if (text.startsWith("[Sacks]") && kill != null) {
             boolean bossDrops = false;
             for (Map.Entry<String, Long> e : sackGains(component).entrySet()) {
@@ -270,6 +272,7 @@ public final class SlayerBossProfit {
 
     /** Your boss appeared ({@link SlayerTimes}): remember the inventory, so the drops are what's new after. */
     static void onSpawn() {
+        SkyBallsPriceTooltip.warmup();
         if (!enabled()) return;
         baseline = inventory();
         groundAtSpawn.clear();
@@ -425,6 +428,12 @@ public final class SlayerBossProfit {
         Kill k = kill;
         SkyBallsConfig.BossProfit c = config();
         if (k == null || k.posted || last == null) return;
+        // Without prices every drop would show "no price": wait for them (they're asked for at the quest start), up
+        // to 10 seconds after the kill.
+        if (!SkyBallsPriceTooltip.pricesLoaded() && System.currentTimeMillis() - k.at < 10_000L) {
+            SkyBallsPriceTooltip.warmup();
+            return;
+        }
         k.posted = true;
         settleHud();
         if (c == null || !c.chat) return;
