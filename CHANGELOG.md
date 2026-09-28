@@ -5,6 +5,7 @@ All notable changes to SkyBalls are listed here, newest first.
 ## test-1.3.7 — 2026-09-28
 
 ### Added
+- Overflow pet level ups in chat again (NopoMod's): "[SB] Your Golden Dragon leveled up to level 158!" when your pet reaches the next overflow level. Needs Overflow Pet Levels on (Pets).
 - Boss Profit Message (Slayers): after each slayer boss, "Profit: +50k" (or "-10k") in chat. Hover it for each drop and its value, the drops' total, the quest's cost (what your purse went down by, or Hypixel's price) and the total.
 - Sign Calculator (Misc), from Skyblocker: on SkyBlock's number signs (auction prices, bazaar amounts) the number you typed shows above the sign, e.g. `15m = 15,000,000`, and sums like `2.5m*3` are worked out and sent as the number.
 - RNG Drop Totem Animation (Combat → Rare Drops), from Skyblocker: big RNG drops pop up like a Totem of Undying, with particles and a sound.
@@ -23,6 +24,7 @@ All notable changes to SkyBalls are listed here, newest first.
 - `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
 ### Fixed
+- /storage: the mouse wheel scrolled a little, then stopped once an item came under the mouse. Block Scrolling on Items was still on for settings saved before 1.3.4; it is switched off once (you can turn it back on).
 - The PB HUD's live timer froze while a Tier 5 Tarantula swapped phases. It now keeps running until the boss's health hits 0.
 - Slayer PBs: a Tier 5 Tarantula was two bosses ("Tarantula Broodfather V", then "Conjoined Brood"), so the PB HUD switched to an empty board at the start of each fight. Both phases are now one boss, Tarantula Broodfather V, and older Conjoined Brood times move over to it.
 - Screenshot upload: when the host failed (e.g. Litterbox's HTTP 500) its whole error web page was pasted into chat. It now tries once more, then says what went wrong in one line with a [Retry] button.

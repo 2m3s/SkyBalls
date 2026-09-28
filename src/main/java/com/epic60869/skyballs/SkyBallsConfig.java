@@ -869,6 +869,8 @@ public final class SkyBallsConfig extends Config {
         @Expose @ConfigOption(name = "Padding", desc = "Padding inside of the storage overview.") @ConfigEditorSlider(minValue = 1, maxValue = 20, minStep = 1) public int padding = 5;
         @Expose @ConfigOption(name = "Margin", desc = "Margin inside of the storage overview.") @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1) public int margin = 20;
         @Expose @ConfigOption(name = "Block Scrolling on Items", desc = "Disables scrolling the storage overlay screen while you are hovering over an item. Useful if you have a tooltip scrolling mod.") @ConfigEditorBoolean public boolean itemsBlockScroll = false;
+        /** Block Scrolling on Items was on by default before 1.3.4; it is switched off once for settings saved then. */
+        @Expose public boolean itemsBlockScrollReset = false;
         @Expose @ConfigOption(name = "Highlight Search Results", desc = "Highlight the search results in the storage overlay.") @ConfigEditorBoolean public boolean highlightSearchResults = true;
         @Expose @ConfigOption(name = "Highlight Search Colour", desc = "Change the colour of the highlighted search result.") @ConfigEditorColour public String highlightSearchResultsColour = "0:255:0:176:0";
     }
@@ -1006,6 +1008,14 @@ public final class SkyBallsConfig extends Config {
         });
         // A change made just before quitting would otherwise wait for the next check.
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveIfChanged());
+
+        // Block Scrolling on Items stopped the storage overlay's wheel as soon as an item scrolled under the mouse.
+        // It was on by default until 1.3.4, and settings saved before kept it on: switch it off once.
+        StorageOverlaySettings storage = managed.getInstance().misc.storageOverlaySettings;
+        if (storage != null && !storage.itemsBlockScrollReset) {
+            storage.itemsBlockScroll = false;
+            storage.itemsBlockScrollReset = true;
+        }
 
         return managed.getInstance();
     }

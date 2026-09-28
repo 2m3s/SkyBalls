@@ -241,6 +241,18 @@ public final class SkyBallsNopoFeatures {
         context.pose().popMatrix();
     }
 
+    // Matched anywhere in the row, like Skyblocker's PetWidget: Hypixel sometimes puts icons or
+    // other text around "[Lvl N] Name".
+    private static final Pattern PET_ROW = Pattern.compile("^(?!Pet\\s*:).*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$",
+        Pattern.CASE_INSENSITIVE);
+    private static final Pattern PET_INLINE = Pattern.compile("^Pet\\s*:.*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$",
+        Pattern.CASE_INSENSITIVE);
+    private static final Pattern PET_XP_LINE = Pattern.compile("^(?:\\+)?[\\d,.]+(?:[kmb])?(?:\\s*/\\s*[\\d,.]+(?:[kmb])?)?\\s+XP.*$",
+        Pattern.CASE_INSENSITIVE);
+    // Past max level Hypixel shows only the extra XP (" +123,456.7 XP"); NopoMod adds the XP of the
+    // capped levels back and recomputes the level on the legendary curve.
+    private static final Pattern PET_OVERFLOW_XP = Pattern.compile("^\\+(?<xp>[\\d,.]+) XP$");
+
     private static void updatePetDisplay(Minecraft mc) {
         SkyBallsConfig config = SkyBallsConfig.current();
         if (config == null || !config.pets.display.enabled || !config.pets.display.autoDisplay
@@ -260,18 +272,11 @@ public final class SkyBallsNopoFeatures {
          * "Pet:" + "[Lvl ...] ..." or a single "Pet: [Lvl ...] ..." component.
          * In both cases the pet data is authoritative in these rows.
          */
-        // Matched anywhere in the row, like Skyblocker's PetWidget: Hypixel sometimes puts icons or
-        // other text around "[Lvl N] Name".
-        Pattern petPattern = Pattern.compile("^(?!Pet\\s*:).*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$",
-            Pattern.CASE_INSENSITIVE);
-        Pattern inlinePattern = Pattern.compile("^Pet\\s*:.*?\\[Lvl\\s+(?<level>\\d+)\\]\\s*(?<name>.+?)(?:\\s*✦)?\\s*$",
-            Pattern.CASE_INSENSITIVE);
-        Pattern xpPattern = Pattern.compile("^(?:\\+)?[\\d,.]+(?:[kmb])?(?:\\s*/\\s*[\\d,.]+(?:[kmb])?)?\\s+XP.*$",
-            Pattern.CASE_INSENSITIVE);
-
-        // Past max level Hypixel shows only the extra XP (" +123,456.7 XP"); NopoMod adds the XP of the
-        // capped levels back and recomputes the level on the legendary curve.
-        Pattern overflowXpPattern = Pattern.compile("^\\+(?<xp>[\\d,.]+) XP$");
+        Pattern petPattern = PET_ROW;
+        Pattern inlinePattern = PET_INLINE;
+        Pattern xpPattern = PET_XP_LINE;
+        Pattern overflowXpPattern = PET_OVERFLOW_XP;
+        int shownOverflow = -1;
 
         List<Component> display = new ArrayList<>();
         String petName = "";
@@ -340,7 +345,10 @@ public final class SkyBallsNopoFeatures {
                     float xp = Float.parseFloat(overflowXp.group("xp").replace(",", "")) + calculativeXpForLevel(level, offset);
                     int overflow = calcLevel(xp);
                     if (level == 200) overflow--; // Golden Dragon's curve starts at level 100
-                    if (overflow > level) display.set(nameIndex, stylePetLine(nameComponent, level, petName, overflow));
+                    if (overflow > level) {
+                        display.set(nameIndex, stylePetLine(nameComponent, level, petName, overflow));
+                        shownOverflow = overflow;
+                    }
                     display.add(overflowProgressLine(xp, overflow));
                     continue;
                 } catch (NumberFormatException ignored) {}
@@ -366,7 +374,17 @@ public final class SkyBallsNopoFeatures {
 
         if (!currentPet.equals(petName)) {
             currentPet = petName;
-            currentOverflowLevel = level;
+            currentOverflowLevel = shownOverflow > 0 ? shownOverflow : level;
+        } else if (shownOverflow > 0) {
+            // NopoMod's overflow level up message: Hypixel stops announcing levels past the maximum.
+            if (currentOverflowLevel > 0 && shownOverflow == currentOverflowLevel + 1) {
+                com.epic60869.skyballs.features.core.SkyBallsAlerts.chat(Component.literal("Your ").withStyle(ChatFormatting.GRAY)
+                    .append(petNameComponent(nameComponent, petName))
+                    .append(Component.literal(" leveled up to level ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(Integer.toString(shownOverflow)).withStyle(ChatFormatting.BLUE))
+                    .append(Component.literal("!").withStyle(ChatFormatting.GRAY)));
+            }
+            currentOverflowLevel = shownOverflow;
         }
 
         petDisplay = List.copyOf(display);
@@ -437,6 +455,19 @@ public final class SkyBallsNopoFeatures {
             return Optional.empty();
         }, Style.EMPTY);
         return out;
+    }
+
+    /** The pet's name in its rarity colour, as the tab list shows it. */
+    private static Component petNameComponent(Component row, String petName) {
+        if (row != null) {
+            final Component[] found = {null};
+            row.visit((style, value) -> {
+                if (found[0] == null && value.contains(petName)) found[0] = Component.literal(petName).withStyle(style);
+                return Optional.empty();
+            }, Style.EMPTY);
+            if (found[0] != null) return found[0];
+        }
+        return Component.literal(petName).withStyle(ChatFormatting.GOLD);
     }
 
     private static Component findComponentText(Component component, String text) {
