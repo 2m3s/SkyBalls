@@ -36,16 +36,16 @@ public final class ToggleSprint {
             while (key.consumeClick()) {
                 SkyBallsConfig config = config();
                 if (config == null) continue;
-                config.misc.toggleSprint = !config.misc.toggleSprint;
+                config.misc.toggleSprint.enabled = !config.misc.toggleSprint.enabled;
                 SkyBallsConfig.saveCurrent(config);
                 if (mc.player != null) {
-                    mc.gui.hud.setOverlayMessage(Component.literal("Toggle Sprint: " + (config.misc.toggleSprint ? "ON" : "OFF"))
-                        .withStyle(config.misc.toggleSprint ? ChatFormatting.GREEN : ChatFormatting.RED), false);
+                    mc.gui.hud.setOverlayMessage(Component.literal("Toggle Sprint: " + (config.misc.toggleSprint.enabled ? "ON" : "OFF"))
+                        .withStyle(config.misc.toggleSprint.enabled ? ChatFormatting.GREEN : ChatFormatting.RED), false);
                 }
             }
         });
         SkyBallsHuds.register("toggle_sprint", "Toggle Sprint",
-            () -> active() && config().misc.toggleSprintHud,
+            () -> active() && config().misc.toggleSprint.hud,
             () -> List.of(Component.literal("[Sprinting (Toggled)]").withStyle(ChatFormatting.GRAY)),
             List.of(Component.literal("[Sprinting (Toggled)]").withStyle(ChatFormatting.GRAY)),
             2, 250);
@@ -53,6 +53,6 @@ public final class ToggleSprint {
 
     public static boolean active() {
         SkyBallsConfig config = config();
-        return config != null && config.misc.toggleSprint;
+        return config != null && config.misc.toggleSprint.enabled;
     }
 }

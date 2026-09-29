@@ -45,12 +45,16 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.core.SkyBallsAlerts.init();
         SkyBallsFoxyScare.init();
         SkyBallsLeaderboards.init();
+        SkyBallsPartyFinder.init();
         com.epic60869.skyballs.features.core.SkyBallsHuds.init(configDir);
         com.epic60869.skyballs.features.core.SkyBallsWorldRender.init();
 
         com.epic60869.skyballs.features.combat.CombatFeatures.init();
         com.epic60869.skyballs.features.combat.ZealotCounter.init(configDir);
+        com.epic60869.skyballs.features.combat.DianaRareMobs.init();
         com.epic60869.skyballs.features.slayer.SlayerFeatures.init();
+        com.epic60869.skyballs.features.slayer.EndermanSlayer.init();
+        com.epic60869.skyballs.features.slayer.BlazeSlayer.init();
         com.epic60869.skyballs.features.slayer.RngMeterValue.init();
         com.epic60869.skyballs.features.slayer.SlayerTimes.init(configDir);
         com.epic60869.skyballs.features.slayer.SlayerPbHud.init();
@@ -67,7 +71,6 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.dungeons.SkyBallsDungeons.init();
         com.epic60869.skyballs.features.dungeons.DungeonFeatures.init(configDir);
         com.epic60869.skyballs.features.misc.PartyCommands.init();
-        com.epic60869.skyballs.features.misc.AutoWelcome.init();
         com.epic60869.skyballs.features.misc.ItemNotification.init();
         com.epic60869.skyballs.features.helditem.HeldItem.init(configDir);
         com.epic60869.skyballs.features.misc.ScrollableTooltips.init();

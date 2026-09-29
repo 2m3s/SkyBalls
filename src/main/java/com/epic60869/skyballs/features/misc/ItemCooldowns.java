@@ -43,7 +43,7 @@ public final class ItemCooldowns {
 
     private record Cooldown(String id, String name, long start, long duration) {
         float remaining(long now) {
-            return Math.max(0f, 1f - (now - start) / (float) duration);
+            return Math.clamp(1f - (now - start) / (float) duration, 0f, 1f);
         }
     }
 
@@ -104,7 +104,7 @@ public final class ItemCooldowns {
                 String id = Compat.neuName(mc.player.getMainHandItem());
                 Cooldown c = ACTIVE.get(id);
                 long left = Math.round(Double.parseDouble(m.group(1)) * 1000);
-                long duration = c != null ? c.duration() : Math.max(left, 1000);
+                long duration = Math.max(c != null ? c.duration() : 1000, left);
                 ACTIVE.put(id, new Cooldown(id, c != null ? c.name() : "", System.currentTimeMillis() - (duration - left), duration));
                 return;
             }

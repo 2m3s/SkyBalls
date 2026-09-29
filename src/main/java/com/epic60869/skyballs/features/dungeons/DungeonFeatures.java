@@ -179,6 +179,7 @@ public final class DungeonFeatures {
         BloodCamp.init();
         OdinPuzzleSolvers.init();
         ThreeByThree.init();
+        WitherDragons.init();
 
         com.epic60869.skyballs.features.core.SkyBallsHuds.setting("dungeon_splits", () -> config() != null && config().timers.splits);
         SkyBallsHuds.register("dungeon_splits", "Dungeon Splits",

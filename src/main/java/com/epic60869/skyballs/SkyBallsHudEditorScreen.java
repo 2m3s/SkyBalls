@@ -48,9 +48,9 @@ public final class SkyBallsHudEditorScreen extends Screen {
                 SkyBallsCommissionHud::renderPreview, "commissions"));
         }
 
-        if (config != null && config.pets.display.enabled) {
-            elements.add(new EditableHud("Pet Display", () -> config.pets.display.x, () -> config.pets.display.y,
-                (x, y) -> { config.pets.display.x = Math.max(0, x); config.pets.display.y = Math.max(0, y); },
+        if (config != null && config.misc.pets.display.enabled) {
+            elements.add(new EditableHud("Pet Display", () -> config.misc.pets.display.x, () -> config.misc.pets.display.y,
+                (x, y) -> { config.misc.pets.display.x = Math.max(0, x); config.misc.pets.display.y = Math.max(0, y); },
                 SkyBallsNopoFeatures::petHudWidth, SkyBallsNopoFeatures::petHudHeight, SkyBallsNopoFeatures::renderPetHudPreview, "pet"));
         }
         if (config != null && config.dungeons.map.enabled) {
@@ -271,7 +271,7 @@ public final class SkyBallsHudEditorScreen extends Screen {
             switch (type) {
                 case "rng" -> c.farming.rng.scale = clamp(c.farming.rng.scale + d);
                 case "commissions" -> c.mining.commissions.scale = clamp(c.mining.commissions.scale + d);
-                case "pet" -> c.pets.display.scale = clamp(c.pets.display.scale + d);
+                case "pet" -> c.misc.pets.display.scale = clamp(c.misc.pets.display.scale + d);
                 case "dmap" -> c.dungeons.map.scale = clamp(c.dungeons.map.scale + d);
                 default -> {
                     if (type.startsWith("hud:")) com.epic60869.skyballs.features.core.SkyBallsHuds.changeScale(type.substring(4), d);
@@ -287,7 +287,7 @@ public final class SkyBallsHudEditorScreen extends Screen {
             return switch (type) {
                 case "rng" -> c.farming.rng.background;
                 case "commissions" -> c.mining.commissions.background;
-                case "pet" -> c.pets.display.background;
+                case "pet" -> c.misc.pets.display.background;
                 case "dmap" -> c.dungeons.map.background;
                 default -> !type.startsWith("hud:") || com.epic60869.skyballs.features.core.SkyBallsHuds.placement(type.substring(4)).background;
             };
@@ -299,7 +299,7 @@ public final class SkyBallsHudEditorScreen extends Screen {
             switch (type) {
                 case "rng" -> c.farming.rng.background = !c.farming.rng.background;
                 case "commissions" -> c.mining.commissions.background = !c.mining.commissions.background;
-                case "pet" -> c.pets.display.background = !c.pets.display.background;
+                case "pet" -> c.misc.pets.display.background = !c.misc.pets.display.background;
                 case "dmap" -> c.dungeons.map.background = !c.dungeons.map.background;
                 default -> {
                     if (type.startsWith("hud:")) com.epic60869.skyballs.features.core.SkyBallsHuds.toggleBackground(type.substring(4));

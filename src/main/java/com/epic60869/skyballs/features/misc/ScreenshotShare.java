@@ -26,25 +26,22 @@ import java.util.UUID;
 
 /**
  * Screenshot sharing, like Skysoft's: after F2, the "Saved screenshot as ..." message gets an [Upload] button. It
- * uploads the picture to Litterbox (catbox.moe's temporary file host, no account or key needed) and gives you the
- * link with [Send in /sbc] and [Copy Link]. The links are direct images, so they preview when hovered in chat.
+ * uploads the picture to 0x0.st (or Uguu or Catbox; none needs an account or key) and gives you the link with
+ * [Send in /sbc] and [Copy Link]. The links are direct images, so they preview when hovered in chat.
  */
 public final class ScreenshotShare {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
+    /** Settings saved with a host that's gone (the Litterbox ones) load as null, which means the default. */
     public enum Host {
-        LITTERBOX_1H("Litterbox (1 hour)", "1h"),
-        LITTERBOX_12H("Litterbox (12 hours)", "12h"),
-        LITTERBOX_24H("Litterbox (24 hours)", "24h"),
-        LITTERBOX_72H("Litterbox (3 days)", "72h"),
-        CATBOX("Catbox (permanent)", null);
+        NULL_POINTER("0x0.st (30+ days)"),
+        UGUU("Uguu (3 hours)"),
+        CATBOX("Catbox (permanent)");
 
         private final String label;
-        final String time;
 
-        Host(String label, String time) {
+        Host(String label) {
             this.label = label;
-            this.time = time;
         }
 
         @Override
@@ -55,9 +52,13 @@ public final class ScreenshotShare {
 
     private ScreenshotShare() {}
 
-    private static SkyBallsConfig.Misc config() {
+    private static SkyBallsConfig.Screenshots config() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c == null ? null : c.misc;
+        return c == null ? null : c.misc.screenshots;
+    }
+
+    private static Host host(SkyBallsConfig.Screenshots c) {
+        return c == null || c.host == null ? Host.NULL_POINTER : c.host;
     }
 
     public static void init() {
@@ -72,14 +73,14 @@ public final class ScreenshotShare {
 
     /** Adds the [Upload] button to Minecraft's "Saved screenshot as ..." message (called from the chat mixin). */
     public static Component decorate(Component message) {
-        SkyBallsConfig.Misc c = config();
-        if (message == null || c == null || !c.screenshotSharing) return message;
+        SkyBallsConfig.Screenshots c = config();
+        if (message == null || c == null || !c.enabled) return message;
         if (!(message.getContents() instanceof TranslatableContents translatable) || !translatable.getKey().equals("screenshot.success")) return message;
         Object[] args = translatable.getArgs();
         if (args.length == 0 || !(args[0] instanceof Component file)) return message;
         String name = file.getString();
         if (!name.matches("[\\w .()-]+\\.png")) return message;
-        Host host = c.screenshotHost == null ? Host.LITTERBOX_72H : c.screenshotHost;
+        Host host = host(c);
         return message.copy().append(Component.literal("  [Upload]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
             .withClickEvent(new ClickEvent.RunCommand("/sb screenshot upload " + name))
             .withHoverEvent(new HoverEvent.ShowText(Component.literal("Upload it and get a link to share in /sbc.\n").withStyle(ChatFormatting.GRAY)
@@ -92,8 +93,7 @@ public final class ScreenshotShare {
         if (!file.startsWith(mc.gameDirectory.toPath().resolve("screenshots")) || !Files.isRegularFile(file)) {
             return say(Component.literal("Couldn't find that screenshot.").withStyle(ChatFormatting.RED));
         }
-        SkyBallsConfig.Misc c = config();
-        Host host = c == null || c.screenshotHost == null ? Host.LITTERBOX_72H : c.screenshotHost;
+        Host host = host(config());
         say(Component.literal("Uploading " + name + "...").withStyle(ChatFormatting.GRAY));
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
@@ -113,14 +113,14 @@ public final class ScreenshotShare {
                     .append(Component.literal("  [Retry]").withStyle(s -> s.withColor(ChatFormatting.YELLOW).withBold(true)
                         .withClickEvent(new ClickEvent.RunCommand("/sb screenshot upload " + name))
                         .withHoverEvent(new HoverEvent.ShowText(Component.literal("Try uploading it again.\n").withStyle(ChatFormatting.GRAY)
-                            .append(Component.literal("If " + host + " keeps failing, pick another host under Misc > Screenshot Upload Host.")
+                            .append(Component.literal("If " + host + " keeps failing, pick another host under Misc > Screenshots > Upload Host.")
                                 .withStyle(ChatFormatting.GRAY)))))));
             }
         });
         return 1;
     }
 
-    /** Litterbox and Catbox often fail for a moment (HTTP 500, a timeout): try once more before giving up. */
+    /** Free hosts sometimes fail for a moment (HTTP 500, a timeout): try once more before giving up. */
     private static String sendWithRetry(Path file, Host host) throws Exception {
         try {
             return send(file, host);
@@ -130,21 +130,37 @@ public final class ScreenshotShare {
         }
     }
 
-    /** Multipart upload to Litterbox (temporary) or Catbox (permanent); both answer with the file's link. */
+    /** Multipart upload; each host answers with the file's link as plain text. */
     private static String send(Path file, Host host) throws Exception {
         String boundary = "----SkyBalls" + UUID.randomUUID().toString().replace("-", "");
         ByteArrayOutputStream body = new ByteArrayOutputStream();
-        field(body, boundary, "reqtype", "fileupload");
-        if (host.time != null) field(body, boundary, "time", host.time);
-        body.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"fileToUpload\"; filename=\""
+        String url;
+        String fileField;
+        switch (host) {
+            case UGUU -> {
+                url = "https://uguu.se/upload?output=text";
+                fileField = "files[]";
+            }
+            case CATBOX -> {
+                url = "https://catbox.moe/user/api.php";
+                fileField = "fileToUpload";
+                field(body, boundary, "reqtype", "fileupload");
+            }
+            default -> {
+                url = "https://0x0.st";
+                fileField = "file";
+                // A longer link that can't be guessed from other uploads.
+                field(body, boundary, "secret", "");
+            }
+        }
+        body.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + fileField + "\"; filename=\""
             + file.getFileName() + "\"\r\nContent-Type: image/png\r\n\r\n").getBytes(StandardCharsets.UTF_8));
         body.write(Files.readAllBytes(file));
         body.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
-        String url = host.time != null ? "https://litterbox.catbox.moe/resources/internals/api.php" : "https://catbox.moe/user/api.php";
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
             .timeout(Duration.ofSeconds(60))
             .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-            .header("User-Agent", "SkyBalls")
+            .header("User-Agent", "SkyBalls/" + com.epic60869.skyballs.features.sbc.SbcInfo.modVersion())
             .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build();
         HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         String text = response.body().trim();
@@ -154,7 +170,7 @@ public final class ScreenshotShare {
             throw new IllegalStateException(host + " answered HTTP " + response.statusCode()
                 + (readable ? ": " + text : response.statusCode() >= 500 ? " (its server is having problems, try again in a bit)" : ""));
         }
-        return text;
+        return text.lines().findFirst().orElse(text).trim();
     }
 
     /** A one-line reason for chat. */

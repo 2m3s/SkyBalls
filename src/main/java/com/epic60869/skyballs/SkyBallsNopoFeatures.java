@@ -129,7 +129,7 @@ public final class SkyBallsNopoFeatures {
     /** Overflow level for the active pet, or -1 if unknown or not above the normal maximum. */
     private static int overflowLevel(String petName, int level) {
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config == null || !config.pets.display.overflowLevels) return -1;
+        if (config == null || !config.misc.pets.display.overflowLevels) return -1;
         if (activePetExp < 0 || !petName.equalsIgnoreCase(activePetName)) return -1;
         int overflow = calcLevel(activePetExp, rarityOffset(activePetTier));
         return overflow > level ? overflow : -1;
@@ -188,9 +188,9 @@ public final class SkyBallsNopoFeatures {
 
     private static void renderPetHud(GuiGraphicsExtractor context) {
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config == null || !config.pets.display.enabled) return;
+        if (config == null || !config.misc.pets.display.enabled) return;
         if (!isHypixel() || petDisplay == null || petDisplay.isEmpty()) return;
-        renderPetHudAt(context, petDisplay, com.epic60869.skyballs.features.core.SkyBallsHuds.mapX(config.pets.display.x, petHudWidth()), com.epic60869.skyballs.features.core.SkyBallsHuds.mapY(config.pets.display.y, petHudHeight()));
+        renderPetHudAt(context, petDisplay, com.epic60869.skyballs.features.core.SkyBallsHuds.mapX(config.misc.pets.display.x, petHudWidth()), com.epic60869.skyballs.features.core.SkyBallsHuds.mapY(config.misc.pets.display.y, petHudHeight()));
     }
 
     private static final List<Component> PET_PREVIEW = List.of(
@@ -206,7 +206,7 @@ public final class SkyBallsNopoFeatures {
 
     public static float petHudScale() {
         SkyBallsConfig config = SkyBallsConfig.current();
-        return config == null ? 1.0f : config.pets.display.scale;
+        return config == null ? 1.0f : config.misc.pets.display.scale;
     }
 
     /** Scaled on-screen width of the pet HUD, matching exactly what is drawn. */
@@ -233,7 +233,7 @@ public final class SkyBallsNopoFeatures {
         context.pose().translate((float) x, (float) y);
         context.pose().scale(scale, scale);
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config != null && config.pets.display.background && !lines.isEmpty()) {
+        if (config != null && config.misc.pets.display.background && !lines.isEmpty()) {
             int w = 0;
             for (Component line : lines) w = Math.max(w, font.width(line));
             context.fill(-2, -2, w + 2, lines.size() * PET_LINE_HEIGHT, 0x80000000);
@@ -258,7 +258,7 @@ public final class SkyBallsNopoFeatures {
 
     private static void updatePetDisplay(Minecraft mc) {
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config == null || !config.pets.display.enabled || !config.pets.display.autoDisplay
+        if (config == null || !config.misc.pets.display.enabled || !config.misc.pets.display.autoDisplay
             || !isHypixel() || mc.getConnection() == null) {
             petDisplay = null;
             return;
@@ -390,7 +390,7 @@ public final class SkyBallsNopoFeatures {
             currentOverflowLevel = shownOverflow;
         }
 
-        if (config.pets.display.heldItem) {
+        if (config.misc.pets.display.heldItem) {
             Component held = PetHeldItems.heldItem(petName);
             if (held != null) display.add(Component.literal(" Held: ").withStyle(ChatFormatting.GRAY).append(held));
         }
@@ -400,7 +400,7 @@ public final class SkyBallsNopoFeatures {
 
     private static boolean overflowLevelsEnabled() {
         SkyBallsConfig config = SkyBallsConfig.current();
-        return config != null && config.pets.display.overflowLevels;
+        return config != null && config.misc.pets.display.overflowLevels;
     }
 
     /** " 1,832,110.4/1.9M XP (97.1%)" progress towards the next overflow level, as NopoMod shows it. */

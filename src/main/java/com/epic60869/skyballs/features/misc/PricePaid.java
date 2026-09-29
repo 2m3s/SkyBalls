@@ -39,7 +39,7 @@ public final class PricePaid {
 
     private static boolean enabled() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c != null && c.misc.pricePaid;
+        return c != null && c.misc.priceTooltip.pricePaid;
     }
 
     public static void init(Path configDir) {

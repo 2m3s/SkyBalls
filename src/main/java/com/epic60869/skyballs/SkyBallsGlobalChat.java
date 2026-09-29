@@ -275,6 +275,7 @@ public final class SkyBallsGlobalChat {
                 features.add("leaderboards");
                 features.add("chatBlocked");
                 features.add("announcements");
+                features.add("partyFinder");
                 hello.add("features", features);
                 hello.addProperty("minecraftUuid", Minecraft.getInstance().getUser().getProfileId().toString());
                 hello.addProperty("modVersion", com.epic60869.skyballs.features.sbc.SbcInfo.modVersion());
@@ -467,6 +468,18 @@ public final class SkyBallsGlobalChat {
 
                 if ("accountStatus".equals(type) || "nickResult".equals(type)) {
                     Minecraft.getInstance().execute(() -> SkyBallsNickCommand.handle(type, packet));
+                    return;
+                }
+
+                // The server answers packets it doesn't know with a plain error; show it where the player is looking.
+                if ("error".equals(type) && SkyBallsPartyFinder.awaitingReply()) {
+                    String message = packet.has("message") ? packet.get("message").getAsString() : "";
+                    Minecraft.getInstance().execute(() -> SkyBallsPartyFinder.plainError(message));
+                    return;
+                }
+
+                if (type.startsWith("pf")) {
+                    Minecraft.getInstance().execute(() -> SkyBallsPartyFinder.handle(type, packet));
                     return;
                 }
 

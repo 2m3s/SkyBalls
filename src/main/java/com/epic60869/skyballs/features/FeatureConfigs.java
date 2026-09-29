@@ -2,6 +2,7 @@ package com.epic60869.skyballs.features;
 
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
+import io.github.notenoughupdates.moulconfig.annotations.Category;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorColour;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
@@ -27,6 +28,11 @@ public final class FeatureConfigs {
         public RareDrops rareDrops = new RareDrops();
 
         @Expose
+        @Accordion
+        @ConfigOption(name = "Diana Rare Mobs", desc = "Share rare Diana mobs with your party and see when you've done enough damage to lootshare them, like Skysoft.")
+        public Diana diana = new Diana();
+
+        @Expose
         @ConfigOption(name = "Arrow Counter", desc = "HUD showing the selected arrow type and how many arrows are left in your quiver.")
         @ConfigEditorBoolean
         public boolean arrowCounter = false;
@@ -42,31 +48,116 @@ public final class FeatureConfigs {
         public boolean legionDisplay = false;
     }
 
+    /** Diana rare mob sharing and the lootshare helper, ported from Skysoft. */
+    public static final class Diana {
+        @Expose
+        @ConfigOption(name = "Rare Mob Sharing", desc = "When you dig up a rare mob, send its coordinates in party chat. Rare mobs your party shares get a waypoint and a title.")
+        @ConfigEditorBoolean
+        public boolean rareMobSharing = false;
+
+        @Expose
+        @ConfigOption(name = "All Rare Mobs", desc = "Share and receive every rare Diana mob. Off: only Minos Inquisitors and King Minos.")
+        @ConfigEditorBoolean
+        public boolean allRareMobs = false;
+
+        @Expose
+        @ConfigOption(name = "Own Mob Alerts", desc = "A title when you dig up a rare mob you share.")
+        @ConfigEditorBoolean
+        public boolean ownMobAlerts = true;
+
+        @Expose
+        @ConfigOption(name = "Line to Rare Mob", desc = "Draw a line from your crosshair to the nearest shared rare mob.")
+        @ConfigEditorBoolean
+        public boolean crosshairLine = true;
+
+        @Expose
+        @ConfigOption(name = "Show Party Messages", desc = "Keep the rare mob and lootshare party messages in chat. Off: they're hidden, and a shared mob shows as \"Name found a Minos Inquisitor at x y z\".")
+        @ConfigEditorBoolean
+        public boolean showPartyMessages = false;
+
+        @Expose
+        @ConfigOption(name = "Lootshare Helper", desc = "Count your damage on rare mobs your party shares and show whether you've done the 1% needed to lootshare them.")
+        @ConfigEditorBoolean
+        public boolean lootshare = false;
+
+        @Expose
+        @ConfigOption(name = "Share Secured Message", desc = "Say \"Loot share secured!\" in party chat once you've done enough damage.")
+        @ConfigEditorBoolean
+        public boolean shareSecuredMessage = true;
+
+        @Expose
+        @ConfigOption(name = "Party Checkmarks", desc = "A checkmark above party members who secured lootshare (cyan) or spawned the rare mob (pink).")
+        @ConfigEditorBoolean
+        public boolean partyCheckmarks = true;
+
+        @Expose
+        @ConfigOption(name = "Lootshare Radius", desc = "Draw the 30 block lootshare radius around the rare mob.")
+        @ConfigEditorBoolean
+        public boolean lootshareRadius = true;
+
+        @Expose
+        @ConfigOption(name = "Lootshare Missing Colour", desc = "Colour of \"Lootsharing\" above the mob before you've done enough damage.")
+        @ConfigEditorColour
+        public String lootshareMissingColor = "0:230:255:85:85";
+
+        @Expose
+        @ConfigOption(name = "Lootshare Ready Colour", desc = "Colour of \"Lootsharing\" above the mob once you've done enough damage.")
+        @ConfigEditorColour
+        public String lootshareReadyColor = "0:230:85:255:255";
+    }
+
+    /** Dungeons: every section is a sub-category in the sidebar (shown under Dungeons when it's open), like SkyHanni's. */
     public static final class Dungeons {
         @Expose
-        @Accordion
-        @ConfigOption(name = "Case Opening", desc = "Open Obsidian and Bedrock reward chests like a CS2 case (SkyOcean's Dungeon Gambling).")
-        public CaseOpening caseOpeningMenu = new CaseOpening();
+        @Category(name = "F7/M7", desc = "Floor 7 and Master Mode 7: dragons and relics, terminal and device solvers, and the 3x3 platform highlight.")
+        public Floor7 f7 = new Floor7();
 
         @Expose
-        @Accordion
-        @ConfigOption(name = "Platform Highlight (3x3)", desc = "One big box over the floor 7 3x3 platform (53-55, 63, 113-115), from when Goldor starts, like NoFrills.")
-        public PlatformHighlight platformHighlight = new PlatformHighlight();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Dungeon Map", desc = "Dungeon map HUD.")
+        @Category(name = "Dungeon Map", desc = "Dungeon map HUD.")
         public DungeonMap map = new DungeonMap();
 
         @Expose
-        @Accordion
-        @ConfigOption(name = "Puzzle Solvers", desc = "Solutions for dungeon puzzles.")
+        @Category(name = "Puzzle Solvers", desc = "Solutions for dungeon puzzles.")
         public Puzzles puzzles = new Puzzles();
 
         @Expose
-        @Accordion
-        @ConfigOption(name = "Secrets and Routes", desc = "Secret waypoints and your recorded routes.")
+        @Category(name = "Secrets and Routes", desc = "Secret waypoints and your recorded routes.")
         public Secrets secrets = new Secrets();
+
+        @Expose
+        @Category(name = "Mobs", desc = "Dungeon mob highlighting.")
+        public DungeonMobs mobs = new DungeonMobs();
+
+        @Expose
+        @Category(name = "Timers and Alerts", desc = "Splits, tick timers, mask timers and debuff alerts.")
+        public Timers timers = new Timers();
+
+        @Expose
+        @Category(name = "Score", desc = "270/300 score alerts and the score display.")
+        public Score score = new Score();
+
+        @Expose
+        @Category(name = "Leap Menu", desc = "Odin-style Spirit Leap menu with a box per teammate, coloured by class.")
+        public LeapMenu leapMenu = new LeapMenu();
+
+        @Expose
+        @Category(name = "Positional Messages", desc = "Party messages sent when you reach a spot (/sb posmsg), plus built-in waypoints like Py Stand Here.")
+        public PositionalMessages positionalMessages = new PositionalMessages();
+
+        @Expose
+        @Category(name = "Blood Camp", desc = "Watcher move prediction and blood mob kill timers.")
+        public BloodCamp bloodCamp = new BloodCamp();
+
+        @Expose
+        @Category(name = "Case Opening", desc = "Open Obsidian and Bedrock reward chests like a CS2 case (SkyOcean's Dungeon Gambling).")
+        public CaseOpening caseOpeningMenu = new CaseOpening();
+    }
+
+    public static final class Floor7 {
+        @Expose
+        @Accordion
+        @ConfigOption(name = "M7 Dragons and Relics", desc = "Master Mode floor 7 dragon phase (P5): spawn alerts with split priority, timers, kill areas and relic spots, like NoFrills' Wither Dragons and Relic Highlight.")
+        public WitherDragons witherDragons = new WitherDragons();
 
         @Expose
         @Accordion
@@ -75,33 +166,8 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Mobs", desc = "Dungeon mob highlighting.")
-        public DungeonMobs mobs = new DungeonMobs();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Timers and Alerts", desc = "Splits, tick timers, mask timers and debuff alerts.")
-        public Timers timers = new Timers();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Score", desc = "270/300 score alerts and the score display.")
-        public Score score = new Score();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Leap Menu", desc = "Odin-style Spirit Leap menu with a box per teammate, coloured by class.")
-        public LeapMenu leapMenu = new LeapMenu();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Positional Messages", desc = "Party messages sent when you reach a spot (/sb posmsg), plus built-in waypoints like Py Stand Here.")
-        public PositionalMessages positionalMessages = new PositionalMessages();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Blood Camp", desc = "Watcher move prediction and blood mob kill timers.")
-        public BloodCamp bloodCamp = new BloodCamp();
+        @ConfigOption(name = "Platform Highlight (3x3)", desc = "One big box over the floor 7 3x3 platform (53-55, 63, 113-115), from when Goldor starts, like NoFrills.")
+        public PlatformHighlight platformHighlight = new PlatformHighlight();
     }
 
     private FeatureConfigs() {}
@@ -140,6 +206,117 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Boss Phase Display", desc = "HUD showing your slayer boss's nametag lines, including Voidgloom hits and Inferno attunement.")
         @ConfigEditorBoolean
         public boolean phaseDisplay = false;
+    }
+
+    /** Voidgloom Seraph helpers, ported from SkyHanni's Enderman slayer features. */
+    public static final class EndermanSlayer {
+        @Expose
+        @ConfigOption(name = "Highlight Yang Glyph", desc = "Highlight the Yang Glyph (beacon) while a Voidgloom holds it, throws it and after it lands, with a timer until it explodes.")
+        @ConfigEditorBoolean
+        public boolean highlightBeacon = false;
+
+        @Expose
+        @ConfigOption(name = "Yang Glyph Colour", desc = "Colour of the Yang Glyph highlight.")
+        @ConfigEditorColour
+        public String beaconColor = "0:255:255:0:88";
+
+        @Expose
+        @ConfigOption(name = "Yang Glyph Warning", desc = "A title when a Voidgloom throws a Yang Glyph.")
+        @ConfigEditorBoolean
+        public boolean beaconWarning = false;
+
+        @Expose
+        @ConfigOption(name = "Line to Yang Glyph", desc = "Draw a line from your crosshair to the Yang Glyph.")
+        @ConfigEditorBoolean
+        public boolean beaconLine = false;
+
+        @Expose
+        @ConfigOption(name = "Yang Glyph Line Colour", desc = "Colour of the line to the Yang Glyph.")
+        @ConfigEditorColour
+        public String beaconLineColor = "0:255:255:0:88";
+
+        @Expose
+        @ConfigOption(name = "Yang Glyph Line Width", desc = "Width of the line to the Yang Glyph.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
+        public int beaconLineWidth = 3;
+
+        @Expose
+        @ConfigOption(name = "Highlight Nukekubi Skulls", desc = "Highlight the Nukekubi Fixation skulls (the eyes) in gold.")
+        @ConfigEditorBoolean
+        public boolean highlightNukekubi = false;
+
+        @Expose
+        @ConfigOption(name = "Line to Nukekubi Skulls", desc = "Draw a line from your crosshair to each Nukekubi Fixation skull you can see.")
+        @ConfigEditorBoolean
+        public boolean lineToNukekubi = false;
+
+        @Expose
+        @ConfigOption(name = "Phase Numbers", desc = "Put the boss's phase (1/3, or 1/6 for tier IV) in front of its health in the Slayer Boss Phase HUD.")
+        @ConfigEditorBoolean
+        public boolean phaseDisplay = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Particles", desc = "Hide the smoke, flame and witch particles around endermen in The End.")
+        @ConfigEditorBoolean
+        public boolean hideParticles = false;
+
+        @Expose
+        @ConfigOption(name = "Line to Boss", desc = "Draw a line from your crosshair to your Voidgloom Seraph while you can see it.")
+        @ConfigEditorBoolean
+        public boolean lineToBoss = false;
+
+        @Expose
+        @ConfigOption(name = "Boss Line Width", desc = "Width of the line to your Voidgloom Seraph.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
+        public int bossLineWidth = 3;
+    }
+
+    /** Inferno Demonlord helpers, ported from SkyHanni's Blaze slayer features. */
+    public static final class BlazeSlayer {
+        @Expose
+        @ConfigOption(name = "Hellion Shield Colours", desc = "Outline the Inferno Demonlord and its demons in their Hellion Shield's colour and show the shield above them.")
+        @ConfigEditorBoolean
+        public boolean coloredMobs = false;
+
+        @Expose
+        @ConfigOption(name = "Dagger Display", desc = "HUD with the attunements on your Twilight and Firedust daggers, updated as soon as you swap them. Hypixel's attunement title is hidden while it shows.")
+        @ConfigEditorBoolean
+        public boolean daggers = false;
+
+        @Expose
+        @ConfigOption(name = "Mark Right Dagger", desc = "In the dagger HUD, mark the attunement that matches the nearest boss or demon's shield.")
+        @ConfigEditorBoolean
+        public boolean markRightDagger = false;
+
+        @Expose
+        @ConfigOption(name = "First Dagger", desc = "Which dagger is shown on the left of the dagger HUD.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.slayer.BlazeSlayer.FirstDagger firstDagger = com.epic60869.skyballs.features.slayer.BlazeSlayer.FirstDagger.TWILIGHT;
+
+        @Expose
+        @ConfigOption(name = "Hide Dagger Chat", desc = "Hide Hypixel's \"Strike using the ... attunement\" and \"Your hit was reduced by Hellion Shield!\" messages.")
+        @ConfigEditorBoolean
+        public boolean hideDaggerChat = false;
+
+        @Expose
+        @ConfigOption(name = "Fire Pits Warning", desc = "A title and sound when a tier III or IV Inferno Demonlord drops below a third of its health and the fire pits start.")
+        @ConfigEditorBoolean
+        public boolean firePitsWarning = false;
+
+        @Expose
+        @ConfigOption(name = "Phase Numbers", desc = "Put the boss's phase (1/2, or 1/3 for tiers III and IV) in front of its health in the Slayer Boss Phase HUD.")
+        @ConfigEditorBoolean
+        public boolean phaseDisplay = false;
+
+        @Expose
+        @ConfigOption(name = "Clear View", desc = "Hide particles and fireballs within 10 blocks of an Inferno Demonlord.")
+        @ConfigEditorBoolean
+        public boolean clearView = false;
+
+        @Expose
+        @ConfigOption(name = "Fire Pillar Display", desc = "HUD with the time until a Fire Pillar explodes, for any player's boss. Move it in /sb hud.")
+        @ConfigEditorBoolean
+        public boolean firePillarDisplay = false;
     }
 
     public static final class Garden {
@@ -869,6 +1046,35 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Fill Colour", desc = "Colour of the fill.") @ConfigEditorColour public String fillColor = "0:127:85:255:85";
     }
 
+    public static final class WitherDragons {
+        @Expose @ConfigOption(name = "Relic Highlight", desc = "While you hold a relic (hotbar slot 9), fill the cauldron it goes in with the relic's colour.") @ConfigEditorBoolean public boolean relicHighlight = false;
+        @Expose @ConfigOption(name = "Spawn Alert", desc = "Title, sound and chat line when a dragon starts spawning. On the first double spawn it names your priority dragon, based on your class and the Power settings below.") @ConfigEditorBoolean public boolean alert = false;
+        @Expose @ConfigOption(name = "Split Power", desc = "Power blessing level (Time counts as half) needed to split the first double spawn: Archer and Tank take one dragon, Berserk, Mage and Healer the other. 0 always splits; leave it at 0 for party finder teams.") @ConfigEditorSlider(minValue = 0, maxValue = 32, minStep = 0.1f) public float power = 0;
+        @Expose @ConfigOption(name = "Easy Power", desc = "Power needed to split when one of the two dragons is Purple.") @ConfigEditorSlider(minValue = 0, maxValue = 32, minStep = 0.1f) public float powerEasy = 0;
+        @Expose @ConfigOption(name = "Spawn Timer", desc = "Seconds until each spawning dragon appears, above its spawn point.") @ConfigEditorBoolean public boolean timer = false;
+        @Expose @ConfigOption(name = "Kill Areas", desc = "Outline the kill area of every spawning or alive dragon.") @ConfigEditorBoolean public boolean boxes = false;
+        @Expose @ConfigOption(name = "Dragon Hitboxes", desc = "Outline each part of every alive dragon in its colour.") @ConfigEditorBoolean public boolean hitboxes = false;
+        @Expose @ConfigOption(name = "Tracer", desc = "Line to your priority spawning dragon.") @ConfigEditorBoolean public boolean tracers = false;
+        @Expose @ConfigOption(name = "Stack Waypoints", desc = "Where to stack while a dragon spawns. Simple: one box on the spawn point. Advanced: boxes the shape of the dragon.") @ConfigEditorDropdown public DragonWaypoints waypoints = DragonWaypoints.OFF;
+        @Expose @ConfigOption(name = "Dragon Health", desc = "Each alive dragon's health on it.") @ConfigEditorBoolean public boolean health = false;
+        @Expose @ConfigOption(name = "Ice Spray Tracker", desc = "Chat line with how many ticks after spawning each dragon was Ice Sprayed.") @ConfigEditorBoolean public boolean trackIceSpray = false;
+    }
+
+    public enum DragonWaypoints {
+        OFF("Off"), SIMPLE("Simple"), ADVANCED("Advanced");
+
+        private final String label;
+
+        DragonWaypoints(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     public static final class PartyCommands {
         @Expose
         @ConfigOption(name = "Enabled", desc = "When you are party leader, run commands that party members type in party chat.")
@@ -924,57 +1130,5 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Sound", desc = "Play a sound when an item on the list comes in.")
         @ConfigEditorBoolean
         public boolean sound = true;
-    }
-
-    public static final class AutoWelcome {
-        public enum Destination {
-            GUILD("Guild Chat"), MESSAGE("Private Message (/msg)");
-
-            private final String label;
-
-            Destination(String label) {
-                this.label = label;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
-        }
-
-        @Expose
-        @ConfigOption(name = "Enabled", desc = "Welcome the players on your list when they come online (from the \"Guild > Name joined.\" and \"Friend > Name joined.\" messages).\n§c§lUSE AT OWN RISK")
-        @ConfigEditorBoolean
-        public boolean enabled = false;
-
-        @Expose
-        @ConfigOption(name = "Players", desc = "Names to welcome, separated by commas. You can also use /sb welcome add <name> and /sb welcome remove <name>.")
-        @ConfigEditorText
-        public String names = "";
-
-        @Expose
-        @ConfigOption(name = "Welcome In", desc = "Send the welcome in guild chat (/gc) or as a private message to the player (/msg).")
-        @ConfigEditorDropdown
-        public Destination destination = Destination.GUILD;
-
-        @Expose
-        @ConfigOption(name = "Message", desc = "What to send. {name} is replaced with the player's name.")
-        @ConfigEditorText
-        public String message = "Welcome back {name}!";
-
-        @Expose
-        @ConfigOption(name = "Welcome New Guild Members", desc = "Also welcome anyone who joins the guild, in guild chat.")
-        @ConfigEditorBoolean
-        public boolean welcomeNewMembers = false;
-
-        @Expose
-        @ConfigOption(name = "New Member Message", desc = "What to send when someone joins the guild. {name} is replaced with their name.")
-        @ConfigEditorText
-        public String newMemberMessage = "Welcome to the guild {name}!";
-
-        @Expose
-        @ConfigOption(name = "Cooldown (minutes)", desc = "Don't welcome the same player again within this many minutes, so relogging doesn't spam chat.")
-        @ConfigEditorSlider(minValue = 0, maxValue = 120, minStep = 5)
-        public int cooldownMinutes = 30;
     }
 }

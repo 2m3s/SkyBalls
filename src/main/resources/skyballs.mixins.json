@@ -47,6 +47,7 @@
     "SkyBallsSystemChatMixin",
     "SkyBallsLowFireMixin",
     "SkyBallsHideExplosionsMixin",
+    "SkyBallsWitherDragonsMixin",
     "SkyBallsLeapMenuMixin",
     "SkyBallsWorldNickMixin",
     "SkyBallsTextDisplayNickMixin",
@@ -67,6 +68,10 @@
     "SkyBallsCapeMixin",
     "SkyBallsItemCooldownMixin",
     "SkyBallsPestGlowMixin",
-    "SkyBallsPestGlowColourMixin"
+    "SkyBallsPestGlowColourMixin",
+    "SkyBallsEntityGlowMixin",
+    "SkyBallsEntityGlowColourMixin",
+    "SkyBallsSlayerPacketsMixin",
+    "SkyBallsHideFireballsMixin"
   ]
 }

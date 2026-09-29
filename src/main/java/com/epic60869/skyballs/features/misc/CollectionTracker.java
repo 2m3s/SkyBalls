@@ -184,13 +184,13 @@ public final class CollectionTracker {
 
     private static boolean enabled() {
         SkyBallsConfig.Misc c = config();
-        return c != null && c.collectionTracker && SkyBallsLocation.onSkyblock();
+        return c != null && c.collectionTracker.enabled && SkyBallsLocation.onSkyblock();
     }
 
     public static void init(Path configDir) {
         compactFile = configDir.resolve("skyballs").resolve("compacted-items.json");
         loadCompactCache();
-        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("collection_tracker", () -> config() != null && config().collectionTracker);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("collection_tracker", () -> config() != null && config().collectionTracker.enabled);
         SkyBallsHuds.registerCustom("collection_tracker", "Collection Tracker", CollectionTracker::enabled, new Hud(), 8, 150);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> {
             for (String root : Compat.COMMAND_ROOTS) {
@@ -761,7 +761,7 @@ public final class CollectionTracker {
         }
         SkyBallsConfig.Misc c = config();
         Board board = BOARDS.get(id);
-        if (c == null || !c.collectionTrackerRank || board == null || profileId.isEmpty()) return;
+        if (c == null || !c.collectionTracker.eliteRank || board == null || profileId.isEmpty()) return;
         Rank rank = ranks.get(id);
         if (Boolean.TRUE.equals(rankLoading.get(id)) || (rank != null && now - rank.fetchedAt() < RANK_REFRESH_MS)) return;
         rankLoading.put(id, true);
@@ -883,7 +883,7 @@ public final class CollectionTracker {
                 : Component.literal("loading...").withStyle(ChatFormatting.DARK_GRAY)));
 
         SkyBallsConfig.Misc c = config();
-        if (c != null && c.collectionTrackerRank && known) {
+        if (c != null && c.collectionTracker.eliteRank && known) {
             Rank rank = ranks.get(id);
             if (rank == null) {
                 lines.add(Component.literal("loading...").withStyle(ChatFormatting.DARK_GRAY));

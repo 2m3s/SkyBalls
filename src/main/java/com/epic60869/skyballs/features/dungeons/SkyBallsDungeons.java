@@ -123,11 +123,11 @@ public final class SkyBallsDungeons {
         sb.dungeons.terminals.solveOrder = false;
         sb.dungeons.terminals.solveStartsWith = false;
         sb.dungeons.terminals.solveSameColor = false;
-        boolean odinDevices = d.terminals.odinDevices;
-        sb.dungeons.devices.solveSimonSays = d.terminals.simonSays && !odinDevices;
-        sb.dungeons.devices.solveLightsOn = d.terminals.lightsOn;
-        sb.dungeons.devices.solveArrowAlign = d.terminals.arrowAlign && !odinDevices;
-        sb.dungeons.devices.solveTargetPractice = d.terminals.targetPractice && !odinDevices;
+        boolean odinDevices = d.f7.terminals.odinDevices;
+        sb.dungeons.devices.solveSimonSays = d.f7.terminals.simonSays && !odinDevices;
+        sb.dungeons.devices.solveLightsOn = d.f7.terminals.lightsOn;
+        sb.dungeons.devices.solveArrowAlign = d.f7.terminals.arrowAlign && !odinDevices;
+        sb.dungeons.devices.solveTargetPractice = d.f7.terminals.targetPractice && !odinDevices;
 
         sb.helpers.experiments.enableChronomatronSolver = skyballs.misc.experimentalTable.chronomatron;
         sb.helpers.experiments.enableSuperpairsSolver = skyballs.misc.experimentalTable.superpairs;

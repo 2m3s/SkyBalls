@@ -126,25 +126,19 @@ public final class SkyBallsConfig extends Config {
     }
 
     public static final class Slayers {
+        // Sub-categories in the sidebar (shown under Slayers when it's open), like SkyHanni's.
+        @Expose
+        @Category(name = "Blaze", desc = "Inferno Demonlord: Hellion Shield colours, dagger display, fire pits warning, phase numbers, clear view and fire pillar timer.")
+        public com.epic60869.skyballs.features.FeatureConfigs.BlazeSlayer blaze = new com.epic60869.skyballs.features.FeatureConfigs.BlazeSlayer();
+
+        @Expose
+        @Category(name = "Enderman", desc = "Voidgloom Seraph: Yang Glyph and Nukekubi skull highlights, phase numbers, hidden particles and a line to your boss.")
+        public com.epic60869.skyballs.features.FeatureConfigs.EndermanSlayer enderman = new com.epic60869.skyballs.features.FeatureConfigs.EndermanSlayer();
+
         @Expose
         @Accordion
         @ConfigOption(name = "Slayer HUDs", desc = "Slayer boss phase HUD.")
         public com.epic60869.skyballs.features.FeatureConfigs.Slayer huds = new com.epic60869.skyballs.features.FeatureConfigs.Slayer();
-
-        @Expose
-        @ConfigOption(name = "Kills Since Rare Drop", desc = "Show the kills-since-drop counter.")
-        @ConfigEditorBoolean
-        public boolean killsSinceDrop = false;
-
-        @Expose
-        @ConfigOption(name = "RNG Meter Value", desc = "In an RNG Meter menu, show each drop's price and how many coins one Slayer XP (or dungeon Score) of meter progress is worth.")
-        @ConfigEditorBoolean
-        public boolean rngMeterValue = false;
-
-        @Expose
-        @ConfigOption(name = "Miniboss Alert", desc = "A title and a ding when one of your slayer minibosses spawns (Hypixel's \"SLAYER MINI-BOSS ... has spawned!\"), not other players' minibosses.")
-        @ConfigEditorBoolean
-        public boolean minibossAlert = false;
 
         @Expose
         @Accordion
@@ -160,6 +154,21 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "PB Leaderboard HUD", desc = "A HUD with the SkyBalls kill time leaderboard for your slayer boss, and a live timer against your PB and the #1 time. Move it in /sb hud.")
         public PbLeaderboardHud pbLeaderboardHud = new PbLeaderboardHud();
+
+        @Expose
+        @ConfigOption(name = "RNG Meter Value", desc = "In an RNG Meter menu, show each drop's price and how many coins one Slayer XP (or dungeon Score) of meter progress is worth.")
+        @ConfigEditorBoolean
+        public boolean rngMeterValue = false;
+
+        @Expose
+        @ConfigOption(name = "Miniboss Alert", desc = "A title and a ding when one of your slayer minibosses spawns (Hypixel's \"SLAYER MINI-BOSS ... has spawned!\"), not other players' minibosses.")
+        @ConfigEditorBoolean
+        public boolean minibossAlert = false;
+
+        @Expose
+        @ConfigOption(name = "Kills Since Rare Drop", desc = "Show the kills-since-drop counter.")
+        @ConfigEditorBoolean
+        public boolean killsSinceDrop = false;
     }
 
     public static final class PbLeaderboardHud {
@@ -242,6 +251,10 @@ public final class SkyBallsConfig extends Config {
 
     public static final class Misc {
         @Expose
+        @Category(name = "Pets", desc = "Pet displays and overflow XP tools.")
+        public Pets pets = new Pets();
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Party Commands", desc = "Let party members use !warp, !allinvite and !pt when you are leader.")
         public com.epic60869.skyballs.features.FeatureConfigs.PartyCommands partyCommands = new com.epic60869.skyballs.features.FeatureConfigs.PartyCommands();
@@ -258,11 +271,6 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Auto Welcome", desc = "Welcome players on your list in guild chat or with /msg when they come online.\n§c§lUSE AT OWN RISK")
-        public com.epic60869.skyballs.features.FeatureConfigs.AutoWelcome autoWelcome = new com.epic60869.skyballs.features.FeatureConfigs.AutoWelcome();
-
-        @Expose
-        @Accordion
         @ConfigOption(name = "Item Rarity", desc = "Rarity-coloured backgrounds behind SkyBlock items.")
         public ItemRarity itemRarity = new ItemRarity();
 
@@ -273,13 +281,43 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Item Price Tooltip", desc = "Add prices to SkyBlock item tooltips, like Skyblocker.")
+        @ConfigOption(name = "Item Price Tooltip", desc = "Add prices to SkyBlock item tooltips, like Skyblocker, and what you paid for items you bought on the auction house.")
         public PriceTooltip priceTooltip = new PriceTooltip();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Museum & Accessory Tooltips", desc = "Show in item tooltips whether you've donated the item to your museum and whether you're missing an accessory, like Skyblocker.")
         public CollectionTooltips collectionTooltips = new CollectionTooltips();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay: /storage, your Ender Chest pages and backpacks as one scrollable view, and its layout and search options.")
+        public StorageOverlaySettings storageOverlaySettings = new StorageOverlaySettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Screenshots", desc = "Upload F2 screenshots and get a link to share in /sbc.")
+        public Screenshots screenshots = new Screenshots();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Collection Tracker", desc = "A HUD with the collection you're gathering, what you've gained this session and per hour, and your Elite leaderboard rank.")
+        public CollectionTrackerSettings collectionTracker = new CollectionTrackerSettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Toggle Sprint", desc = "Always sprint, with a HUD while it's on.")
+        public ToggleSprintSettings toggleSprint = new ToggleSprintSettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Item Cooldowns", desc = "Show item ability cooldowns on the item's slot (and optionally a HUD).")
+        public com.epic60869.skyballs.features.sbc.SbcConfig.ItemCooldowns itemCooldowns = new com.epic60869.skyballs.features.sbc.SbcConfig.ItemCooldowns();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Event Calendar", desc = "Upcoming SkyBlock events with countdowns (/sb calendar), a HUD and reminders before the events you pick.")
+        public com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar eventCalendar = new com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar();
 
         @Expose
         @Accordion
@@ -300,7 +338,6 @@ public final class SkyBallsConfig extends Config {
         @Expose
         public LegacyHeldItemModel heldItemModel = null;
 
-
         @Expose
         @Accordion
         @ConfigOption(name = "Mouse Reset", desc = "Reset the mouse cursor when selected SkyBlock menus open.")
@@ -312,19 +349,14 @@ public final class SkyBallsConfig extends Config {
         public TooltipScroll tooltipScroll = new TooltipScroll();
 
         @Expose
+        @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub, /crypts, /garden and other warp names without /warp (SkyHanni's and Skysoft's short warp commands). In the Garden, /home warps to the Garden, /barn goes to the barn and /tp <plot> to a plot.")
+        @ConfigEditorBoolean
+        public boolean warpShortcuts = false;
+
+        @Expose
         @ConfigOption(name = "Join Commands", desc = "Quick commands to join dungeons and Kuudra: /f0 (Entrance) to /f7, /m1 to /m7, and /t1 to /t5 for Kuudra (Basic to Infernal). Applies next time you join a server.")
         @ConfigEditorBoolean
         public boolean joinCommands = false;
-
-        @Expose
-        @ConfigOption(name = "Screenshot Sharing", desc = "After F2, the screenshot message gets an [Upload] button that gives you a link to post in /sbc, like Skysoft. Uploads are public to anyone with the link.")
-        @ConfigEditorBoolean
-        public boolean screenshotSharing = false;
-
-        @Expose
-        @ConfigOption(name = "Screenshot Upload Host", desc = "Where screenshots are uploaded. Litterbox deletes them after the chosen time; Catbox keeps them.")
-        @ConfigEditorDropdown
-        public com.epic60869.skyballs.features.misc.ScreenshotShare.Host screenshotHost = com.epic60869.skyballs.features.misc.ScreenshotShare.Host.LITTERBOX_72H;
 
         @Expose
         @ConfigOption(name = "Sign Calculator", desc = "On SkyBlock's number signs (auction prices, bazaar amounts, ...) show what you typed as a number above the sign, e.g. 15m = 15,000,000, and send that number, so sums like 2.5m*3 work. Suffixes: k, m, b, s (64), e (160).")
@@ -335,16 +367,6 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Hypixel Button", desc = "A Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.")
         @ConfigEditorBoolean
         public boolean hypixelButton = false;
-
-        @Expose
-        @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay (ported from Firmament): /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /sb storage opens it even with this off.")
-        @ConfigEditorBoolean
-        public boolean storageOverlay = false;
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Storage Overlay Settings", desc = "Layout and search options for the storage overlay.")
-        public StorageOverlaySettings storageOverlaySettings = new StorageOverlaySettings();
 
         @Expose
         @ConfigOption(name = "Recipe HUD", desc = "While a /sb recipe is selected, show a movable HUD with the item and the base ingredients you still need (like SkyOcean's craft helper overlay). Move it in /sb gui.")
@@ -362,24 +384,9 @@ public final class SkyBallsConfig extends Config {
         public boolean calendarTimeToRealTime = false;
 
         @Expose
-        @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip, like NoFrills.")
-        @ConfigEditorBoolean
-        public boolean pricePaid = false;
-
-        @Expose
         @ConfigOption(name = "Update Notifications", desc = "Tell you in chat when a newer SkyBalls version is out (\"New SkyBalls Mod Version 1.2.3 --> 1.2.5\"), with a download link.")
         @ConfigEditorBoolean
         public boolean updateNotifications = true;
-
-        @Expose
-        @ConfigOption(name = "Collection Tracker", desc = "While you mine, farm, forage or fish, show the collection you're gathering, what you've gained this session and per hour, like SkyHanni's farming display. Move it in /sb gui.")
-        @ConfigEditorBoolean
-        public boolean collectionTracker = false;
-
-        @Expose
-        @ConfigOption(name = "Collection Tracker Elite Rank", desc = "Also show your rank on the Elite (elitebot.dev) collection leaderboard and how much you need to pass the next player.")
-        @ConfigEditorBoolean
-        public boolean collectionTrackerRank = true;
 
         /** Collection pinned with /sj trackcollection (a Hypixel item id), or "" to follow what you gather. */
         @Expose
@@ -388,36 +395,42 @@ public final class SkyBallsConfig extends Config {
         /** Goal set with /sj trackcollection &lt;item&gt; &lt;goal&gt;, or 0. */
         @Expose
         public long collectionTrackerGoal = 0;
+    }
 
+    public static final class Screenshots {
         @Expose
-        @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub instead of /warp dhub (and the same for every name in the list below). Applies next time you join a server.")
+        @ConfigOption(name = "Screenshot Sharing", desc = "After F2, the screenshot message gets an [Upload] button that gives you a link to post in /sbc, like Skysoft. Uploads are public to anyone with the link.")
         @ConfigEditorBoolean
-        public boolean warpShortcuts = false;
+        public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Warp Shortcut List", desc = "Warps that get their own command, separated by commas.")
-        @ConfigEditorText
-        public String warpShortcutList = "dhub, dungeon_hub, garden, barn, desert, trapper, park, howl, jungle, gold, deep, mines, forge, crystals, nucleus, base, camp, tunnels, end, drag, void, spider, nest, arachne, crimson, isle, kuudra, smold, museum, da, castle, wiz, jerry, rift, galatea, murkwater";
+        @ConfigOption(name = "Upload Host", desc = "Where screenshots are uploaded. 0x0.st keeps them for at least 30 days, Uguu for 3 hours, Catbox for good.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.misc.ScreenshotShare.Host host = com.epic60869.skyballs.features.misc.ScreenshotShare.Host.NULL_POINTER;
+    }
 
+    public static final class CollectionTrackerSettings {
+        @Expose
+        @ConfigOption(name = "Collection Tracker", desc = "While you mine, farm, forage or fish, show the collection you're gathering, what you've gained this session and per hour, like SkyHanni's farming display. Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Elite Rank", desc = "Also show your rank on the Elite (elitebot.dev) collection leaderboard and how much you need to pass the next player.")
+        @ConfigEditorBoolean
+        public boolean eliteRank = true;
+    }
+
+    public static final class ToggleSprintSettings {
         @Expose
         @ConfigOption(name = "Toggle Sprint", desc = "Always sprint, like Odin's Auto Sprint. Set a \"Toggle Sprint\" key in Controls to switch it on and off.")
         @ConfigEditorBoolean
-        public boolean toggleSprint = false;
+        public boolean enabled = false;
 
         @Expose
         @ConfigOption(name = "Toggle Sprint HUD", desc = "Show [Sprinting (Toggled)] while toggle sprint is on. Move it in /sb gui.")
         @ConfigEditorBoolean
-        public boolean toggleSprintHud = true;
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Item Cooldowns", desc = "Show item ability cooldowns on the item's slot (and optionally a HUD).")
-        public com.epic60869.skyballs.features.sbc.SbcConfig.ItemCooldowns itemCooldowns = new com.epic60869.skyballs.features.sbc.SbcConfig.ItemCooldowns();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Event Calendar", desc = "Upcoming SkyBlock events with countdowns (/sb calendar), a HUD and reminders before the events you pick.")
-        public com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar eventCalendar = new com.epic60869.skyballs.features.sbc.SbcConfig.EventCalendar();
+        public boolean hud = true;
     }
 
     private static final Gson LEGACY_GSON = new Gson();
@@ -467,10 +480,6 @@ public final class SkyBallsConfig extends Config {
     @Expose
     @Category(name = "Dungeons", desc = "Map, puzzle solvers, secrets, terminals, splits and timers.")
     public com.epic60869.skyballs.features.FeatureConfigs.Dungeons dungeons = new com.epic60869.skyballs.features.FeatureConfigs.Dungeons();
-
-    @Expose
-    @Category(name = "Pets", desc = "Pet displays and overflow XP tools.")
-    public Pets pets = new Pets();
 
     @Expose
     @Category(name = "Misc", desc = "Nickname and small quality-of-life options.")
@@ -799,6 +808,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "3 Day Avg. Price", desc = "The item's average lowest BIN price over the last 3 days.")
         @ConfigEditorBoolean
         public boolean threeDayAverage = true;
+
+        @Expose
+        @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip, like NoFrills.")
+        @ConfigEditorBoolean
+        public boolean pricePaid = false;
     }
 
     public static final class CollectionTooltips {
@@ -883,6 +897,11 @@ public final class SkyBallsConfig extends Config {
 
     /** Firmament's storage overlay options (Firmament's StorageOverlay.TConfig). */
     public static final class StorageOverlaySettings {
+        @Expose
+        @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay (ported from Firmament): /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /sb storage opens it even with this off.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
         @Expose @ConfigOption(name = "Dark Mode", desc = "Draw the storage overlay's backgrounds, slots and scroll bar dark instead of Minecraft's light grey.") @ConfigEditorBoolean public boolean darkMode = false;
         @Expose @ConfigOption(name = "Dark Mode Shade", desc = "How dark Dark Mode is: the colour the overlay's textures are tinted with (darker is darker).") @ConfigEditorColour public String darkModeShade = "0:255:70:70:78";
         @Expose @ConfigOption(name = "Outline Active Page", desc = "Put a border around the selected storage page in the storage overlay.") @ConfigEditorBoolean public boolean outlineActivePage = false;
@@ -1231,7 +1250,69 @@ public final class SkyBallsConfig extends Config {
             }
         }
 
+        // The settings reorganisation: sections that moved keep their saved settings.
+        // The Pets tab became a sub-category of Misc.
+        if (root.has("pets") && root.get("pets").isJsonObject()) {
+            if (!misc.has("pets")) misc.add("pets", root.get("pets"));
+            root.remove("pets");
+            changed = true;
+        }
+        // Screenshot Sharing and its host became the Screenshots section (Litterbox hosts are gone: back to the default).
+        if (misc.has("screenshotSharing")) {
+            JsonObject screenshots = childObject(misc, "screenshots");
+            screenshots.add("enabled", misc.remove("screenshotSharing"));
+            if (misc.has("screenshotHost") && "CATBOX".equals(misc.get("screenshotHost").getAsString())) screenshots.addProperty("host", "CATBOX");
+            changed = true;
+        }
+        if (misc.remove("screenshotHost") != null) changed = true;
+        // Storage Overlay's on/off moved into its settings section.
+        if (misc.has("storageOverlay") && misc.get("storageOverlay").isJsonPrimitive()) {
+            childObject(misc, "storageOverlaySettings").add("enabled", misc.remove("storageOverlay"));
+            changed = true;
+        }
+        // Price Paid moved into Item Price Tooltip.
+        if (misc.has("pricePaid")) {
+            childObject(misc, "priceTooltip").add("pricePaid", misc.remove("pricePaid"));
+            changed = true;
+        }
+        // Collection Tracker and its Elite rank became one section.
+        if (misc.has("collectionTracker") && misc.get("collectionTracker").isJsonPrimitive()) {
+            JsonObject tracker = new JsonObject();
+            tracker.add("enabled", misc.remove("collectionTracker"));
+            if (misc.has("collectionTrackerRank")) tracker.add("eliteRank", misc.remove("collectionTrackerRank"));
+            misc.add("collectionTracker", tracker);
+            changed = true;
+        }
+        // Toggle Sprint and its HUD became one section.
+        if (misc.has("toggleSprint") && misc.get("toggleSprint").isJsonPrimitive()) {
+            JsonObject sprint = new JsonObject();
+            sprint.add("enabled", misc.remove("toggleSprint"));
+            if (misc.has("toggleSprintHud")) sprint.add("hud", misc.remove("toggleSprintHud"));
+            misc.add("toggleSprint", sprint);
+            changed = true;
+        }
+        // Removed: the warp shortcut list (every warp works now) and Auto Welcome.
+        if (misc.remove("warpShortcutList") != null) changed = true;
+        if (misc.remove("autoWelcome") != null) changed = true;
+        // Dragons and relics, terminals and devices, and the 3x3 platform highlight moved into Dungeons > F7/M7.
+        if (root.has("dungeons") && root.get("dungeons").isJsonObject()) {
+            JsonObject dungeons = root.getAsJsonObject("dungeons");
+            for (String key : new String[]{"witherDragons", "terminals", "platformHighlight"}) {
+                if (!dungeons.has(key)) continue;
+                JsonObject f7 = childObject(dungeons, "f7");
+                if (!f7.has(key)) f7.add(key, dungeons.remove(key));
+                else dungeons.remove(key);
+                changed = true;
+            }
+        }
+
         if (changed) Files.writeString(path, LEGACY_GSON.toJson(root), StandardCharsets.UTF_8);
+    }
+
+    /** {@code parent.key} as an object, created if it's missing. */
+    private static JsonObject childObject(JsonObject parent, String key) {
+        if (!parent.has(key) || !parent.get(key).isJsonObject()) parent.add(key, new JsonObject());
+        return parent.getAsJsonObject(key);
     }
 
     private static final class FileHolder {

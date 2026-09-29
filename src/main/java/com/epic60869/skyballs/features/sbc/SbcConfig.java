@@ -94,6 +94,11 @@ public final class SbcConfig {
         @ConfigOption(name = "Item Sharing", desc = "Show items shared in SkyBalls chat as [Item Name] with its tooltip, and let you share yours with /sb share, the Share Item key or [item] in a message.")
         @ConfigEditorBoolean
         public boolean itemSharing = true;
+
+        @Expose
+        @ConfigOption(name = "Party Finder Announcements", desc = "Show a line in chat with a [JOIN] button when someone opens a new /sb pf listing.")
+        @ConfigEditorBoolean
+        public boolean partyFinderAnnouncements = true;
     }
 
     public enum LocationSharing {

@@ -22,7 +22,7 @@ public final class ThreeByThree {
             SkyBallsConfig config = SkyBallsConfig.current();
             Minecraft mc = Minecraft.getInstance();
             if (config == null || mc.player == null) return;
-            FeatureConfigs.PlatformHighlight settings = config.dungeons.platformHighlight;
+            FeatureConfigs.PlatformHighlight settings = config.dungeons.f7.platformHighlight;
             // Shown whenever you're on F7/M7: the box is in the boss room, so it only appears there, and waiting for
             // Goldor's chat line meant it often didn't show at all.
             if (!settings.enabled || !PositionalMessages.onFloor7()) return;

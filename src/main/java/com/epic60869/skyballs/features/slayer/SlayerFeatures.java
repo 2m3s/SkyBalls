@@ -12,6 +12,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.AABB;
 
@@ -20,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -35,6 +38,7 @@ public final class SlayerFeatures {
     private static final Pattern EGG_SAC = Pattern.compile("\\d+s \\d+/\\d+");
 
     private static List<Component> bossLines = List.of();
+    private static LivingEntity boss;
 
     private static int ticks;
 
@@ -59,11 +63,11 @@ public final class SlayerFeatures {
 
     private static void tick(Minecraft mc) {
         FeatureConfigs.Slayer config = config();
-        boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled();
+        boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled()
+            || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss();
         // Only during a slayer quest: no boss can be yours otherwise, and the scan reads every nametag nearby.
         if (mc.player == null || mc.level == null || !needed || !SkyBallsLocation.onSkyblock() || !onSlayerQuest()) {
-            bossLines = List.of();
-            SlayerTimes.onBoss(null);
+            clearBoss();
             return;
         }
         updateBossLines(mc);
@@ -114,10 +118,10 @@ public final class SlayerFeatures {
             }
         }
         if (owner == null) {
-            bossLines = List.of();
-            SlayerTimes.onBoss(null);
+            clearBoss();
             return;
         }
+        boss = mobNear(mc, owner);
         AABB area = owner.getBoundingBox().inflate(1.5, 3, 1.5);
         List<Entity> tags = mc.level.getEntities((Entity) null, area, e -> nametag(e) != null);
         tags.sort(Comparator.comparingDouble((Entity e) -> e.getY()).reversed());
@@ -134,8 +138,94 @@ public final class SlayerFeatures {
         }
         String health = lines.isEmpty() ? "" : SkyBallsLocation.strip(lines.get(0).getString());
         SlayerTimes.onBoss(health);
+        if (!lines.isEmpty()) lines.set(0, withPhase(lines.get(0), health));
         if (isTarantula(health)) addEggSacLines(mc, lines);
         bossLines = lines;
+    }
+
+    private static void clearBoss() {
+        bossLines = List.of();
+        boss = null;
+        maxHealth = 0;
+        phaseBoss = "";
+        SlayerTimes.onBoss(null);
+    }
+
+    /** Your slayer boss (the mob under your "Spawned by" nametag), or null without one. */
+    public static LivingEntity boss() {
+        return boss != null && boss.isAlive() ? boss : null;
+    }
+
+    /** The mob nearest your boss's nametags: players, armor stands and text displays aren't it. */
+    private static LivingEntity mobNear(Minecraft mc, Entity tag) {
+        AABB area = tag.getBoundingBox().inflate(1.5, 3, 1.5);
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (LivingEntity mob : mc.level.getEntitiesOfClass(LivingEntity.class, area,
+                e -> !(e instanceof ArmorStand) && !(e instanceof Player) && e.isAlive())) {
+            double distance = mob.distanceToSqr(tag);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = mob;
+            }
+        }
+        return best;
+    }
+
+    /** "☠ Voidgloom Seraph IV 45M❤": the boss, its tier and its health. */
+    private static final Pattern PHASE_HEALTH = Pattern.compile(
+        "(?<boss>Voidgloom Seraph|Inferno Demonlord) (?<tier>IV|III|II|I)\\b.*?(?<hp>[\\d.,]+)(?<unit>[kKMB]?)❤");
+
+    /** The highest health seen for the current boss: its full health, as it starts full. */
+    private static double maxHealth;
+    private static String phaseBoss = "";
+
+    /**
+     * As in SkyHanni's damage indicator: a Voidgloom's health is split into three phases (six for tier IV) and an
+     * Inferno Demonlord's into two (three for tiers III and IV). The phase goes in front of the health line.
+     */
+    private static Component withPhase(Component line, String health) {
+        Matcher m = PHASE_HEALTH.matcher(health);
+        if (!m.find()) return line;
+        String bossName = m.group("boss");
+        String tier = m.group("tier");
+        double hp = parseHealth(m.group("hp"), m.group("unit"));
+        if (hp < 0) return line;
+        String key = bossName + " " + tier;
+        if (!key.equals(phaseBoss)) {
+            phaseBoss = key;
+            maxHealth = 0;
+        }
+        double previous = maxHealth == 0 ? hp : lastHealth;
+        maxHealth = Math.max(maxHealth, hp);
+        lastHealth = hp;
+
+        boolean voidgloom = bossName.startsWith("Voidgloom");
+        int phases = voidgloom ? (tier.equals("IV") ? 6 : 3) : (tier.equals("III") || tier.equals("IV") ? 3 : 2);
+        if (!voidgloom && phases == 3) BlazeSlayer.onBossHealth(previous, hp, maxHealth);
+
+        boolean show = voidgloom ? EndermanSlayer.phaseNumbers() : BlazeSlayer.phaseNumbers();
+        if (!show || maxHealth <= 0) return line;
+        double step = maxHealth / phases;
+        int phase = Math.min(phases, Math.max(1, phases - (int) Math.ceil(hp / step) + 1));
+        ChatFormatting colour = phase == 1 ? ChatFormatting.RED : phase == phases ? ChatFormatting.GREEN : ChatFormatting.YELLOW;
+        return Component.empty().append(Component.literal(phase + "/" + phases + " ").withStyle(colour)).append(line);
+    }
+
+    private static double lastHealth;
+
+    private static double parseHealth(String number, String unit) {
+        try {
+            double value = Double.parseDouble(number.replace(",", ""));
+            return switch (unit) {
+                case "k", "K" -> value * 1_000;
+                case "M" -> value * 1_000_000;
+                case "B" -> value * 1_000_000_000;
+                default -> value;
+            };
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private static boolean isTarantula(String text) {

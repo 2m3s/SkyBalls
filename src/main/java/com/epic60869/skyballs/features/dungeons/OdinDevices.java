@@ -57,7 +57,7 @@ public final class OdinDevices {
 
     private static FeatureConfigs.Terminals config() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c == null ? null : c.dungeons.terminals;
+        return c == null ? null : c.dungeons.f7.terminals;
     }
 
     /**

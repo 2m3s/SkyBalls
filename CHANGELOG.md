@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## test-1.3.7 — 2026-09-28
+## 1.3.7 — 2026-09-29
 
 ### Added
 - Pet HUD shows your pet's held item (Pets → Pets Display → Show Held Item). The tab list doesn't show it, so it's learned from the Pets menu (open it once), "Your pet is now holding ..." and Autopet messages, and remembered per pet.
@@ -16,23 +16,37 @@ All notable changes to SkyBalls are listed here, newest first.
 - The slayer boss phase display shows your Tarantula's egg sacs (time left and hits) under its health.
 - Slayer kill time leaderboard: your slayer personal bests are shared with the SkyBalls leaderboard (Slayers → Personal Best → Share Slayer PBs, on by default; bests from before this update are sent the next time you connect). `/sb leaderboard slayer` shows every boss and tier with its record holder and your time and rank (click a row for its top 10), and `/sb leaderboard slayer <boss>` shows the top 10 for one boss, e.g. `Revenant Horror V`. Without a connection it shows your own times. The board is also in Discord (`/leaderboard slayer`).
 - Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/sb hud`. Offline it keeps the last standings it got.
+- Enderman Slayer (Slayers → Enderman), from SkyHanni: highlights the Yang Glyph (beacon) while a Voidgloom holds it, throws it and after it lands, with a timer until it explodes, plus an optional title warning and line to it; highlights Nukekubi Fixation skulls in gold with an optional line to each; phase numbers (1/3, or 1/6 for tier IV) in the Slayer Boss Phase HUD; hides the smoke, flame and witch particles around endermen in The End; and a line to your Voidgloom Seraph.
+- Blaze Slayer (Slayers → Blaze), from SkyHanni: outlines the Inferno Demonlord and its demons in their Hellion Shield's colour with the shield above them; a dagger HUD with your Twilight and Firedust attunements that can mark the one matching the nearest shield (Hypixel's attunement title is hidden while it shows); hides the "Strike using the ... attunement" and "Your hit was reduced by Hellion Shield!" messages; a Fire Pits warning for tiers III and IV; phase numbers in the Slayer Boss Phase HUD; Clear View, which hides particles and fireballs within 10 blocks of a boss; and a Fire Pillar countdown HUD (move it in `/sb hud`).
+- Diana Rare Mobs (Combat → Diana Rare Mobs), from Skysoft. Rare Mob Sharing: when you dig up a Minos Inquisitor or King Minos (or every rare mob, with All Rare Mobs) its coordinates go out in party chat, and rare mobs your party shares get a waypoint, a title and a line from your crosshair. Lootshare Helper: your hits on a shared rare mob are counted, and once you've done 1% of its health (enough to lootshare it) "Lootsharing" over the mob turns from red to cyan and "Loot share secured!" goes out in party chat. Party members who secured it get a cyan ✓ above their head, and whoever spawned the mob a pink one. It also draws the 30 block lootshare radius. Uses the same party messages as Skysoft, so both mods see each other's shares and checkmarks. Damage only counts with a Griffin pet out.
+- Party Finder Announcements (SkyBalls Online → SB Chat, on by default): when someone opens a new `/sb pf` listing, the SkyBalls server announces it in chat (who is looking for how many more, for what, and their note) with a [JOIN] button (not on your own listings). Turn it off to stop seeing them.
 
 ### Changed
+- Settings reorganised. Your settings move with them.
+  - Like SkyHanni, categories can have sub-categories in the sidebar, shown when you open the category: Slayers has Blaze and Enderman, Dungeons has one per section, and Misc has Pets (the Pets tab is gone).
+  - Dungeons → F7/M7 holds the M7 dragons and relics, the terminal and device solvers, and the 3x3 platform highlight.
+  - Misc: Screenshots, Storage Overlay, Collection Tracker (with its Elite rank) and Toggle Sprint (with its HUD) are each one dropdown, and Price Paid is in Item Price Tooltip with the lowest BIN and 3 day average.
+  - In every category the dropdowns come before the single toggles; Kills Since Rare Drop is last in Slayers.
+- Screenshot uploads go to 0x0.st (kept for at least 30 days) instead of Litterbox. Uguu (3 hours) and Catbox (permanent) can be picked under Misc → Screenshots.
+- Warp Shortcuts use SkyHanni's and Skysoft's short warp commands: every warp name works without /warp (/dhub, /crypts, /garden, ...) and tab-completes, and in the Garden /home, /barn and /tp <plot> work like SkyHanni's. It applies straight away, and the list of warps to set up is gone.
 - New installs start with almost every feature off: turn on what you want in /sb. Options inside a feature keep their defaults, and SBC chat stays on. Existing settings don't change.
 - /sb gui only shows the HUDs whose feature is turned on.
 - Performance: the slayer boss scan only runs during a slayer quest and skips non-boss nametags early; starred mob highlighting checks every 4 ticks; SkyBlock item ids are cached instead of copying each item's data; the pickaxe ability reads the tab list every 4 ticks; settings are checked for changes every 5 seconds outside menus (and saved when the game closes); two chat regexes are built once.
 - Museum tooltip: your donations are also read from Hypixel's museum API (through SBC) when you join and every 10 minutes, so you don't have to open the museum menus first.
-- Auto Welcome's description warns USE AT OWN RISK.
 - The jumpscare lasts 1 second.
 - `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
 ### Fixed
+- Pest Highlight didn't find any pests: Hypixel's pests are now an invisible Silverfish or Bat under the pest's name, with a new icon, and the name can be a text display. Pests are found by their name again, and the pest count on the scoreboard is read with the new icon.
 - /storage: the mouse wheel scrolled a little, then stopped once an item came under the mouse. Block Scrolling on Items was still on for settings saved before 1.3.4; it is switched off once (you can turn it back on).
 - The PB HUD's live timer froze while a Tier 5 Tarantula swapped phases. It now keeps running until the boss's health hits 0.
 - Slayer PBs: a Tier 5 Tarantula was two bosses ("Tarantula Broodfather V", then "Conjoined Brood"), so the PB HUD switched to an empty board at the start of each fight. Both phases are now one boss, Tarantula Broodfather V, and older Conjoined Brood times move over to it.
 - Screenshot upload: when the host failed (e.g. Litterbox's HTTP 500) its whole error web page was pasted into chat. It now tries once more, then says what went wrong in one line with a [Retry] button.
 - Storage overview: smooth-scrolling mice and touchpads barely scrolled (each small wheel step was rounded to nothing).
 - Storage overlay and overview: Retain Scroll Position was lost the first time you opened them after starting the game.
+
+### Removed
+- Auto Welcome.
 
 ## 1.3.6 — 2026-09-28
 

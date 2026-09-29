@@ -19,7 +19,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class SkyBallsCommandCaseMixin {
     @ModifyVariable(method = "sendCommand", at = @At("HEAD"), argsOnly = true)
     private String skyballs$normaliseCase(String command) {
-        return skyballs$normalise(command);
+        // Misc > Warp Shortcuts: /dhub -> /warp dhub, and the Garden's /home, /barn and /tp <plot>.
+        return com.epic60869.skyballs.features.misc.WarpShortcuts.rewrite(skyballs$normalise(command));
     }
 
     @ModifyVariable(method = "sendUnattendedCommand", at = @At("HEAD"), argsOnly = true)

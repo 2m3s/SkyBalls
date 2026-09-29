@@ -2,6 +2,7 @@ package com.epic60869.skyballs.mixin;
 
 import net.minecraft.client.gui.components.PlayerTabOverlay;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -13,4 +14,7 @@ public interface SkyBallsPlayerTabOverlayAccessor {
     static Comparator<PlayerInfo> getOrdering() {
         throw new AssertionError();
     }
+
+    @Accessor("footer")
+    Component skyballs$getFooter();
 }

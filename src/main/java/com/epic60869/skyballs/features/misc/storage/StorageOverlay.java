@@ -46,7 +46,7 @@ public final class StorageOverlay {
     /** "Always Open Overlay": replace the storage menus without /sb storage. */
     public static boolean alwaysReplace() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c == null || c.misc.storageOverlay;
+        return c == null || c.misc.storageOverlaySettings.enabled;
     }
 
     public static int colour(String special) {

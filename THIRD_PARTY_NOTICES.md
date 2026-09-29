@@ -80,6 +80,21 @@ SkyBalls's implementation is independently adapted to SkyBalls's own Java/Fabric
 
 SkyBalls's current chat display (`SkyBallsCurrentChat.java`) follows SkyHanni's CurrentChatDisplay (src/main/java/at/hannibal2/skyhanni/features/chat/CurrentChatDisplay.kt): the channel-change message patterns and the channel names and colours. SkyHanni is licensed under the GNU Lesser General Public License v2.1 (LGPL-2.1).
 
+## SkyHanni Enderman and Blaze slayer features
+
+SkyBalls's Enderman Slayer and Blaze Slayer features (`features/slayer/EndermanSlayer.java`, `features/slayer/BlazeSlayer.java`, the phase numbers in `features/slayer/SlayerFeatures.java`, and the SkyBallsSlayerPacketsMixin and SkyBallsHideFireballsMixin mixins) are ported from SkyHanni:
+
+- https://github.com/hannibal002/SkyHanni (branch beta)
+- Relevant source: src/main/java/at/hannibal2/skyhanni/features/slayer/enderman/ (EndermanSlayerFeatures, EndermanSlayerHideParticles, LineToVoidgloomSeraph), features/slayer/blaze/ (BlazeSlayerClearView, BlazeSlayerDaggerHelper, BlazeSlayerFirePitsWarning, FirePillarDisplay, HellionShield, HellionShieldHelper), and the Enderman and Blaze phase splits in features/combat/damageindicator/DamageIndicatorManager.kt
+- The Nukekubi skull texture comes from SkyHanni-REPO's constants/Skulls.json (MIT License)
+- License: GNU Lesser General Public License v2.1 (LGPL-2.1)
+
+The Kotlin code was rewritten in Java on SkyBalls's own HUD, world renderer and config. Entity colour tints are drawn as glowing outlines, and the landed Yang Glyph is found by checking the blocks around the thrown one instead of from block change packets.
+
+## Short warp commands
+
+SkyBalls's Warp Shortcuts (`features/misc/WarpShortcuts.java`) follow Skysoft's WarpAliases (https://github.com/Akinsoft/Skysoft, src/main/kotlin/com/skysoft/features/misc/WarpAliases.kt, LGPL-3.0) and SkyHanni's ShortenWarpCommand and GardenWarpCommands (https://github.com/hannibal002/SkyHanni, LGPL-2.1): the warp names (Skysoft's list and SkyHanni-REPO's constants/Warps.json, MIT License) and the Garden's /home, /barn and /tp commands.
+
 ## SkyOcean
 
 SkyBalls's search-keybind and recipe-command workflows are adapted from the corresponding SkyOcean features:
@@ -162,6 +177,14 @@ SkyBalls's Held Item (the `com.epic60869.skyballs.features.helditem` package and
 
 - License: GNU Lesser General Public License v3.0 (LGPL-3.0)
 
+## Skysoft Diana Rare Mob Sharing and Lootshare Helper
+
+SkyBalls's Diana rare mob sharing and lootshare helper (`features/combat/DianaRareMobs.java`) is a Java port of Skysoft's (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): src/main/kotlin/com/skysoft/features/event/diana/ (DianaRareMobSharing, DianaRareMobTarget, DianaRareMobShare, DianaRareMobPartyMessages, DianaRareMobSupport, DianaRareMobRenderer, DianaRareMobEntityMatcher, DianaRareMobSignalSelector, DianaRareMobTitleRenderer, DianaDugMobParser, DianaMythologicalPetRequirement, DianaLootshareReadyMarkers, DianaLootshareReadyMessage), the mob matching and damage attribution from features/combat/ (SkyBlockMobEntityMatcher, SkyBlockMobTextParser, SkyBlockMobTracker, DamageSplashText, DamageSplashAttribution, CocoonMessageParser), data/skyblock/SkyBlockMobNames.kt and SkyBlockPlayerDeathParser.kt, and the party message queue in utils/chat/SkysoftPartyShare.kt. The party chat formats are kept, so shares and "Loot share secured!" work between SkyBalls and Skysoft players.
+
+SkyBalls reads party membership from Hypixel's party messages instead of the Hypixel mod API, reads your pet from the tab list, and draws labels with its own world renderer.
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
 ## Skysoft Tooltip Scroll
 
 SkyBalls's tooltip scroll (`features/misc/ScrollableTooltips.java`, `SkyBallsTooltipMixin`, `SkyBallsTooltipScrollMixin`) is a Java port of Skysoft's Tooltip Scroll (src/main/kotlin/com/skysoft/gui/tooltip/TooltipViewport.kt and TooltipPanSession.kt, com/skysoft/config/TooltipScrollConfig.kt, and the tooltip positioner / mouse scroll mixins): the pan session with smooth movement, the keyboard and mouse wheel controls, and the settings.
@@ -173,3 +196,13 @@ SkyBalls's tooltip scroll (`features/misc/ScrollableTooltips.java`, `SkyBallsToo
 SkyBalls's accessory tooltip (`features/misc/AccessoryTooltip.java`) is a 1:1 port of Skyblocker's AccessoriesHelper and AccessoryTooltip (https://github.com/SkyblockerMod/Skyblocker), with accessory data from Aaron's Mod via hysky.de.
 
 - License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## NoFrills
+
+SkyBalls's M7 dragon and relic features (`features/dungeons/WitherDragons` and SkyBallsWitherDragonsMixin) are ported from NoFrills' Wither Dragons and Relic Highlight:
+
+- https://github.com/WhatYouThing/NoFrills (commit 1ecf22d3b9cf49a22dcf592e142fc67688e64424)
+- Relevant source: src/main/java/nofrills/features/dungeons/WitherDragons.java and RelicHighlight.java
+- License: GNU General Public License v3.0 (GPL-3.0)
+
+NoFrills' dragon boxes and priorities come from Odin's WitherDragonEnum. The arrow-hit tracker was not ported.
