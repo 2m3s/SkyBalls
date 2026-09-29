@@ -18,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SkyBallsSlayerPacketsMixin {
     @Inject(method = "handleParticleEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER), cancellable = true)
     private void skyballs$slayerParticles(ClientboundLevelParticlesPacket packet, CallbackInfo ci) {
+        // Mayors > Diana > Burrows reads burrow, arrow and spade particles (never hides them).
+        com.epic60869.skyballs.features.combat.DianaBurrows.onParticle(packet);
         if (BlazeSlayer.hideParticle() || EndermanSlayer.hideParticle(packet)) ci.cancel();
     }
 

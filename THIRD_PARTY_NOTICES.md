@@ -95,6 +95,20 @@ The Kotlin code was rewritten in Java on SkyBalls's own HUD, world renderer and 
 
 SkyBalls's Warp Shortcuts (`features/misc/WarpShortcuts.java`) follow Skysoft's WarpAliases (https://github.com/Akinsoft/Skysoft, src/main/kotlin/com/skysoft/features/misc/WarpAliases.kt, LGPL-3.0) and SkyHanni's ShortenWarpCommand and GardenWarpCommands (https://github.com/hannibal002/SkyHanni, LGPL-2.1): the warp names (Skysoft's list and SkyHanni-REPO's constants/Warps.json, MIT License) and the Garden's /home, /barn and /tp commands.
 
+## SkyBlock Overhaul (SBO)
+
+SkyBalls's Diana burrows, warp keys and Sphinx solver (`features/combat/DianaBurrows.java` and `features/combat/DianaSphinx.java`) are ported from SkyBlock Overhaul:
+
+- https://github.com/SkyblockOverhaul/SBO (commit f5663baed4dd7748c80ba0fe52164bfb404ae4d5)
+- Relevant source: src/main/kotlin/net/sbo/mod/diana/burrows/ (BurrowDetector, ParticleTypes), diana/guesses/ (ArrowGuessBurrow, GuessEntry, PreciseGuessBurrow), diana/sphinx/ (SphinxSolver, SphinxSession, SphinxQuestions), utils/events/DianaEvents.kt, utils/math/ (PolynomialFitter, Matrix, RaycastUtils), utils/waypoint/WaypointManager.kt and WarpPoint.kt, and the settings text in settings/categories/Diana.kt
+- License: Apache License 2.0. SBO credits its arrow guess to SidOfThe7Cs's work in SkyHanni (https://github.com/hannibal002/SkyHanni/pull/4916, LGPL-2.1) and its raycast helpers to SkyHanni's RaycastUtils.
+
+The Kotlin code was rewritten in Java. Changes: waypoints are drawn with SkyBalls's world renderer, the guess colours and beacon beam are SkyBalls settings, and the warp keys use SkyBalls's warp settings.
+
+## Diana profit tracker and Lobby Compromised
+
+The Diana profit tracker (`features/combat/DianaProfitTracker.java`) follows SkyHanni's DianaProfitTracker (https://github.com/hannibal002/SkyHanni, LGPL-2.1), with SkyHanni-REPO's constants/DianaDrops.json list (MIT License). Lobby Compromised (`features/combat/DianaLobbyCompromised.java`) is ported from Skysoft's DianaLobbyCompromisedWatcher (https://github.com/Akinsoft/Skysoft, LGPL-3.0), reading your party from chat instead of the Hypixel mod API.
+
 ## SkyOcean
 
 SkyBalls's search-keybind and recipe-command workflows are adapted from the corresponding SkyOcean features:

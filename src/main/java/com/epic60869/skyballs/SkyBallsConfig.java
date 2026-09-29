@@ -404,9 +404,9 @@ public final class SkyBallsConfig extends Config {
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Upload Host", desc = "Where screenshots are uploaded. 0x0.st keeps them for at least 30 days, Uguu for 3 hours, Catbox for good.")
+        @ConfigOption(name = "Upload Host", desc = "Where screenshots are uploaded. SkyBalls sends them to ImgBB through the SkyBalls server (kept 30 days, and Catbox if that fails), Catbox keeps them for good, Uguu for 3 hours.")
         @ConfigEditorDropdown
-        public com.epic60869.skyballs.features.misc.ScreenshotShare.Host host = com.epic60869.skyballs.features.misc.ScreenshotShare.Host.NULL_POINTER;
+        public com.epic60869.skyballs.features.misc.ScreenshotShare.Host host = com.epic60869.skyballs.features.misc.ScreenshotShare.Host.SKYBALLS;
     }
 
     public static final class CollectionTrackerSettings {
@@ -452,6 +452,10 @@ public final class SkyBallsConfig extends Config {
     @Expose
     @Category(name = "Combat", desc = "Arrow counter, legion display, cocoon alerts and rare drops.")
     public com.epic60869.skyballs.features.FeatureConfigs.Combat combat = new com.epic60869.skyballs.features.FeatureConfigs.Combat();
+
+    @Expose
+    @Category(name = "Mayors", desc = "Features for SkyBlock's mayors and their events: Diana's rare mob sharing and lootshare helper.")
+    public com.epic60869.skyballs.features.FeatureConfigs.Mayors mayors = new com.epic60869.skyballs.features.FeatureConfigs.Mayors();
 
     @Expose
     @Category(name = "Slayers", desc = "Slayer boss phases and drop tracking.")
@@ -1294,6 +1298,13 @@ public final class SkyBallsConfig extends Config {
         // Removed: the warp shortcut list (every warp works now) and Auto Welcome.
         if (misc.remove("warpShortcutList") != null) changed = true;
         if (misc.remove("autoWelcome") != null) changed = true;
+        // Combat > Diana Rare Mobs moved to Mayors > Diana.
+        if (root.has("combat") && root.get("combat").isJsonObject() && root.getAsJsonObject("combat").has("diana")) {
+            JsonObject mayors = childObject(root, "mayors");
+            var diana = root.getAsJsonObject("combat").remove("diana");
+            if (!mayors.has("diana")) mayors.add("diana", diana);
+            changed = true;
+        }
         // Dragons and relics, terminals and devices, and the 3x3 platform highlight moved into Dungeons > F7/M7.
         if (root.has("dungeons") && root.get("dungeons").isJsonObject()) {
             JsonObject dungeons = root.getAsJsonObject("dungeons");

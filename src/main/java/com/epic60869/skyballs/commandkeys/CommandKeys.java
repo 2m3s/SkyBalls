@@ -60,8 +60,8 @@ public class CommandKeys {
             .append(Component.literal(MOD_NAME).withStyle(ChatFormatting.DARK_AQUA))
             .append(Component.literal("] ").withStyle(ChatFormatting.DARK_GRAY))
             .withStyle(ChatFormatting.GRAY);
-    public static final KeyMapping.Category CATEGORY =
-            KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "main"));
+    // SkyBalls change: Command Keys' binds are in the SkyBalls key category.
+    public static final KeyMapping.Category CATEGORY = com.epic60869.skyballs.SkyBallsKeyMappings.CATEGORY;
     public static final KeyMapping CONFIG_KEY = new KeyMapping(
             translationKey("key", "main.edit"),
             InputConstants.Type.KEYSYM,

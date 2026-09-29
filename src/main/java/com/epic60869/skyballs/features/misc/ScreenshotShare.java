@@ -26,17 +26,21 @@ import java.util.UUID;
 
 /**
  * Screenshot sharing, like Skysoft's: after F2, the "Saved screenshot as ..." message gets an [Upload] button. It
- * uploads the picture to 0x0.st (or Uguu or Catbox; none needs an account or key) and gives you the link with
- * [Send in /sbc] and [Copy Link]. The links are direct images, so they preview when hovered in chat.
+ * uploads the picture and gives you the link with [Send in /sbc] and [Copy Link]. The links are direct images, so
+ * they preview when hovered in chat.
+ *
+ * <p>By default it goes to ImgBB through the SkyBalls server ({@code POST /mod-api/screenshots}), which holds the
+ * ImgBB key, as Skysoft does with its own server; the links last 30 days. If that fails it goes to Catbox. Catbox
+ * and Uguu can also be picked; neither needs an account or key.
  */
 public final class ScreenshotShare {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
-    /** Settings saved with a host that's gone (the Litterbox ones) load as null, which means the default. */
+    /** Settings saved with a host that's gone (Litterbox, 0x0.st) load as null, which means the default. */
     public enum Host {
-        NULL_POINTER("0x0.st (30+ days)"),
-        UGUU("Uguu (3 hours)"),
-        CATBOX("Catbox (permanent)");
+        SKYBALLS("SkyBalls (ImgBB, 30 days)"),
+        CATBOX("Catbox (permanent)"),
+        UGUU("Uguu (3 hours)");
 
         private final String label;
 
@@ -58,7 +62,7 @@ public final class ScreenshotShare {
     }
 
     private static Host host(SkyBallsConfig.Screenshots c) {
-        return c == null || c.host == null ? Host.NULL_POINTER : c.host;
+        return c == null || c.host == null ? Host.SKYBALLS : c.host;
     }
 
     public static void init() {
@@ -97,7 +101,7 @@ public final class ScreenshotShare {
         say(Component.literal("Uploading " + name + "...").withStyle(ChatFormatting.GRAY));
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                String link = sendWithRetry(file, host);
+                String link = uploadWithFallback(file, host);
                 MutableComponent message = Component.literal("Screenshot uploaded: ").withStyle(ChatFormatting.GREEN)
                     .append(Component.literal(link).withStyle(s -> s.withColor(ChatFormatting.AQUA).withUnderlined(true)
                         .withClickEvent(new ClickEvent.OpenUrl(URI.create(link)))))
@@ -120,6 +124,17 @@ public final class ScreenshotShare {
         return 1;
     }
 
+    /** The SkyBalls server couldn't take it (down, or ImgBB failing): Catbox instead. */
+    private static String uploadWithFallback(Path file, Host host) throws Exception {
+        try {
+            return sendWithRetry(file, host);
+        } catch (Exception e) {
+            if (host != Host.SKYBALLS) throw e;
+            say(Component.literal("The SkyBalls upload didn't work (" + reason(e, host) + "), trying Catbox...").withStyle(ChatFormatting.GRAY));
+            return sendWithRetry(file, Host.CATBOX);
+        }
+    }
+
     /** Free hosts sometimes fail for a moment (HTTP 500, a timeout): try once more before giving up. */
     private static String sendWithRetry(Path file, Host host) throws Exception {
         try {
@@ -137,33 +152,34 @@ public final class ScreenshotShare {
         String url;
         String fileField;
         switch (host) {
+            case SKYBALLS -> {
+                url = "https://tastyfish.org/mod-api/screenshots";
+                fileField = "image";
+            }
             case UGUU -> {
                 url = "https://uguu.se/upload?output=text";
                 fileField = "files[]";
             }
-            case CATBOX -> {
+            default -> {
                 url = "https://catbox.moe/user/api.php";
                 fileField = "fileToUpload";
                 field(body, boundary, "reqtype", "fileupload");
-            }
-            default -> {
-                url = "https://0x0.st";
-                fileField = "file";
-                // A longer link that can't be guessed from other uploads.
-                field(body, boundary, "secret", "");
             }
         }
         body.write(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + fileField + "\"; filename=\""
             + file.getFileName() + "\"\r\nContent-Type: image/png\r\n\r\n").getBytes(StandardCharsets.UTF_8));
         body.write(Files.readAllBytes(file));
         body.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-            .timeout(Duration.ofSeconds(60))
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
+            .timeout(Duration.ofSeconds(70))
             .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-            .header("User-Agent", "SkyBalls/" + com.epic60869.skyballs.features.sbc.SbcInfo.modVersion())
-            .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build();
+            .header("User-Agent", "SkyBalls/" + com.epic60869.skyballs.features.sbc.SbcInfo.modVersion());
+        // Lets the server rate-limit uploads per player.
+        if (host == Host.SKYBALLS) builder.header("X-Minecraft-Uuid", String.valueOf(Minecraft.getInstance().getUser().getProfileId()));
+        HttpRequest request = builder.POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray())).build();
         HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         String text = response.body().trim();
+        if (host == Host.SKYBALLS) return skyBallsLink(response.statusCode(), text);
         if (response.statusCode() != 200 || !text.startsWith("https://")) {
             // Error pages are whole HTML documents: only a short plain-text answer is worth showing.
             boolean readable = !text.isEmpty() && text.length() <= 200 && !text.contains("<");
@@ -171,6 +187,24 @@ public final class ScreenshotShare {
                 + (readable ? ": " + text : response.statusCode() >= 500 ? " (its server is having problems, try again in a bit)" : ""));
         }
         return text.lines().findFirst().orElse(text).trim();
+    }
+
+    /**
+     * The SkyBalls server's answer: {@code {"url": "https://i.ibb.co/...png", "page": "https://ibb.co/..."}}, or
+     * {@code {"error": "..."}} with a non-2xx status.
+     */
+    private static String skyBallsLink(int status, String text) {
+        com.google.gson.JsonObject json = null;
+        try {
+            json = com.google.gson.JsonParser.parseString(text).getAsJsonObject();
+        } catch (Exception ignored) {}
+        if (status < 200 || status > 299 || json == null || !json.has("url")) {
+            String error = json != null && json.has("error") ? json.get("error").getAsString() : "";
+            throw new IllegalStateException("the SkyBalls server answered HTTP " + status + (error.isBlank() ? "" : ": " + error));
+        }
+        String link = json.get("url").getAsString();
+        if (!link.startsWith("https://")) throw new IllegalStateException("the SkyBalls server sent a bad link");
+        return link;
     }
 
     /** A one-line reason for chat. */

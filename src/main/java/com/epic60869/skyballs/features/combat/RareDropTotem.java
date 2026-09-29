@@ -52,12 +52,15 @@ public final class RareDropTotem {
         return c != null && c.combat.rareDrops.totemAnimation;
     }
 
+    /** An RNG drop: one on Skyblocker's list (slayer, Diana and fishing RNG items), or any PRAY TO RNGESUS or RNG METER drop. */
+    static boolean isRngDrop(String type, String item) {
+        return RNG_DROPS.containsKey(item) || type.startsWith("PRAY TO RNGESUS") || type.startsWith("RNG METER");
+    }
+
     /** A rare drop line ({@link CombatFeatures}): {@code type} is "RARE DROP!", "PRAY TO RNGESUS DROP!", .... */
     static void onDrop(String type, String item) {
-        if (!enabled()) return;
+        if (!enabled() || !isRngDrop(type, item)) return;
         String id = RNG_DROPS.get(item);
-        boolean rng = type.startsWith("PRAY TO RNGESUS") || type.startsWith("RNG METER");
-        if (id == null && !rng) return;
         if (id == null) id = RepoItems.idByName(item);
         if (id == null) return;
         ItemStack stack = RepoItems.itemStack(id);

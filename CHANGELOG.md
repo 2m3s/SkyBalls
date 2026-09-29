@@ -2,6 +2,32 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.8 — 2026-09-29
+
+### Added
+- Diana burrows (Mayors → Diana → Burrows), from SkyBlock Overhaul (SBO):
+  - Close Burrow Detection: burrows near you are found from their particles and shown as Start, Mob or Treasure burrows. /sb clearburrows clears the waypoints.
+  - Arrow Guess: after each burrow, the arrow's particles point to the next one.
+  - Spade Guess: where your spade's trail lands.
+  - Waypoints are a coloured block border (guesses purple, mob burrows red, treasure gold, start green; all changeable), with an optional beacon beam in the same colour, and dig progress ([1/2]) to the right, left, above or below the name.
+  - Multi Guesses keeps earlier guesses when a new one comes in, and Keep Waypoints on World Change keeps them when you change servers.
+- Diana Warp keys (Options → Controls → Key Binds → SkyBalls), from SBO: warp to the warp closest to your next burrow or guess, or to the newest rare mob your party shared. Pick which warps can be used under Mayors → Diana → Diana Warp.
+- Sphinx Solver (Mayors → Diana), from SBO: the Sphinx's answers show in chat with the right one in green, and clicking anywhere while chat is open answers it. There's also a key for it (use at your own risk).
+- Diana Profit Tracker (Mayors → Diana → Profit Tracker): what each Diana drop was worth, the coins you dug out, burrows dug, total profit, profit per burrow and per hour, and the time you spent, for this session, this mayor term or all time (/sb dianatracker session|season|alltime|reset). Move it in /sb hud.
+- Lobby Compromised (Mayors → Diana), from Skysoft: an alert when too many players who aren't in your party join your lobby while you do Diana, as a title and optionally in party chat.
+- Copy RNG Drops (Combat → Rare Drops): copies only RNG drops to your clipboard (PRAY TO RNGESUS and RNG METER drops, and slayer, Diana and fishing RNG items), for when you don't want every rare drop copied.
+- Copy Slayer Drops and Copy Garden Drops (Combat → Rare Drops): copy only slayer drops (anything on a slayer's drop list), or only Garden drops (RARE CROP drops and anything else that drops in the Garden, like pest drops).
+
+### Changed
+- The jumpscare now has a 1 in 1,000 chance each time you run /sb: it plays, then the menu opens, instead of a random chance every second while playing. Still never in dungeons or Kuudra.
+- One SkyBalls category in Options → Controls → Key Binds: the Command Keys binds are in it now, with the new Diana keys.
+- Pest Highlight draws a box around each pest (seen through crops and walls) instead of outlining its invisible Silverfish or Bat and the armor stand it wears.
+- New Mayors category in the sidebar, with Diana under it: the Diana rare mob sharing and lootshare settings moved there from Combat (your settings move with them).
+- Screenshot uploads go through the SkyBalls server to ImgBB (links last 30 days), like Skysoft's. If that doesn't work they go to Catbox instead. Catbox (permanent) and Uguu (3 hours) can still be picked under Misc → Screenshots.
+
+### Removed
+- 0x0.st as a screenshot host: it has stopped taking uploads.
+
 ## 1.3.7 — 2026-09-29
 
 ### Added

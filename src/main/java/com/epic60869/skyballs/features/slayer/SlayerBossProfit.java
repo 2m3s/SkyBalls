@@ -167,6 +167,19 @@ public final class SlayerBossProfit {
         return pet.matches() && keys.contains("PET:" + pet.group(1));
     }
 
+    /**
+     * Whether a rare drop (by its name in chat) is a slayer drop: an item on any slayer's drop list, or, before the
+     * lists have loaded, anything that drops during a slayer quest.
+     */
+    public static boolean isSlayerDrop(String itemName) {
+        Map<String, java.util.Set<String>> lists = drops;
+        if (lists.isEmpty()) return SlayerFeatures.onSlayerQuest();
+        String id = com.epic60869.skyballs.custom.RepoItems.idByName(itemName);
+        if (id == null) return false;
+        for (java.util.Set<String> keys : lists.values()) if (keys.contains(id)) return true;
+        return false;
+    }
+
     private static final Pattern PET_ID = Pattern.compile("^LVL_\\d+_[A-Z]+_(.+)$");
 
     public static void init(java.nio.file.Path configDir) {
@@ -498,7 +511,7 @@ public final class SlayerBossProfit {
     }
 
     /** What a "[Sacks]" message added, per item name (each hover once; Hypixel repeats it on several parts). */
-    private static Map<String, Long> sackGains(Component component) {
+    public static Map<String, Long> sackGains(Component component) {
         Map<String, Long> net = new LinkedHashMap<>();
         java.util.Set<String> seen = new java.util.HashSet<>();
         List<Component> parts = new ArrayList<>();

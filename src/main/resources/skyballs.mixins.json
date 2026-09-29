@@ -67,8 +67,6 @@
     "SkyBallsChromaTextMixin",
     "SkyBallsCapeMixin",
     "SkyBallsItemCooldownMixin",
-    "SkyBallsPestGlowMixin",
-    "SkyBallsPestGlowColourMixin",
     "SkyBallsEntityGlowMixin",
     "SkyBallsEntityGlowColourMixin",
     "SkyBallsSlayerPacketsMixin",

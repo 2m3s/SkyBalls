@@ -188,7 +188,12 @@ public final class CombatFeatures {
                 amount = Integer.parseInt(prefixed.group("amount"));
                 item = prefixed.group("item").trim();
             }
-            onRareDrop(config.rareDrops, text.trim(), item, amount);
+            String type = m.group("type").trim();
+            boolean rng = RareDropTotem.isRngDrop(type, item);
+            boolean slayer = com.epic60869.skyballs.features.slayer.SlayerBossProfit.isSlayerDrop(item);
+            // RARE CROP lines, and anything else that drops in the Garden (pest drops).
+            boolean garden = type.contains("CROP") || SkyBallsLocation.inGarden();
+            onRareDrop(config.rareDrops, text.trim(), item, amount, rng, slayer, garden);
             RareDropTotem.onDrop(m.group("type").trim(), item);
         }
     }
@@ -228,9 +233,10 @@ public final class CombatFeatures {
         return false;
     }
 
-    private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount) {
+    private static void onRareDrop(FeatureConfigs.RareDrops config, String text, String item, int amount,
+                                   boolean rng, boolean slayer, boolean garden) {
         Minecraft mc = Minecraft.getInstance();
-        if (config.copy) {
+        if (config.copy || (config.copyRng && rng) || (config.copySlayer && slayer) || (config.copyGarden && garden)) {
             mc.execute(() -> {
                 mc.keyboardHandler.setClipboard(text);
                 com.epic60869.skyballs.features.misc.CopyChat.showPreview("Drop copied", text);

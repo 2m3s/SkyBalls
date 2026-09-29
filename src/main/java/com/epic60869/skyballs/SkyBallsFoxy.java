@@ -8,7 +8,6 @@ import java.util.Random;
 
 public final class SkyBallsFoxy {
     private static final Random RANDOM = new Random();
-    private static int tickCounter;
 
     private SkyBallsFoxy() {}
 
@@ -24,22 +23,30 @@ public final class SkyBallsFoxy {
         return com.epic60869.skyballs.features.core.SkyBallsLocation.onSkyblock() && area.isEmpty();
     }
 
+    /** The menu to open once the scare is over (it's drawn on the HUD, so a menu would cover it). */
+    private static Runnable afterScare;
+
     public static void tick(Minecraft mc) {
-        tickCounter++;
-
-        // One independent 1/100,000 roll every second (10x rarer than the linked datapack's 1/10,000).
-        if (tickCounter < 20) return;
-        tickCounter = 0;
-
-        if (SkyBallsFoxyScare.isPlaying()) return;
-        // Never in dungeons or Kuudra, where a surprise scare would ruin a run.
-        if (inInstance()) return;
-
-        if (RANDOM.nextInt(100_000) == 0) {
-            mc.getSoundManager().play(
-                SimpleSoundInstance.forUI(SoundEvents.GHAST_SCREAM, 1.5F, 0.72F)
-            );
-            SkyBallsFoxyScare.start();
+        if (afterScare != null && !SkyBallsFoxyScare.isPlaying()) {
+            Runnable open = afterScare;
+            afterScare = null;
+            open.run();
         }
+    }
+
+    /**
+     * Opening the SkyBalls menu (/sb): a 1 in 1,000 chance of the scare first, never in dungeons
+     * or Kuudra. {@code open} opens the menu, straight away or once the scare is over.
+     */
+    public static void openMenu(Minecraft mc, Runnable open) {
+        if (SkyBallsFoxyScare.isPlaying() || inInstance() || RANDOM.nextInt(1_000) != 0) {
+            open.run();
+            return;
+        }
+        // Close whatever is open so the scare shows.
+        mc.gui.setScreen(null);
+        mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.GHAST_SCREAM, 1.5F, 0.72F));
+        SkyBallsFoxyScare.start();
+        afterScare = open;
     }
 }

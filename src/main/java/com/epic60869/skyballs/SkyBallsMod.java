@@ -52,6 +52,10 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.combat.CombatFeatures.init();
         com.epic60869.skyballs.features.combat.ZealotCounter.init(configDir);
         com.epic60869.skyballs.features.combat.DianaRareMobs.init();
+        com.epic60869.skyballs.features.combat.DianaBurrows.init();
+        com.epic60869.skyballs.features.combat.DianaSphinx.init();
+        com.epic60869.skyballs.features.combat.DianaProfitTracker.init(configDir);
+        com.epic60869.skyballs.features.combat.DianaLobbyCompromised.init();
         com.epic60869.skyballs.features.slayer.SlayerFeatures.init();
         com.epic60869.skyballs.features.slayer.EndermanSlayer.init();
         com.epic60869.skyballs.features.slayer.BlazeSlayer.init();
@@ -180,7 +184,8 @@ public final class SkyBallsMod implements ClientModInitializer {
     }
 
     private int openMenu() {
-        Minecraft.getInstance().execute(SkyBallsConfig::openGui);
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> SkyBallsFoxy.openMenu(mc, SkyBallsConfig::openGui));
         return 1;
     }
 

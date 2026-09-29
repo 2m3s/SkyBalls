@@ -28,11 +28,6 @@ public final class FeatureConfigs {
         public RareDrops rareDrops = new RareDrops();
 
         @Expose
-        @Accordion
-        @ConfigOption(name = "Diana Rare Mobs", desc = "Share rare Diana mobs with your party and see when you've done enough damage to lootshare them, like Skysoft.")
-        public Diana diana = new Diana();
-
-        @Expose
         @ConfigOption(name = "Arrow Counter", desc = "HUD showing the selected arrow type and how many arrows are left in your quiver.")
         @ConfigEditorBoolean
         public boolean arrowCounter = false;
@@ -48,8 +43,177 @@ public final class FeatureConfigs {
         public boolean legionDisplay = false;
     }
 
+    /** Mayors: a sub-category in the sidebar per mayor (shown under Mayors when it's open). */
+    public static final class Mayors {
+        @Expose
+        @Category(name = "Diana", desc = "Share rare Diana mobs with your party and see when you've done enough damage to lootshare them, like Skysoft.")
+        public Diana diana = new Diana();
+    }
+
+    /** Diana burrow detection and guesses, ported from SkyBlock Overhaul. */
+    public static final class DianaBurrows {
+        @Expose
+        @ConfigOption(name = "Close Burrow Detection", desc = "Detects burrow locations when being close to them from the particles when holding shovel to register/update it as a Treasure, Mob or Start burrow. Needs Critical Hit and Enchant particles, and set /particlequality extreme. To reset waypoints type /sb clearburrows.")
+        @ConfigEditorBoolean
+        public boolean closeBurrowDetection = false;
+
+        @Expose
+        @ConfigOption(name = "Arrow Guess", desc = "Guesses the burrow location from the arrow direction after digging a burrow.\n§cHave Dust and Smoke Particles enabled and /particlequality extreme!\n§aDo every burrow you see and Use Spade when the mod tells you to for doing Diana the fastest way!")
+        @ConfigEditorBoolean
+        public boolean arrowGuess = false;
+
+        @Expose
+        @ConfigOption(name = "Spade Guess", desc = "Guess the burrow location when using spade ability. Needs Dripping Lava Particles and set /particlequality to Extreme for more accuracy.")
+        @ConfigEditorBoolean
+        public boolean spadeGuess = false;
+
+        @Expose
+        @ConfigOption(name = "Multi Guesses", desc = "Remember previous guess locations when guessing to a new location. Off: a new arrow or spade guess replaces the old ones.")
+        @ConfigEditorBoolean
+        public boolean multiGuesses = false;
+
+        @Expose
+        @ConfigOption(name = "Keep Waypoints on World Change", desc = "Keep your burrow and guess waypoints when you change servers (burrows are yours, so they're in the same places on every Hub). Off: they're cleared.")
+        @ConfigEditorBoolean
+        public boolean keepOnWorldChange = false;
+
+        @Expose
+        @ConfigOption(name = "Show Beacon Beam", desc = "Shows a beacon beam for waypoints going to the sky if enabled.")
+        @ConfigEditorBoolean
+        public boolean beaconBeam = false;
+
+        @Expose
+        @ConfigOption(name = "Show Progress", desc = "Show burrow click progress.")
+        @ConfigEditorBoolean
+        public boolean showProgress = true;
+
+        @Expose
+        @ConfigOption(name = "Progress Position", desc = "Where to show burrow click progress.")
+        @ConfigEditorDropdown
+        public ProgressPosition progressPosition = ProgressPosition.RIGHT;
+
+        public enum ProgressPosition {
+            RIGHT("Right"), LEFT("Left"), ABOVE("Above"), BELOW("Below");
+
+            private final String label;
+
+            ProgressPosition(String label) {
+                this.label = label;
+            }
+
+            @Override
+            public String toString() {
+                return label;
+            }
+        }
+
+        @Expose
+        @ConfigOption(name = "Guess Colour", desc = "Border (and beam) colour of arrow and spade guesses.")
+        @ConfigEditorColour
+        public String guessColour = "0:255:170:0:255";
+
+        @Expose
+        @ConfigOption(name = "Mob Colour", desc = "Border (and beam) colour of mob burrows.")
+        @ConfigEditorColour
+        public String mobColour = "0:255:255:85:85";
+
+        @Expose
+        @ConfigOption(name = "Treasure Colour", desc = "Border (and beam) colour of treasure burrows.")
+        @ConfigEditorColour
+        public String treasureColour = "0:255:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Start Colour", desc = "Border (and beam) colour of start burrows.")
+        @ConfigEditorColour
+        public String startColour = "0:255:85:255:85";
+    }
+
+    public static final class DianaProfitTracker {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show the Diana profit tracker HUD in the Hub while you're doing Diana (and for 10 minutes after).")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Show", desc = "Which totals the HUD shows: this session, this mayor term (Diana's whole season) or all time. Also /sb dianatracker session|season|alltime, and /sb dianatracker reset to reset the one shown.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.combat.DianaProfitTracker.Period period = com.epic60869.skyballs.features.combat.DianaProfitTracker.Period.SESSION;
+    }
+
+    public static final class DianaLobbyCompromised {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Alert when too many non-party players join the lobby.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Stranger Limit", desc = "Non-party players before alerting.")
+        @ConfigEditorSlider(minValue = 2, maxValue = 12, minStep = 1)
+        public int strangerLimit = 10;
+
+        @Expose
+        @ConfigOption(name = "Title Alert", desc = "A \"Lobby compromised!\" title and a bell.")
+        @ConfigEditorBoolean
+        public boolean titleAlert = true;
+
+        @Expose
+        @ConfigOption(name = "Chat Alert", desc = "Say \"Lobby compromised!\" in party chat.")
+        @ConfigEditorBoolean
+        public boolean chatAlert = false;
+    }
+
+    /** The Diana warp keys (SBO's): set them in Options > Controls > Key Binds, under SkyBalls. */
+    public static final class DianaWarp {
+        @ConfigOption(name = "Diana Warp", desc = "You must configure the warp keys from vanilla Minecraft settings, under (ESC) -> Options -> Controls -> Key Binds... scroll till you find SkyBalls and configure it from there.")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorInfoText
+        public boolean info = false;
+
+        @Expose @ConfigOption(name = "Warp: Castle", desc = "Let the warp keys use /warp castle.") @ConfigEditorBoolean public boolean castle = true;
+        @Expose @ConfigOption(name = "Warp: Wizard", desc = "Let the warp keys use /warp wizard.") @ConfigEditorBoolean public boolean wizard = true;
+        @Expose @ConfigOption(name = "Warp: Dark Auction", desc = "Let the warp keys use /warp da.") @ConfigEditorBoolean public boolean da = true;
+        @Expose @ConfigOption(name = "Warp: Crypt", desc = "Let the warp keys use /warp crypt.") @ConfigEditorBoolean public boolean crypt = false;
+        @Expose @ConfigOption(name = "Warp: Stonks", desc = "Let the warp keys use /warp stonks.") @ConfigEditorBoolean public boolean stonks = false;
+        @Expose @ConfigOption(name = "Warp: Taylor", desc = "Let the warp keys use /warp taylor.") @ConfigEditorBoolean public boolean taylor = false;
+        @Expose @ConfigOption(name = "Warp: Museum", desc = "Let the warp keys use /warp museum.") @ConfigEditorBoolean public boolean museum = false;
+
+        @Expose
+        @ConfigOption(name = "Don't Warp If Close", desc = "The warp key won't warp you if you are already within 60 blocks of the target (burrow, guess or rare mob).")
+        @ConfigEditorBoolean
+        public boolean dontWarpIfClose = true;
+
+        @Expose
+        @ConfigOption(name = "Warp Block Difference", desc = "Only warp if the warp is at least this many blocks closer to the target than you are.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 60, minStep = 1)
+        public int warpDiff = 22;
+    }
+
     /** Diana rare mob sharing and the lootshare helper, ported from Skysoft. */
     public static final class Diana {
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Burrows", desc = "Burrow waypoints from the particles near you, the arrow after each burrow and your spade, like SkyBlock Overhaul (SBO).")
+        public DianaBurrows burrows = new DianaBurrows();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Diana Warp", desc = "Keys that warp you to the warp closest to your next burrow or to a shared rare mob.")
+        public DianaWarp warp = new DianaWarp();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Profit Tracker", desc = "What each Diana drop was worth, the total profit and the time spent, for this session, this mayor term or all time, like SkyHanni's. Move it in /sb hud.")
+        public DianaProfitTracker profitTracker = new DianaProfitTracker();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Lobby Compromised", desc = "Alert when too many non-party players join the lobby while you do Diana, like Skysoft.")
+        public DianaLobbyCompromised lobbyCompromised = new DianaLobbyCompromised();
+
+        @Expose
+        @ConfigOption(name = "Sphinx Solver", desc = "Helps you solve the sphinx riddle by showing you the answer choices in chat and it automatically clicks the correct one for you when you click anywhere while the chat is open.\nTheres also the option to us a keybind in the mc keybinds menu but §c⚠ USE AT YOUR OWN RISK ⚠")
+        @ConfigEditorBoolean
+        public boolean sphinxSolver = false;
+
         @Expose
         @ConfigOption(name = "Rare Mob Sharing", desc = "When you dig up a rare mob, send its coordinates in party chat. Rare mobs your party shares get a waypoint and a title.")
         @ConfigEditorBoolean
@@ -184,6 +348,21 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Copy Rare Drops", desc = "Copy rare drop messages to your clipboard (RARE, VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, rare crops, rare rewards and outstanding catches). What was copied shows in chat, using Copy Chat's preview settings.")
         @ConfigEditorBoolean
         public boolean copy = false;
+
+        @Expose
+        @ConfigOption(name = "Copy RNG Drops", desc = "Copy only RNG drops to your clipboard: PRAY TO RNGESUS and RNG METER drops, and slayer, Diana and fishing RNG items (Skyblocker's list). Not needed with Copy Rare Drops on, which copies these too.")
+        @ConfigEditorBoolean
+        public boolean copyRng = false;
+
+        @Expose
+        @ConfigOption(name = "Copy Slayer Drops", desc = "Copy only slayer drops to your clipboard: anything on a slayer's drop list (SkyHanni's slayer profit tracker lists). Not needed with Copy Rare Drops on.")
+        @ConfigEditorBoolean
+        public boolean copySlayer = false;
+
+        @Expose
+        @ConfigOption(name = "Copy Garden Drops", desc = "Copy only Garden drops to your clipboard: RARE CROP drops and anything else that drops in the Garden, like pest drops. Not needed with Copy Rare Drops on.")
+        @ConfigEditorBoolean
+        public boolean copyGarden = false;
 
         @Expose
         @ConfigOption(name = "Big Drop Animation", desc = "Play an animation when a rare drop is worth more than the threshold.")

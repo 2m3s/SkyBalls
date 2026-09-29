@@ -290,12 +290,12 @@ public final class SbcConfig {
 
     public static final class PestHighlight {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "In the Garden only: outline pests so they're easy to find. Off everywhere else.")
+        @ConfigOption(name = "Enabled", desc = "In the Garden only: a box around pests, seen through crops and walls, so they're easy to find. Off everywhere else.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Colour", desc = "The outline colour.")
+        @ConfigOption(name = "Colour", desc = "The box colour.")
         @ConfigEditorColour
         public String colour = "0:255:255:85:255";
 

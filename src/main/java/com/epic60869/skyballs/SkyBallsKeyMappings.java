@@ -9,10 +9,17 @@ public final class SkyBallsKeyMappings {
     private static final Identifier CATEGORY_ID =
         Identifier.fromNamespaceAndPath("skyballs", "main");
 
-    public static KeyMapping.Category CATEGORY;
+    /** The SkyBalls category in Options > Controls > Key Binds. Command Keys' binds are in it too. */
+    public static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(CATEGORY_ID);
     public static KeyMapping SEARCH;
     /** Shares the held (or hovered) item in SkyBalls chat. Unbound until you pick a key. */
     public static KeyMapping SHARE_ITEM;
+    /** Diana: warp to the warp closest to your next burrow or guess (SBO's guess warp key). */
+    public static KeyMapping DIANA_GUESS_WARP;
+    /** Diana: warp to the warp closest to the newest rare mob your party shared. */
+    public static KeyMapping DIANA_RARE_MOB_WARP;
+    /** Diana: answer the Sphinx (Sphinx Solver). Use at your own risk. */
+    public static KeyMapping DIANA_SPHINX_SOLVER;
 
     private static boolean initialized;
 
@@ -28,8 +35,6 @@ public final class SkyBallsKeyMappings {
         if (initialized) {
             return;
         }
-
-        CATEGORY = KeyMapping.Category.register(CATEGORY_ID);
 
         SEARCH = KeyMappingHelper.registerKeyMapping(
             new KeyMapping(
@@ -50,6 +55,13 @@ public final class SkyBallsKeyMappings {
         );
 
         com.epic60869.skyballs.features.misc.ToggleSprint.registerKey();
+
+        DIANA_GUESS_WARP = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.skyballs.diana_guess_warp", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
+        DIANA_RARE_MOB_WARP = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.skyballs.diana_rare_mob_warp", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
+        DIANA_SPHINX_SOLVER = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.skyballs.diana_sphinx_solver", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
 
         initialized = true;
     }

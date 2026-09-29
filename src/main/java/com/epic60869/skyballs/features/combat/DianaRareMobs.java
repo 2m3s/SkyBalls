@@ -295,7 +295,7 @@ public final class DianaRareMobs {
 
     private static FeatureConfigs.Diana config() {
         SkyBallsConfig c = SkyBallsConfig.current();
-        return c == null ? null : c.combat.diana;
+        return c == null ? null : c.mayors.diana;
     }
 
     private static boolean onHub() {
@@ -351,6 +351,13 @@ public final class DianaRareMobs {
         List<Target> list = new ArrayList<>();
         for (Target t : targets.values()) if (t.server.equals(server)) list.add(t);
         return list;
+    }
+
+    /** Where the newest rare mob a party member shared is, or null (the Diana rare mob warp key). */
+    public static Vec3 newestSharedRareMob() {
+        return currentTargets().stream().filter(t -> t.source == Source.REMOTE)
+            .max(Comparator.comparingLong((Target t) -> t.createdAt).thenComparingLong(t -> t.id))
+            .map(Target::lineLocation).orElse(null);
     }
 
     private static Set<RareMob> sharedMobs(FeatureConfigs.Diana config) {

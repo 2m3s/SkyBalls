@@ -25,15 +25,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Pest highlight, in the Garden only: pests (an invisible Silverfish or Bat under a "Beetle" name line)
- * get an outline in your colour, optionally with a line from your crosshair and a beam on the nearest one, and a HUD
+ * get a box in your colour, optionally with a line from your crosshair and a beam on the nearest one, and a HUD
  * shows how many are alive and on which plots (from the tab list). Written for SkyBalls; everywhere else it's off.
  */
 public final class PestHighlight {
@@ -41,9 +39,17 @@ public final class PestHighlight {
     private static final Pattern PLOTS = Pattern.compile("(?:Infested )?Plots?: (.+)");
     private static final Pattern SCOREBOARD_PESTS = Pattern.compile("[ൠ\\uE07F\\uE018] x(\\d+)");
 
-    /** Entity ids of pest bodies this tick. */
-    private static volatile Set<Integer> pests = Set.of();
-    private static volatile List<Vec3> positions = List.of();
+    /**
+     * A pest: the entity its box follows (the head it wears, or its invisible body when it has none) and where on that
+     * entity the box goes. Its Silverfish or Bat and armor stand aren't outlined, as their shapes aren't the pest's.
+     */
+    private record Pest(Entity anchor, double yOffset) {
+        Vec3 centre(float partial) {
+            return anchor.getPosition(partial).add(0, yOffset, 0);
+        }
+    }
+
+    private static volatile List<Pest> pests = List.of();
     private static String alive = "";
     private static String plots = "";
     private static int ticks;
@@ -63,28 +69,34 @@ public final class PestHighlight {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 != 0) return;
             if (mc.level == null || !active()) {
-                if (!pests.isEmpty()) {
-                    pests = Set.of();
-                    positions = List.of();
-                }
+                if (!pests.isEmpty()) pests = List.of();
                 return;
             }
             scan(mc);
             readTab();
         });
         SkyBallsWorldRender.register(collector -> {
-            if (!active() || positions.isEmpty()) return;
+            if (!active() || pests.isEmpty()) return;
             SbcConfig.PestHighlight c = config();
-            if (!c.tracer && !c.beacon) return;
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
-            Vec3 eye = mc.player.getEyePosition();
-            Vec3 nearest = null;
-            for (Vec3 p : positions) if (nearest == null || p.distanceToSqr(eye) < nearest.distanceToSqr(eye)) nearest = p;
+            float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
             int colour = Sbc.colour(c.colour, 0xFFFF55FF);
             float[] rgb = {(colour >> 16 & 255) / 255f, (colour >> 8 & 255) / 255f, (colour & 255) / 255f};
-            if (c.tracer) collector.submitLineFromCursor(nearest.add(0, 0.3, 0), rgb, 1f, 2f);
-            if (c.beacon) collector.submitFilledBoxWithBeaconBeam(new AABB(nearest.subtract(0.3, 0, 0.3), nearest.add(0.3, 0.6, 0.3)), rgb, 0.4f, false);
+            Vec3 eye = mc.player.getEyePosition();
+            Vec3 nearest = null;
+            for (Pest pest : pests) {
+                if (pest.anchor().isRemoved()) continue;
+                Vec3 p = pest.centre(partial);
+                // Seen through crops and walls, so pests are easy to find.
+                AABB box = new AABB(p.subtract(0.35, 0.35, 0.35), p.add(0.35, 0.35, 0.35));
+                collector.submitFilledBox(box, rgb, 0.25f, true);
+                collector.submitOutlinedBox(box, rgb, 1f, 2f, true);
+                if (nearest == null || p.distanceToSqr(eye) < nearest.distanceToSqr(eye)) nearest = p;
+            }
+            if (nearest == null) return;
+            if (c.tracer) collector.submitLineFromCursor(nearest, rgb, 1f, 2f);
+            if (c.beacon) collector.submitFilledBoxWithBeaconBeam(new AABB(nearest.subtract(0.3, 0.3, 0.3), nearest.add(0.3, 0.3, 0.3)), rgb, 0.4f, false);
         });
         com.epic60869.skyballs.features.core.SkyBallsHuds.setting("pestHighlight", () -> config().enabled && config().hud);
         SkyBallsHuds.register("pestHighlight", "Pests", () -> active() && config().hud, PestHighlight::hudLines,
@@ -97,7 +109,7 @@ public final class PestHighlight {
     /**
      * As SkyHanni's MobFinder.tryAddGarden: a pest is an invisible Silverfish or Bat with the pest's name above it.
      * The name line is an armor stand or (as Hypixel now draws nametags) a text display, and its icon is a private-use
-     * glyph now rather than ൠ, so the name itself is matched. The head the pest wears (an armor stand) is outlined too.
+     * glyph now rather than ൠ, so the name itself is matched. The box goes on the head the pest wears (an armor stand).
      */
     private static void scan(Minecraft mc) {
         Vec3 me = mc.player.position();
@@ -114,8 +126,7 @@ public final class PestHighlight {
             if (tag != null && PEST_NAME.matcher(SkyBallsLocation.strip(tag.getString())).find()) tags.add(entity);
             else if (entity instanceof ArmorStand stand && stand.getItemBySlot(EquipmentSlot.HEAD).is(Items.PLAYER_HEAD)) heads.add(stand);
         }
-        Set<Integer> found = new HashSet<>();
-        List<Vec3> where = new ArrayList<>();
+        List<Pest> found = new ArrayList<>();
         for (Entity body : bodies) {
             boolean named = false;
             for (Entity tag : tags) {
@@ -126,14 +137,14 @@ public final class PestHighlight {
                 }
             }
             if (!named) continue;
-            found.add(body.getId());
-            for (ArmorStand head : heads) {
-                if (head.distanceToSqr(body) <= 2.0 * 2.0) found.add(head.getId());
+            ArmorStand head = null;
+            for (ArmorStand stand : heads) {
+                if (stand.distanceToSqr(body) <= 2.0 * 2.0 && (head == null || stand.distanceToSqr(body) < head.distanceToSqr(body))) head = stand;
             }
-            where.add(body.position().add(0, body.getBbHeight() * 0.5, 0));
+            // The head is drawn at the top of its armor stand.
+            found.add(head != null ? new Pest(head, head.getBbHeight() - 0.25) : new Pest(body, body.getBbHeight() * 0.5));
         }
-        pests = Set.copyOf(found);
-        positions = List.copyOf(where);
+        pests = List.copyOf(found);
     }
 
     /** A nametag's text: an armor stand's custom name or a text display's text. */
@@ -170,20 +181,12 @@ public final class PestHighlight {
     }
 
     private static List<Component> hudLines() {
-        String count = !alive.isEmpty() ? alive : String.valueOf(positions.size());
+        String count = !alive.isEmpty() ? alive : String.valueOf(pests.size());
         if ("0".equals(count) && plots.isEmpty()) return List.of(Component.literal("Pests: ").withStyle(ChatFormatting.GOLD)
             .append(Component.literal("none").withStyle(ChatFormatting.GREEN)));
         return List.of(Component.literal("Pests: ").withStyle(ChatFormatting.GOLD)
             .append(Component.literal(count + " alive" + (plots.isEmpty() || plots.equalsIgnoreCase("none") ? "" : " · Plots " + plots)
-                + (positions.isEmpty() ? "" : " · " + positions.size() + " nearby")).withStyle(ChatFormatting.WHITE)));
+                + (pests.isEmpty() ? "" : " · " + pests.size() + " nearby")).withStyle(ChatFormatting.WHITE)));
     }
 
-    /** Whether the entity should be outlined (SkyBallsPestGlowMixin). */
-    public static boolean isPest(Entity entity) {
-        return !pests.isEmpty() && pests.contains(entity.getId()) && active();
-    }
-
-    public static int colour() {
-        return Sbc.colour(config().colour, 0xFFFF55FF) & 0xFFFFFF;
-    }
 }
