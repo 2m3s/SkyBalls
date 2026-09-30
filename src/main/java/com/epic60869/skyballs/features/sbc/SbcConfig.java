@@ -35,11 +35,6 @@ public final class SbcConfig {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Casino", desc = "The SkyBalls casino (/sb casino) and its daily reward.")
-        public Casino casino = new Casino();
-
-        @Expose
-        @Accordion
         @ConfigOption(name = "Server Messages", desc = "Update notices, announcements and the message of the day from the SkyBalls server.")
         public Server server = new Server();
 
@@ -175,13 +170,6 @@ public final class SbcConfig {
         @ConfigOption(name = "My Cosmetics", desc = "Pick the badge and cape you show.")
         @ConfigEditorButton(buttonText = "OPEN")
         public Runnable open = () -> SbcCosmetics.openScreen();
-    }
-
-    public static final class Casino {
-        @Expose
-        @ConfigOption(name = "Daily Reward Reminder", desc = "Remind you in chat when your casino daily reward can be claimed.")
-        @ConfigEditorBoolean
-        public boolean dailyReminder = false;
     }
 
     public static final class Server {

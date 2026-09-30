@@ -110,8 +110,18 @@ public final class SkyBallsUpdateChecker {
         });
     }
 
-    /** Compares versions like "1.2.10" and "1.2.9" number by number; a missing part counts as 0. */
+    /**
+     * Compares versions like "1.2.10" and "1.2.9" number by number; a missing part counts as 0. A test build
+     * ("test-1.3.9") is that version's number, just before its release.
+     */
     static int compare(String a, String b) {
+        String numberA = a.replaceFirst("^\\D+", ""), numberB = b.replaceFirst("^\\D+", "");
+        int result = compareNumbers(numberA, numberB);
+        if (result != 0) return result;
+        return Boolean.compare(numberA.equals(a), numberB.equals(b));
+    }
+
+    private static int compareNumbers(String a, String b) {
         String[] x = a.split("[.\\-+]"), y = b.split("[.\\-+]");
         for (int i = 0; i < Math.max(x.length, y.length); i++) {
             int p = i < x.length ? number(x[i]) : 0;

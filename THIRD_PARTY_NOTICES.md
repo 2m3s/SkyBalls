@@ -220,3 +220,33 @@ SkyBalls's M7 dragon and relic features (`features/dungeons/WitherDragons` and S
 - License: GNU General Public License v3.0 (GPL-3.0)
 
 NoFrills' dragon boxes and priorities come from Odin's WitherDragonEnum. The arrow-hit tracker was not ported.
+
+## Skysoft Hide Status Effects
+
+SkyBalls's Hide Status Effects (`features/misc/HideStatusEffects.java` and the SkyBallsEffectsInInventoryMixin mixin) is ported from Skysoft's (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d, mixin/EffectsInInventoryMixin.java and the Hide Status Effects option in config/GuiFeatureConfig.kt).
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## Skysoft Server Info Display, Real Time Display and Farming Profit Tracker
+
+SkyBalls's Server Info Display and Real Time Display (`features/misc/ServerInfo.java` and the SkyBallsServerInfoPacketMixin mixin) are ported from Skysoft (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): features/misc/ServerInfoDisplay.kt, ServerPingTracker.kt, ServerTpsEstimator.kt, ServerTpsProvider.kt, RealTimeDisplay.kt, config/ServerInfoDisplayConfig.kt, config/RealTimeDisplayConfig.kt and mixin/ServerInfoPacketMixin.java. The Farming Profit Tracker (`features/garden/FarmingProfitTracker.java`) follows Skysoft's Profit Tracker and its Farming preset: features/profit/ (ProfitTracker.kt, ProfitReplenishCosts.kt, ProfitCraftingReconciliation.kt, FarmingKernelProfit.kt, ProfitTrackerRenderable.kt), data/skyblock/ParsedGardenPestKill.kt and the farming items in assets/skysoft/data/profit_tracker_presets.json.
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## Skysoft Keep Terrain Loaded and Slayer Target Highlighting
+
+SkyBalls's Keep Terrain Loaded (`features/misc/KeepTerrainLoaded.java` and the SkyBallsKeepTerrainLoadedMixin, SkyBallsKeepTerrainChunkCacheMixin and SkyBallsClientPacketListenerAccessor mixins) is ported from Skysoft (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): features/misc/KeepTerrainLoaded.kt, mixin/KeepTerrainLoadedPacketMixin.java, mixin/KeepTerrainLoadedClientChunkCacheMixin.java and the island list in config/WorldFeatureConfig.kt. Boss Highlight (`features/slayer/SlayerTargetHighlight.java`) follows Skysoft's features/slayer/SlayerTargetHighlighting.kt and config/SlayerFeatureConfig.kt.
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## Odin Chat Commands
+
+SkyBalls's Party Commands !fps, !ping, !tps, !f1-!f7, !m1-!m7 and !t1-!t5 (`features/misc/PartyCommands.java`) follow Odin's ChatCommands, and the Etherwarp Overlay (`features/misc/EtherwarpOverlay.java`) is ported from Odin's src/main/kotlin/com/odtheking/odin/features/impl/render/Etherwarp.kt (with Bloom's voxel traversal) (https://github.com/odtheking/Odin, commit ae6a1994b633f5b8e59bf1a88b50e5eab6a1b15f, src/main/kotlin/com/odtheking/odin/features/impl/skyblock/ChatCommands.kt).
+
+- License: BSD 3-Clause License
+
+## NoFrills Egg Hits Display
+
+SkyBalls's Egg Hits Display (`features/slayer/EggHitsDisplay.java`) is ported from NoFrills (https://github.com/WhatYouThing/NoFrills, commit 1ecf22d3b9cf49a22dcf592e142fc67688e64424, src/main/java/nofrills/features/slayer/EggHitsDisplay.java).
+
+- License: GNU General Public License v3.0 (GPL-3.0)

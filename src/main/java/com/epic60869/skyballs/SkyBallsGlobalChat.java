@@ -212,7 +212,7 @@ public final class SkyBallsGlobalChat {
         ws.sendText(GSON.toJson(packet), true);
     }
 
-    /** The open connection, or null; identifies it (a reconnect is a new one, needing a new casino login). */
+    /** The open connection, or null; identifies it (a reconnect is a new one, needing a new login). */
     public static Object currentConnection() {
         WebSocket ws = socket;
         return ws == null || ws.isInputClosed() || ws.isOutputClosed() ? null : ws;
@@ -281,7 +281,7 @@ public final class SkyBallsGlobalChat {
                 hello.addProperty("modVersion", com.epic60869.skyballs.features.sbc.SbcInfo.modVersion());
                 hello.addProperty("mcVersion", com.epic60869.skyballs.features.sbc.SbcInfo.mcVersion());
                 ws.sendText(GSON.toJson(hello), true);
-                // Log in on every connection, right after hello: friends, casino, settings and cosmetics need it.
+                // Log in on every connection, right after hello: friends, settings and cosmetics need it.
                 Minecraft.getInstance().execute(() -> {
                     SkyBallsLogin.whenLoggedIn(null);
                     com.epic60869.skyballs.features.sbc.Sbc.onConnected();
@@ -480,11 +480,6 @@ public final class SkyBallsGlobalChat {
 
                 if (type.startsWith("pf")) {
                     Minecraft.getInstance().execute(() -> SkyBallsPartyFinder.handle(type, packet));
-                    return;
-                }
-
-                if (type.startsWith("casino")) {
-                    Minecraft.getInstance().execute(() -> SkyBallsCasino.handle(type, packet));
                     return;
                 }
 

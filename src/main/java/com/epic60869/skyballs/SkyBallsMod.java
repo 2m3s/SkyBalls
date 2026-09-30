@@ -55,6 +55,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.combat.DianaBurrows.init();
         com.epic60869.skyballs.features.combat.DianaSphinx.init();
         com.epic60869.skyballs.features.combat.DianaProfitTracker.init(configDir);
+        com.epic60869.skyballs.features.garden.FarmingProfitTracker.init(configDir);
         com.epic60869.skyballs.features.combat.DianaLobbyCompromised.init();
         com.epic60869.skyballs.features.slayer.SlayerFeatures.init();
         com.epic60869.skyballs.features.slayer.EndermanSlayer.init();
@@ -91,6 +92,13 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.misc.storage.StorageOverlay.init(configDir);
         com.epic60869.skyballs.features.misc.ItemEmojis.init(configDir);
         com.epic60869.skyballs.features.misc.HypixelButton.init();
+        com.epic60869.skyballs.features.misc.SmartDisconnect.init();
+        com.epic60869.skyballs.features.misc.ServerInfo.init();
+        com.epic60869.skyballs.features.misc.HideStatusEffects.init();
+        com.epic60869.skyballs.features.misc.KeepTerrainLoaded.init(configDir);
+        com.epic60869.skyballs.features.slayer.SlayerTargetHighlight.init();
+        com.epic60869.skyballs.features.slayer.EggHitsDisplay.init();
+        com.epic60869.skyballs.features.misc.EtherwarpOverlay.init();
         com.epic60869.skyballs.features.misc.ScreenshotShare.init();
         com.epic60869.skyballs.features.misc.JoinCommands.init();
         com.epic60869.skyballs.features.dungeons.CaseOpening.init();
@@ -147,13 +155,6 @@ public final class SkyBallsMod implements ClientModInitializer {
             .then(ClientCommands.literal("notes").executes(context -> openNotes()))
             .then(ClientCommands.literal("search").executes(context -> openStorageSearch()))
             .then(SkyBallsRecipeCommand.command())
-            .then(ClientCommands.literal("casino")
-                .executes(context -> !com.epic60869.skyballs.features.sbc.Flags.check("casino") ? 1
-                    : com.epic60869.skyballs.custom.util.Compat.queueOpenScreen(new SkyBallsCasinoGamesScreen()))
-                .then(ClientCommands.literal("daily").executes(context -> {
-                    SkyBallsCasino.claimDaily();
-                    return 1;
-                })))
             .then(ClientCommands.literal("calc")
                 .then(ClientCommands.argument("calculation", StringArgumentType.greedyString())
                     .executes(context -> calculate(StringArgumentType.getString(context, "calculation")))))

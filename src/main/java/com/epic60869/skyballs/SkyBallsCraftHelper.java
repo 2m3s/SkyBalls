@@ -212,7 +212,7 @@ public final class SkyBallsCraftHelper {
     // ----------------------------------------------------------------- recipes
 
     /** The best recipe for an item (crafting before Forge), fetched from the NEU repo and cached. Blocking. */
-    static Recipe recipeOf(String id) {
+    public static Recipe recipeOf(String id) {
         return RECIPES.computeIfAbsent(id, key -> Optional.ofNullable(withoutUncompacting(key, rawRecipeOf(key)))).orElse(null);
     }
 

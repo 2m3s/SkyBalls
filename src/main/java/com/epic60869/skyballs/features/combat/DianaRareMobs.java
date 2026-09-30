@@ -16,8 +16,10 @@ import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -238,6 +240,11 @@ public final class DianaRareMobs {
     private static final String LOOTSHARE_MESSAGE = "Loot share secured!";
     private static final int RARE_MOB_COLOUR = 0xFF55FF;
     private static final int READY_COLOUR = 0x55FFFF;
+    private static final int LYNX_COLOUR = 0x55FF55;
+    /** The rare mobs worth lootsharing: only these glow. */
+    private static final Set<RareMob> SHARABLE = Set.of(RareMob.MINOS_INQUISITOR, RareMob.MANTICORE, RareMob.KING_MINOS);
+    /** How long a lynx stays marked after its last angry villager particle. */
+    private static final long LYNX_PARTICLE_MS = 1_500L;
 
     private static final String HEALTH_ZERO = "health reached zero";
     private static final String MOB_DIED = "mob died";
@@ -286,6 +293,10 @@ public final class DianaRareMobs {
     /** Lowercase name -> (name, expiry) of players who said "Loot share secured!". */
     private static final Map<String, Map.Entry<String, Long>> readyPlayers = new HashMap<>();
     private static Map<Entity, Integer> glow = Map.of();
+    /** Where and when the last angry villager particle was: it's over the Siamese Lynx you can hit. */
+    private static Vec3 lynxParticle;
+    private static long lynxParticleAt;
+    private static LivingEntity hittableLynx;
     private static long nextTargetId;
     private static int ticks;
     private static String serverName;
@@ -361,7 +372,7 @@ public final class DianaRareMobs {
     }
 
     private static Set<RareMob> sharedMobs(FeatureConfigs.Diana config) {
-        return config.allRareMobs ? Set.of(RareMob.values()) : Set.of(RareMob.MINOS_INQUISITOR, RareMob.KING_MINOS);
+        return config.allRareMobs ? Set.of(RareMob.values()) : SHARABLE;
     }
 
     // ------------------------------------------------------------------------------------------------ tick
@@ -371,8 +382,10 @@ public final class DianaRareMobs {
         FeatureConfigs.Diana config = config();
         long now = System.currentTimeMillis();
         readyPlayers.values().removeIf(e -> now >= e.getValue());
+        updateHittableLynx(config, now);
         if (config == null || (!config.rareMobSharing && !config.lootshare)) {
             if (!targets.isEmpty() || !pendingLocalSpawns.isEmpty()) clear();
+            glow = hittableLynx == null ? Map.of() : Map.of(hittableLynx, LYNX_COLOUR);
             return;
         }
         pruneTargets(now);
@@ -456,7 +469,6 @@ public final class DianaRareMobs {
                 Vec3 location = blockOf(closest.entity().position());
                 Target target = rememberShare(pending.mob(), location, local, Source.LOCAL, server, now);
                 target.update(closest, now);
-                if (config.ownMobAlerts) alert(pending.mob(), null);
                 PartyChat.send(formatShare(pending.mob(), location));
                 iterator.remove();
             } else if (now >= pending.expiresAt()) {
@@ -541,6 +553,8 @@ public final class DianaRareMobs {
         recentLocalDeaths.clear();
         readyPlayers.clear();
         glow = Map.of();
+        hittableLynx = null;
+        lynxParticle = null;
         nextTargetId = 0;
         ticks = 0;
     }
@@ -775,19 +789,51 @@ public final class DianaRareMobs {
     }
 
     private static void updateGlow(FeatureConfigs.Diana config, List<Target> active) {
-        if (active.isEmpty()) {
-            glow = Map.of();
-            return;
-        }
-        String local = localName();
         Map<Entity, Integer> map = new HashMap<>();
+        if (hittableLynx != null) map.put(hittableLynx, LYNX_COLOUR);
+        String local = localName();
         for (Target t : active) {
-            if (t.entity == null || !t.entity.isAlive()) continue;
+            if (t.entity == null || !t.entity.isAlive() || !SHARABLE.contains(t.mob)) continue;
             int colour = t.spawner(local) || !config.lootshare ? RARE_MOB_COLOUR
                 : rgb(t.lootshareEligible ? config.lootshareReadyColor : config.lootshareMissingColor, t.lootshareEligible ? READY_COLOUR : 0xFF5555);
             map.put(t.entity, colour);
         }
         glow = map;
+    }
+
+    // ------------------------------------------------------------------------------------------------ siamese lynxes
+
+    /** Every particle packet (SkyBallsSlayerPacketsMixin): angry villager particles mark the lynx that can be hit. */
+    public static void onParticle(ClientboundLevelParticlesPacket packet) {
+        FeatureConfigs.Diana config = config();
+        if (config == null || !config.lynxHighlight || packet.getParticle().getType() != ParticleTypes.ANGRY_VILLAGER || !onHub()) return;
+        lynxParticle = new Vec3(packet.getX(), packet.getY(), packet.getZ());
+        lynxParticleAt = System.currentTimeMillis();
+    }
+
+    /** The Siamese Lynx right under the latest angry villager particle, while they keep coming. */
+    private static void updateHittableLynx(FeatureConfigs.Diana config, long now) {
+        Minecraft mc = Minecraft.getInstance();
+        if (config == null || !config.lynxHighlight || lynxParticle == null || now - lynxParticleAt > LYNX_PARTICLE_MS
+            || mc.level == null || mc.player == null || !onHub()) {
+            hittableLynx = null;
+            return;
+        }
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Signal s : visibleSignals(mc)) {
+            if (s.mob() != RareMob.SIAMESE_LYNXES || !s.entity().isAlive()) continue;
+            Vec3 at = s.entity().position();
+            double dx = at.x - lynxParticle.x, dz = at.z - lynxParticle.z, dy = lynxParticle.y - at.y;
+            double horizontal = dx * dx + dz * dz;
+            if (horizontal > 2.25 || dy < -0.5 || dy > 4) continue;
+            if (horizontal < bestDistance) {
+                bestDistance = horizontal;
+                best = s.entity();
+            }
+        }
+        if (best != null) hittableLynx = best;
+        else if (hittableLynx != null && !hittableLynx.isAlive()) hittableLynx = null;
     }
 
     // ------------------------------------------------------------------------------------------------ chat
@@ -978,7 +1024,6 @@ public final class DianaRareMobs {
         for (Target t : locals) clearTarget(t, t == newest ? MOB_DIED : "cocooned");
 
         PartyChat.send("Cocooned a " + mob.label + "!");
-        if (config.ownMobAlerts) alert(mob, Component.literal("Cocooned!").withStyle(ChatFormatting.GRAY));
         if (location == null) return;
         Target target = rememberShare(mob, location, local, Source.LOCAL, server, now);
         target.prepareForCocoonHatch(now + COCOON_HATCH_ATTACH_MS);

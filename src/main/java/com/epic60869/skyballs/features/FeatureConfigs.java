@@ -220,14 +220,14 @@ public final class FeatureConfigs {
         public boolean rareMobSharing = false;
 
         @Expose
-        @ConfigOption(name = "All Rare Mobs", desc = "Share and receive every rare Diana mob. Off: only Minos Inquisitors and King Minos.")
+        @ConfigOption(name = "All Rare Mobs", desc = "Share and receive every rare Diana mob. Off: only Minos Inquisitors, Manticores and King Minos. Only those three glow either way.")
         @ConfigEditorBoolean
         public boolean allRareMobs = false;
 
         @Expose
-        @ConfigOption(name = "Own Mob Alerts", desc = "A title when you dig up a rare mob you share.")
+        @ConfigOption(name = "Siamese Lynx Highlight", desc = "Highlight the Siamese Lynx you can hit (the one with angry villager particles) in green.")
         @ConfigEditorBoolean
-        public boolean ownMobAlerts = true;
+        public boolean lynxHighlight = true;
 
         @Expose
         @ConfigOption(name = "Line to Rare Mob", desc = "Draw a line from your crosshair to the nearest shared rare mob.")
@@ -1254,9 +1254,144 @@ public final class FeatureConfigs {
         }
     }
 
+    /** NoFrills' Egg Hits Display. */
+    public static final class EggHitsDisplay {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "While you fight a Tarantula Broodfather, show how many hits each egg sack still needs, big on the egg (NoFrills' Egg Hits Display).")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose @ConfigOption(name = "Colour", desc = "Colour of the text.") @ConfigEditorColour public String colour = "0:255:255:255:255";
+
+        @Expose
+        @ConfigOption(name = "Scale", desc = "Size of the text.")
+        @ConfigEditorSlider(minValue = 0.5f, maxValue = 6, minStep = 0.25f)
+        public float scale = 2f;
+    }
+
+    /** Skysoft's Slayer Target Highlighting. */
+    public static final class SlayerTargetHighlight {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Box your slayer boss and the minibosses you spawned while you can see them, not through walls (Skysoft's Slayer Target Highlighting).")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose @ConfigOption(name = "Highlight Bosses", desc = "Highlight your slayer boss.") @ConfigEditorBoolean public boolean highlightBosses = true;
+        @Expose @ConfigOption(name = "Highlight Mini-Bosses", desc = "Highlight the minibosses you spawned.") @ConfigEditorBoolean public boolean highlightMinibosses = true;
+        @Expose @ConfigOption(name = "Target Line", desc = "Draw a line to your boss, or the closest miniboss.") @ConfigEditorBoolean public boolean targetLine = true;
+
+        @Expose
+        @ConfigOption(name = "Style", desc = "Box: a box around them. Outline: a glowing outline, like Skysoft's.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.slayer.SlayerTargetHighlight.Style style = com.epic60869.skyballs.features.slayer.SlayerTargetHighlight.Style.BOX;
+
+        @Expose @ConfigOption(name = "Highlight Colour", desc = "Colour of the box or outline.") @ConfigEditorColour public String colour = "0:255:255:85:85";
+        @Expose @ConfigOption(name = "Target Line Colour", desc = "Colour of the line.") @ConfigEditorColour public String lineColour = "0:255:255:255:255";
+    }
+
+    /** Odin's Etherwarp overlay. */
+    public static final class EtherwarpOverlay {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "While you sneak with an etherwarp item, show where you'd teleport to (Odin's Etherwarp).")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose @ConfigOption(name = "Colour", desc = "Colour of the box.") @ConfigEditorColour public String colour = "0:217:255:170:0";
+        @Expose @ConfigOption(name = "Show When Failed", desc = "Show the box even when the teleport would fail.") @ConfigEditorBoolean public boolean showFail = true;
+        @Expose @ConfigOption(name = "Fail Colour", desc = "Colour of the box when the teleport would fail.") @ConfigEditorColour public String failColour = "0:217:255:85:85";
+
+        @Expose
+        @ConfigOption(name = "Style", desc = "How the box is drawn.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.misc.EtherwarpOverlay.Style style = com.epic60869.skyballs.features.misc.EtherwarpOverlay.Style.FILLED_OUTLINE;
+
+        @Expose @ConfigOption(name = "Use Server Position", desc = "Work it out from where the server last had you, instead of where you are.") @ConfigEditorBoolean public boolean useServerPosition = false;
+        @Expose @ConfigOption(name = "Full Block", desc = "Draw a whole block instead of the block's own shape.") @ConfigEditorBoolean public boolean fullBlock = false;
+        @Expose @ConfigOption(name = "Through Walls", desc = "Draw the box through walls.") @ConfigEditorBoolean public boolean throughWalls = false;
+    }
+
+    /** Skysoft's Keep Terrain Loaded. */
+    public static final class KeepTerrainLoaded {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "On SkyBlock islands, keep terrain you've visited loaded out to your render distance, past Hypixel's view distance, and remember it on disk for next time (Skysoft's). Not in dungeons or Kuudra. Off when Bobby is installed.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Excluded Islands", desc = "Islands to leave out, separated by commas, as the tab list names them (e.g. Hub, Garden, Crimson Isle).")
+        @ConfigEditorText
+        public String excludedIslands = "";
+    }
+
+    /** Skysoft's Farming Profit Tracker. */
+    public static final class FarmingProfitTracker {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "In the Garden, show what your crops and Garden drops were worth, Bountiful coins, Kernels, pests vacuumed, total profit, profit per hour and your farming time (Skysoft's Farming Profit Tracker). Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Show", desc = "Which totals the HUD shows: this session, today or in total. Also /sb farmingtracker session|today|total, and /sb farmingtracker reset to reset the one shown.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.garden.FarmingProfitTracker.Period period = com.epic60869.skyballs.features.garden.FarmingProfitTracker.Period.SESSION;
+
+        @Expose
+        @ConfigOption(name = "Pause After", desc = "Stop the farming time after a while without farming.")
+        @ConfigEditorBoolean
+        public boolean pauseAfter = true;
+
+        @Expose
+        @ConfigOption(name = "Inactivity Time", desc = "Seconds without farming before the time pauses.")
+        @ConfigEditorSlider(minValue = 15, maxValue = 900, minStep = 15)
+        public int pauseAfterSeconds = 60;
+
+        @Expose
+        @ConfigOption(name = "Maximum Items", desc = "Most item rows shown at once (the most valuable first).")
+        @ConfigEditorSlider(minValue = 1, maxValue = 15, minStep = 1)
+        public int maximumItems = 8;
+    }
+
+    /** Skysoft's Server Info Display and Real Time Display: FPS, TPS, ping and time HUDs. */
+    public static final class ServerInfoDisplay {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show your FPS, the server's TPS, your ping and the time on a HUD (Skysoft's Server Info and Real Time Displays). Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose @ConfigOption(name = "Show FPS", desc = "Frames per second.") @ConfigEditorBoolean public boolean showFps = true;
+        @Expose @ConfigOption(name = "Show TPS", desc = "The server's ticks per second, from how fast its clock moves.") @ConfigEditorBoolean public boolean showTps = true;
+        @Expose @ConfigOption(name = "Show Ping", desc = "Your ping, measured once a second.") @ConfigEditorBoolean public boolean showPing = true;
+        @Expose @ConfigOption(name = "Show Time", desc = "Your computer's clock (Skysoft's Real Time Display).") @ConfigEditorBoolean public boolean showTime = true;
+
+        @Expose
+        @ConfigOption(name = "Time Format", desc = "12-hour or 24-hour time, with optional seconds.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.misc.ServerInfo.TimeFormat timeFormat = com.epic60869.skyballs.features.misc.ServerInfo.TimeFormat.TWENTY_FOUR_HOUR;
+
+        @Expose
+        @ConfigOption(name = "Style", desc = "Simple: one HUD with everything. Split: a separate HUD for each value, each moved on its own.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.misc.ServerInfo.Style style = com.epic60869.skyballs.features.misc.ServerInfo.Style.SIMPLE;
+
+        @Expose
+        @ConfigOption(name = "Simple Layout", desc = "Arrange the Simple display vertically or horizontally.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.misc.ServerInfo.Layout layout = com.epic60869.skyballs.features.misc.ServerInfo.Layout.VERTICAL;
+
+        @Expose
+        @ConfigOption(name = "Labels", desc = "Show text labels, symbols, or values only.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.misc.ServerInfo.LabelStyle labelStyle = com.epic60869.skyballs.features.misc.ServerInfo.LabelStyle.TEXT;
+
+        @Expose @ConfigOption(name = "FPS Colour", desc = "Colour of the FPS text.") @ConfigEditorColour public String fpsColour = "0:255:255:255:255";
+        @Expose @ConfigOption(name = "TPS Colour", desc = "Colour of the TPS text.") @ConfigEditorColour public String tpsColour = "0:255:255:255:255";
+        @Expose @ConfigOption(name = "Ping Colour", desc = "Colour of the ping text.") @ConfigEditorColour public String pingColour = "0:255:255:255:255";
+        @Expose @ConfigOption(name = "Time Colour", desc = "Colour of the time.") @ConfigEditorColour public String timeColour = "0:255:255:255:255";
+    }
+
     public static final class PartyCommands {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "When you are party leader, run commands that party members type in party chat.")
+        @ConfigOption(name = "Enabled", desc = "Answer ! commands party members type in party chat: the leader ones (!warp, !pt, !f7, ...) while you are party leader, and !fps, !ping and !tps always.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
@@ -1264,6 +1399,13 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!allinvite", desc = "Runs /party settings allinvite.") @ConfigEditorBoolean public boolean allInvite = true;
         @Expose @ConfigOption(name = "!pt / !transfer", desc = "Transfers the party to the player who asked.") @ConfigEditorBoolean public boolean transfer = true;
         @Expose @ConfigOption(name = "!promote", desc = "Promotes the player who asked.") @ConfigEditorBoolean public boolean promote = false;
+
+        @Expose @ConfigOption(name = "!f1 - !f7", desc = "Joins that Catacombs floor (Odin's queue commands). Only while you're leader.") @ConfigEditorBoolean public boolean floors = true;
+        @Expose @ConfigOption(name = "!m1 - !m7", desc = "Joins that Master Mode floor. Only while you're leader.") @ConfigEditorBoolean public boolean masterFloors = true;
+        @Expose @ConfigOption(name = "!t1 - !t5", desc = "Joins that Kuudra tier (Basic, Hot, Burning, Fiery, Infernal). Only while you're leader.") @ConfigEditorBoolean public boolean kuudra = true;
+        @Expose @ConfigOption(name = "!fps", desc = "Says your FPS in party chat (Odin's). Works whoever is leader.") @ConfigEditorBoolean public boolean fps = true;
+        @Expose @ConfigOption(name = "!ping", desc = "Says your ping in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean ping = true;
+        @Expose @ConfigOption(name = "!tps", desc = "Says the server's TPS in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean tps = true;
     }
 
     public static final class ItemNotification {

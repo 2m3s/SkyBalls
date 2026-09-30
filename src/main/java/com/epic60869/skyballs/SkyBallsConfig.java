@@ -111,6 +111,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Pest Highlight", desc = "Outline pests in the Garden, with an optional line or beacon to the nearest one and a pests/plots HUD.")
         public com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight pestHighlight = new com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight();
 
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Profit Tracker", desc = "What your farming in the Garden made: crops, drops, Bountiful coins, Kernels and profit per hour (Skysoft's).")
+        public com.epic60869.skyballs.features.FeatureConfigs.FarmingProfitTracker profitTracker = new com.epic60869.skyballs.features.FeatureConfigs.FarmingProfitTracker();
+
     }
 
     public static final class Mining {
@@ -144,6 +149,16 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Boss Profit", desc = "Profit from each slayer boss: its drops and their value, minus the quest's cost, in chat and in a HUD.")
         public BossProfit bossProfit = new BossProfit();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Boss Highlight", desc = "Box your slayer boss and your minibosses (Skysoft's).")
+        public com.epic60869.skyballs.features.FeatureConfigs.SlayerTargetHighlight targetHighlight = new com.epic60869.skyballs.features.FeatureConfigs.SlayerTargetHighlight();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Egg Hits Display", desc = "Hits each Tarantula egg sack still needs, shown on the egg (NoFrills').")
+        public com.epic60869.skyballs.features.FeatureConfigs.EggHitsDisplay eggHitsDisplay = new com.epic60869.skyballs.features.FeatureConfigs.EggHitsDisplay();
 
         @Expose
         @Accordion
@@ -256,7 +271,7 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Party Commands", desc = "Let party members use !warp, !allinvite and !pt when you are leader.")
+        @ConfigOption(name = "Party Commands", desc = "Let party members use !warp, !allinvite, !pt, !f7, !m7 and !t5 when you are leader, and ask your !fps, !ping and !tps.")
         public com.epic60869.skyballs.features.FeatureConfigs.PartyCommands partyCommands = new com.epic60869.skyballs.features.FeatureConfigs.PartyCommands();
 
         @Expose
@@ -369,6 +384,31 @@ public final class SkyBallsConfig extends Config {
         public boolean hypixelButton = false;
 
         @Expose
+        @Accordion
+        @ConfigOption(name = "Server Info Display", desc = "FPS, TPS, ping and time HUD (Skysoft's).")
+        public com.epic60869.skyballs.features.FeatureConfigs.ServerInfoDisplay serverInfoDisplay = new com.epic60869.skyballs.features.FeatureConfigs.ServerInfoDisplay();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Etherwarp Overlay", desc = "Show where your etherwarp would take you (Odin's).")
+        public com.epic60869.skyballs.features.FeatureConfigs.EtherwarpOverlay etherwarpOverlay = new com.epic60869.skyballs.features.FeatureConfigs.EtherwarpOverlay();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Keep Terrain Loaded", desc = "Keep visited terrain loaded past Hypixel's view distance (Skysoft's).")
+        public com.epic60869.skyballs.features.FeatureConfigs.KeepTerrainLoaded keepTerrainLoaded = new com.epic60869.skyballs.features.FeatureConfigs.KeepTerrainLoaded();
+
+        @Expose
+        @ConfigOption(name = "Hide Status Effects", desc = "Hide potion effects beside inventories and in the top-right of the screen (Skysoft's).")
+        @ConfigEditorBoolean
+        public boolean hideStatusEffects = true;
+
+        @Expose
+        @ConfigOption(name = "Smart Disconnect", desc = "Clicking Disconnect in the pause menu asks first, with Cancel and a red Disconnect button, so a misclick doesn't kick you from the server.")
+        @ConfigEditorBoolean
+        public boolean smartDisconnect = true;
+
+        @Expose
         @ConfigOption(name = "Recipe HUD", desc = "While a /sb recipe is selected, show a movable HUD with the item and the base ingredients you still need (like SkyOcean's craft helper overlay). Move it in /sb gui.")
         @ConfigEditorBoolean
         public boolean recipeHud = false;
@@ -446,7 +486,7 @@ public final class SkyBallsConfig extends Config {
     public Chat chat = new Chat();
 
     @Expose
-    @Category(name = "SkyBalls Online", desc = "SkyBalls chat replies, reactions and item sharing, friends, cosmetics, the casino and cloud settings.")
+    @Category(name = "SkyBalls Online", desc = "SkyBalls chat replies, reactions and item sharing, friends, cosmetics and cloud settings.")
     public com.epic60869.skyballs.features.sbc.SbcConfig.Online online = new com.epic60869.skyballs.features.sbc.SbcConfig.Online();
 
     @Expose

@@ -20,6 +20,7 @@ public abstract class SkyBallsSlayerPacketsMixin {
     private void skyballs$slayerParticles(ClientboundLevelParticlesPacket packet, CallbackInfo ci) {
         // Mayors > Diana > Burrows reads burrow, arrow and spade particles (never hides them).
         com.epic60869.skyballs.features.combat.DianaBurrows.onParticle(packet);
+        com.epic60869.skyballs.features.combat.DianaRareMobs.onParticle(packet);
         if (BlazeSlayer.hideParticle() || EndermanSlayer.hideParticle(packet)) ci.cancel();
     }
 

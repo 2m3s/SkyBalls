@@ -2,6 +2,30 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.3.9 — 2026-09-30
+
+### Added
+- Smart Disconnect (Misc, on by default): clicking Disconnect in the pause menu asks first, with Cancel and a red Disconnect button.
+- Server Info Display (Misc), from Skysoft: your FPS, the server's TPS, your ping and the time (Skysoft's Real Time Display, 12- or 24-hour, with or without seconds) on a HUD, as one display (vertical or horizontal) or a separate one for each, with text labels, symbols or values only, and a colour for each.
+- Hide Status Effects (Misc, on by default), from Skysoft: hides potion effects beside inventories and in the top-right of the screen.
+- Keep Terrain Loaded (Misc), from Skysoft: on SkyBlock islands, terrain you've visited stays loaded out to your render distance, past Hypixel's view distance, and is remembered on disk for next time. Islands can be left out. Off when Bobby is installed.
+- Boss Highlight (Slayers, on by default), from Skysoft: a box (or a glowing outline) on your slayer boss and the minibosses you spawned while you can see them (not through walls), with a line to your boss or the closest miniboss.
+- Egg Hits Display (Slayers, on by default), from NoFrills: while you fight a Tarantula Broodfather, how many hits each egg sack still needs, shown big on the egg.
+- Etherwarp Overlay (Misc, on by default), from Odin: while you sneak with an etherwarp item, a box on the block you'd teleport to, in red when it would fail.
+- Farming Profit Tracker (Farming → Profit Tracker), from Skysoft: in the Garden, what your crops and Garden drops were worth, Bountiful coins, Kernels, pests vacuumed, total profit, profit per hour and your farming time (paused when you stop farming), for this session, today or in total (/sb farmingtracker session|today|total|reset). Replenish and compactors don't make crops count twice.
+- Party Commands, from Odin: !f1-!f7, !m1-!m7 and !t1-!t5 join that floor or Kuudra tier while you're leader, and !fps, !ping and !tps answer in party chat whoever is leader (a moment later, so Hypixel doesn't say "Woah slow down"). Each has its own toggle.
+
+### Removed
+- The SkyBalls casino: /sb casino, its games, the daily reward and the Daily Reward Reminder setting.
+- Diana's Own Mob Alerts: no more title across the screen when you dig up a rare mob yourself.
+
+### Changed
+- The slayer profit chat line names the boss you killed: "[SB] T5 Tara Profit: -52.0k".
+- Diana: only Minos Inquisitors, Manticores and King Minos glow; other rare mobs (Minotaurs and the rest) no longer get a purple outline. Manticores are now shared and received with All Rare Mobs off.
+- Diana: Siamese Lynx Highlight (on by default) outlines the lynx you can hit (the one with angry villager particles) in green.
+- Diana: an arrow guess is only dropped for showing no burrow particles after 2.5 s in range, and only with Close Burrow Detection on, so it no longer vanishes just before the real burrow shows up (or when detection is off).
+- Diana warp keys: the guess warp goes to your newest guess instead of the nearest waypoint (a burrow you'd already found next to you blocked it), the rare mob warp no longer needs your spade in hand, and both say in chat why they didn't warp.
+
 ## 1.3.8 — 2026-09-29
 
 ### Added

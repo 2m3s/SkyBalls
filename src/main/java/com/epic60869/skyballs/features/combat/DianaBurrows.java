@@ -92,6 +92,8 @@ public final class DianaBurrows {
     static final class GuessChain {
         final List<BlockPos> guesses;
         int index;
+        /** When you came within particle range of the current guess with a spade, or 0. */
+        long nearSince;
 
         GuessChain(List<BlockPos> guesses) {
             this.guesses = guesses;
@@ -123,6 +125,7 @@ public final class DianaBurrows {
             }
             if (index + 1 >= guesses.size()) return false;
             index++;
+            nearSince = 0;
             addArrowGuess(current());
             return true;
         }
@@ -137,6 +140,8 @@ public final class DianaBurrows {
 
     private static final AABB HUB_BOUNDS = new AABB(-283, 60, -208, 175, 105, 205);
     private static final long RECENTLY_REMOVED_MS = 1_000L;
+    /** Hypixel shows a burrow's particles about once a second: this long near a guess without any means it's wrong. */
+    private static final long NO_PARTICLES_GRACE_MS = 2_500L;
     private static final int SHAFT_LENGTH = 20;
     private static final double PARTICLE_TOLERANCE = 0.12;
     private static final int COUNT_NEAR_TIP = 4;
@@ -832,11 +837,17 @@ public final class DianaBurrows {
             chains.removeIf(chain -> {
                 BlockPos current = chain.current();
                 if (!isBlockValid(current)) return !chain.moveToNext();
-                // Holding the spade within 32 blocks shows a real burrow's particles: none means the guess is wrong.
-                if (hasSpade && !burrows.containsKey(current) && Vec3.atLowerCornerOf(current).distanceToSqr(player) <= 1024) {
-                    return !chain.moveToNext();
+                // Holding the spade within 32 blocks shows a real burrow's particles: none for a while means the guess is
+                // wrong. Only Close Burrow Detection reads those particles, so without it the guess stays.
+                boolean near = config.closeBurrowDetection && hasSpade && !burrows.containsKey(current)
+                    && Vec3.atLowerCornerOf(current).distanceToSqr(player) <= 1024;
+                if (!near) {
+                    chain.nearSince = 0;
+                    return false;
                 }
-                return false;
+                if (chain.nearSince == 0) chain.nearSince = now;
+                if (now - chain.nearSince < NO_PARTICLES_GRACE_MS) return false;
+                return !chain.moveToNext();
             });
         }
 
@@ -938,20 +949,41 @@ public final class DianaBurrows {
         if (SkyBallsKeyMappings.DIANA_GUESS_WARP == null) return;
         while (SkyBallsKeyMappings.DIANA_GUESS_WARP.consumeClick()) warpToGuess(mc);
         while (SkyBallsKeyMappings.DIANA_RARE_MOB_WARP.consumeClick()) {
+            if (mc.player == null) continue;
             Vec3 mob = DianaRareMobs.newestSharedRareMob();
             if (mob != null) warpTo(mc, mob, false);
+            else warpFeedback("No shared rare mob to warp to.");
         }
     }
 
     private static void warpToGuess(Minecraft mc) {
-        Vec3 target = bestGuessAt(mc.player.position());
-        if (target != null) warpTo(mc, target, true);
+        if (mc.player == null) return;
+        // You press the key right after guessing: the newest guess is the one you mean.
+        Waypoint newest = null;
+        for (Waypoint wp : allWaypoints()) {
+            if (wp.hidden || !wp.kind.guess()) continue;
+            if (newest == null || wp.created >= newest.created) newest = wp;
+        }
+        if (newest == null) {
+            warpFeedback("No burrow guess to warp to.");
+            return;
+        }
+        if (System.currentTimeMillis() - lastSpadeHeld > 1_000L) {
+            warpFeedback("Hold your spade to use the guess warp.");
+            return;
+        }
+        warpTo(mc, Vec3.atCenterOf(newest.pos), true);
     }
 
+    private static void warpFeedback(String message) {
+        SkyBallsAlerts.chat(Component.literal(message).withStyle(ChatFormatting.GRAY));
+    }
+
+    /** The guess nearest {@code from}: known burrows don't count, you'll dig them on the way. */
     private static Vec3 bestGuessAt(Vec3 from) {
         Vec3 best = null;
         for (Waypoint wp : allWaypoints()) {
-            if (wp.hidden) continue;
+            if (wp.hidden || !wp.kind.guess()) continue;
             Vec3 p = Vec3.atCenterOf(wp.pos);
             if (best == null || p.distanceToSqr(from) < best.distanceToSqr(from)) best = p;
         }
@@ -965,7 +997,6 @@ public final class DianaBurrows {
     private static void warpTo(Minecraft mc, Vec3 target, boolean followGuesses) {
         FeatureConfigs.DianaWarp config = warpConfig();
         if (config == null || !inHub() || mc.getConnection() == null) return;
-        if (System.currentTimeMillis() - lastSpadeHeld > 1_000L) return;
         if (System.currentTimeMillis() - lastWarpAt < 500L) return;
         Vec3 player = mc.player.position();
         Vec3 goal = target;
@@ -981,7 +1012,10 @@ public final class DianaBurrows {
                 goal = next;
             }
         }
-        if (last == null) return;
+        if (last == null) {
+            warpFeedback("No warp is closer than walking.");
+            return;
+        }
         lastWarpAt = System.currentTimeMillis();
         mc.getConnection().sendCommand("warp " + last.name());
     }

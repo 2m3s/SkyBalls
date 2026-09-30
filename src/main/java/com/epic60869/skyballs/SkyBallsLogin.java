@@ -16,7 +16,7 @@ import java.util.List;
  * Proves to the SBC chat server which Minecraft account this connection is, like a Minecraft server login: the mod
  * gets a random serverId from /mod-api/auth/challenge, "joins" it through Mojang's session server, and sends it as
  * casinoAuth; the server asks Mojang whether this player joined it. Needed for things that change your data on the
- * server (the casino, /sb nick). A login lasts for one connection; a reconnect logs in again.
+ * server (/sb nick, friends, leaderboards). A login lasts for one connection; a reconnect logs in again.
  */
 public final class SkyBallsLogin {
     private static final String CHALLENGE_URL = "https://tastyfish.org/mod-api/auth/challenge";

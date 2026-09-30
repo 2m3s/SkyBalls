@@ -107,7 +107,7 @@ public final class SkyBallsNickCommand {
             packet.addProperty("mode", mode);
             packet.addProperty("customHex", customHex);
         }
-        // Changing your nickname needs a checked login, like the casino.
+        // Changing your nickname needs a checked login.
         SkyBallsLogin.whenLoggedIn(() -> SkyBallsGlobalChat.send(packet));
         if (!SkyBallsLogin.loggedIn()) {
             say(Component.literal("Logging in to SBC...").withStyle(ChatFormatting.GRAY));

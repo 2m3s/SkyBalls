@@ -49,8 +49,7 @@ public final class SbcCommands {
             new Help("/sb friend add|remove|accept|deny <player>", "Manage SkyBalls friends"),
             new Help("/sb friend list", "Your friends (or /sb friends)"),
             new Help("/sb cosmetics", "Pick your badge and cape"))),
-        new Section("Casino & Leaderboards", List.of(
-            new Help("/sb casino", "Blackjack, coinflip, dice, roulette, slots, higher/lower, daily reward"),
+        new Section("Leaderboards", List.of(
             new Help("/sb leaderboard", "SkyBalls leaderboards"))),
         new Section("SkyBlock", List.of(
             new Help("/sb calendar", "Upcoming SkyBlock events"),

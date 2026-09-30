@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * The SkyBalls Online (SBC) client: packets from the mod server that aren't handled by the older classes
- * (SkyBallsGlobalChat, SkyBallsCasino, SkyBallsLeaderboards) come here, on the game thread, and are passed to the
+ * (SkyBallsGlobalChat, SkyBallsLeaderboards) come here, on the game thread, and are passed to the
  * feature they belong to. Also holds the small JSON and chat helpers those features share.
  */
 public final class Sbc {
@@ -43,8 +43,6 @@ public final class Sbc {
             try {
                 while (com.epic60869.skyballs.SkyBallsKeyMappings.SHARE_ITEM != null
                     && com.epic60869.skyballs.SkyBallsKeyMappings.SHARE_ITEM.consumeClick()) SbcChat.share("");
-                SbcNet.tick();
-                com.epic60869.skyballs.SkyBallsCasino.tick();
             } catch (Exception e) {
                 SbcCrashReports.report(e, "SBC tick");
             }
@@ -84,7 +82,6 @@ public final class Sbc {
 
     /** Called on the game thread when the connection closes. */
     public static void onDisconnected() {
-        SbcNet.clearQueues();
     }
 
     // ------------------------------------------------------------------------------------------------ chat helpers

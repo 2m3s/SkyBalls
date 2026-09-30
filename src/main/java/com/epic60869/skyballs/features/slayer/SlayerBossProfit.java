@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Profit per slayer boss: "Profit: -10k" in chat after each kill, with a hover listing each drop and its value, the
+ * Profit per slayer boss: "T5 Tara Profit: -10k" in chat after each kill, with a hover listing each drop and its value, the
  * drops' total, the quest's cost and what's left, and the same in the Boss Profit HUD. Drops are what came into your
  * inventory since your boss spawned, what went straight into your sacks (Hypixel's "[Sacks]" messages) and what it
  * showed on the ground when it died (whichever is more for each item), and only
@@ -155,6 +155,26 @@ public final class SlayerBossProfit {
             case "Conjoined Brood" -> "Tarantula Broodfather";
             default -> name;
         };
+    }
+
+    /** "Tarantula Broodfather V" -> "T5 Tara", "Atoned Horror" -> "T5 Rev", for the chat line. */
+    private static String shortName(String boss) {
+        String tier = boss.matches(".* [IVX]+$") ? boss.substring(boss.lastIndexOf(' ') + 1) : "";
+        if (boss.startsWith("Atoned Horror") || boss.startsWith("Conjoined Brood")) tier = "V";
+        String slayer = switch (slayer(boss)) {
+            case "Revenant Horror" -> "Rev";
+            case "Tarantula Broodfather" -> "Tara";
+            case "Sven Packmaster" -> "Sven";
+            case "Voidgloom Seraph" -> "Eman";
+            case "Inferno Demonlord" -> "Blaze";
+            case "Riftstalker Bloodfiend" -> "Vamp";
+            default -> slayer(boss);
+        };
+        int n = switch (tier) {
+            case "I" -> 1; case "II" -> 2; case "III" -> 3; case "IV" -> 4; case "V" -> 5;
+            default -> 0;
+        };
+        return n > 0 ? "T" + n + " " + slayer : slayer;
     }
 
     /** Whether {@code id} (a price id, or a pet's LVL_n_TIER_TYPE) is one of the boss's drops; all count before the list loads. */
@@ -460,7 +480,7 @@ public final class SlayerBossProfit {
         hover.append(Component.literal("\n\nDrops: ").withStyle(ChatFormatting.GRAY)).append(Component.literal(CombatFeatures.formatCoins(r.drops())).withStyle(ChatFormatting.GOLD))
             .append(Component.literal("\nSlayer cost: ").withStyle(ChatFormatting.GRAY)).append(Component.literal("-" + CombatFeatures.formatCoins(r.cost())).withStyle(ChatFormatting.RED))
             .append(Component.literal("\nTotal: ").withStyle(ChatFormatting.GRAY)).append(coins(r.total()));
-        SkyBallsAlerts.chat(Component.literal("Profit: ").withStyle(style -> style.withColor(ChatFormatting.YELLOW)
+        SkyBallsAlerts.chat(Component.literal(shortName(r.boss()) + " Profit: ").withStyle(style -> style.withColor(ChatFormatting.YELLOW)
                 .withHoverEvent(new HoverEvent.ShowText(hover)))
             .append(coins(r.total()).copy().withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(hover))))
             .append(Component.literal(" (hover for the drops)").withStyle(style -> style.withColor(ChatFormatting.DARK_GRAY)

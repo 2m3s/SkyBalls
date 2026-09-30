@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Feature flags from the mod server: {@code flags {flags: {"casino.slots": {enabled: false, message: "..."}}}}, sent
+ * Feature flags from the mod server: {@code flags {flags: {"cosmetics.capes": {enabled: false, message: "..."}}}}, sent
  * after hello and on every change. A flag the server hasn't mentioned is on, so the mod keeps working when the server
- * is down. Flag names used by the mod: chat.replies, chat.reactions, chat.items, casino, casino.&lt;game&gt;,
+ * is down. Flag names used by the mod: chat.replies, chat.reactions, chat.items,
  * friends, cosmetics, cosmetics.capes, calendar, pestHighlight, itemCooldowns, settingsSync,
  * crashReports.
  */
@@ -22,7 +22,7 @@ public final class Flags {
 
     private Flags() {}
 
-    /** Whether the feature is on (a missing flag means on). A disabled "casino" also turns off "casino.slots". */
+    /** Whether the feature is on (a missing flag means on). A disabled "cosmetics" also turns off "cosmetics.capes". */
     public static boolean isEnabled(String name) {
         if (FLAGS.isEmpty()) return true;
         Flag flag = FLAGS.get(name);
