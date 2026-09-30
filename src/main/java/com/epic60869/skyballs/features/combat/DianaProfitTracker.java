@@ -124,6 +124,33 @@ public final class DianaProfitTracker {
         return c != null && c.enabled;
     }
 
+    /**
+     * Whether to count: the HUD is on, or something else reads the totals (the mob tracker's mobs per hour, the Diana
+     * party commands' !profit, !playtime and !burrows, and the achievements).
+     */
+    private static boolean counting() {
+        if (enabled()) return true;
+        SkyBallsConfig c = SkyBallsConfig.current();
+        if (c == null) return false;
+        FeatureConfigs.Diana d = c.mayors.diana;
+        return (d.mobTracker != null && d.mobTracker.enabled) || (d.achievements != null && d.achievements.enabled)
+            || (c.misc.partyCommands.enabled && c.misc.partyCommands.diana);
+    }
+
+    /** One period's totals, for the Diana party commands and the mob tracker. */
+    public record Totals(long burrows, long activeMs, long coins, double profit) {}
+
+    public static Totals totals(Period period) {
+        Data data = switch (period) {
+            case SESSION -> session;
+            case SEASON -> saved.seasons.computeIfAbsent(String.valueOf(electionYear()), k -> new Data());
+            case ALL_TIME -> saved.allTime;
+        };
+        double profit = data.coins;
+        for (Map.Entry<String, Long> e : data.items.entrySet()) profit += ItemPriceResolver.value(e.getKey()) * e.getValue();
+        return new Totals(data.burrowsDug, data.activeMs, data.coins, profit);
+    }
+
     public static void init(Path configDir) {
         file = configDir.resolve("skyballs").resolve("diana-profit.json");
         load();
@@ -212,7 +239,7 @@ public final class DianaProfitTracker {
     }
 
     private static void onChat(Component component, String text) {
-        if (!enabled() || !SkyBallsLocation.onSkyblock() || !SkyBallsLocation.areaIs("Hub")) return;
+        if (!counting() || !SkyBallsLocation.onSkyblock() || !SkyBallsLocation.areaIs("Hub")) return;
         String t = text.trim();
         if (DUG_BURROW.matcher(t).matches()) {
             for (Data d : targets()) d.burrowsDug++;
@@ -241,7 +268,7 @@ public final class DianaProfitTracker {
         long now = System.currentTimeMillis();
         long delta = lastTick == 0 ? 0 : Math.min(1_000L, now - lastTick);
         lastTick = now;
-        if (!enabled() || mc.player == null) {
+        if (!counting() || mc.player == null) {
             lastInventory = null;
             return;
         }
@@ -322,7 +349,7 @@ public final class DianaProfitTracker {
         return lines;
     }
 
-    private static String duration(long ms) {
+    static String duration(long ms) {
         long minutes = ms / 60_000L;
         long hours = minutes / 60;
         return hours > 0 ? hours + "h " + minutes % 60 + "m" : minutes + "m " + (ms / 1000) % 60 + "s";

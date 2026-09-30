@@ -7,17 +7,25 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.Minecraft;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Lets party members run !warp, !allinvite, !pt, !promote and Odin's !f1-!f7, !m1-!m7 and !t1-!t5 while you are
  * party leader, and answers !fps, !ping and !tps (Odin's ChatCommands, https://github.com/odtheking/Odin, BSD-3-Clause)
- * whoever is leader. Leadership is tracked from Hypixel's party messages.
+ * whoever is leader. Leadership is tracked from Hypixel's party messages. SBO's party commands
+ * (https://github.com/SkyblockOverhaul/SBO, Apache-2.0) add !demote, !carrot, !time and the Diana ones (!chim, !since,
+ * !profit, ...; see {@link com.epic60869.skyballs.features.combat.DianaPartyCommands}).
  */
 public final class PartyCommands {
-    private static final Pattern PARTY_CHAT = Pattern.compile("^Party > (?:\\[[^]]+] )?(?<name>\\w+)[^:]*: !(?<command>\\w+)");
+    private static final Pattern PARTY_CHAT = Pattern.compile("^Party > (?:\\[[^]]+] )?(?<name>\\w+)[^:]*: !(?<command>\\w+)(?: +(?<arg>\\S+))?(?<more> +\\S.*?)?\\s*$");
     private static final Pattern INVITED = Pattern.compile("^(?:\\[[^]]+] )?(?<me>\\w+) invited (?:\\[[^]]+] )?\\w+ to the party!");
     private static final Pattern TRANSFERRED = Pattern.compile("^The party was transferred to (?:\\[[^]]+] )?(?<name>\\w+)");
     private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(?<name>\\w+)'s? party!");
@@ -32,11 +40,19 @@ public final class PartyCommands {
     /** Like Odin, answer a moment after the ! message, not in the same tick. */
     private static final long REPLY_DELAY_MS = 250L;
 
+    /** SBO's !carrot answers. */
+    private static final List<String> CARROT = List.of("As I see it, Carrot", "It is Carrot", "It is decidedly Carrot",
+        "Most likely Carrot", "Outlook Carrot", "Signs point to Carrot", "Without a Carrot", "Yes - Carrot", "Carrot - definitely",
+        "You may rely on Carrot", "Ask Carrot later", "Carrot predict now", "Concentrate and ask Carrot ",
+        "Don't count on it - Carrot 2024", "My reply is Carrot", "My sources say Carrot", "Outlook not so Carrot", "Very Carrot");
+
+    private record Pending(String command, long at) {}
+
     private static String leader;
     private static long lastCommand;
     private static long lastSent;
-    private static String pending;
-    private static long pendingAt;
+    /** Commands waiting to be sent, one at a time so Hypixel doesn't say "Woah slow down". */
+    private static final Deque<Pending> pending = new ArrayDeque<>();
 
     private PartyCommands() {}
 
@@ -45,10 +61,11 @@ public final class PartyCommands {
         ClientSendMessageEvents.CHAT.register(message -> lastSent = System.currentTimeMillis());
         ClientSendMessageEvents.COMMAND.register(command -> lastSent = System.currentTimeMillis());
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            if (pending == null || System.currentTimeMillis() < pendingAt) return;
-            String command = pending;
-            pending = null;
-            if (mc.getConnection() != null) mc.getConnection().sendCommand(command);
+            Pending next = pending.peek();
+            long now = System.currentTimeMillis();
+            if (next == null || now < next.at() || now < lastSent + SEND_GAP_MS) return;
+            pending.poll();
+            if (mc.getConnection() != null) mc.getConnection().sendCommand(next.command());
         });
     }
 
@@ -74,6 +91,18 @@ public final class PartyCommands {
         if (!config.enabled || !(m = PARTY_CHAT.matcher(text)).find()) return;
         String sender = m.group("name");
         String command = m.group("command").toLowerCase(Locale.ROOT);
+        String arg = m.group("arg");
+        // Like SBO, a command with more words after it than it takes isn't one.
+        if (m.group("more") != null) return;
+
+        if (config.diana) {
+            String diana = command.equals("help") ? "Diana party commands: " + String.join(", ", com.epic60869.skyballs.features.combat.DianaPartyCommands.HELP)
+                : com.epic60869.skyballs.features.combat.DianaPartyCommands.reply(command, arg, me());
+            if (diana != null) {
+                run("pc " + diana);
+                return;
+            }
+        }
 
         // Anyone in the party (you too) can ask these, like Odin's chat commands.
         String reply = switch (command) {
@@ -86,6 +115,8 @@ public final class PartyCommands {
                 Double tps = ServerInfo.tps();
                 yield config.tps ? "Current TPS: " + (tps == null ? "?" : String.format(Locale.ROOT, "%.1f", tps)) : null;
             }
+            case "carrot", "c" -> config.carrot ? CARROT.get(ThreadLocalRandom.current().nextInt(CARROT.size())) : null;
+            case "time" -> config.time ? LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) : null;
             default -> null;
         };
         if (reply != null) {
@@ -98,7 +129,8 @@ public final class PartyCommands {
             case "warp" -> config.warp ? "party warp" : null;
             case "allinvite", "allinv" -> config.allInvite ? "party settings allinvite" : null;
             case "pt", "transfer", "ptme" -> config.transfer ? "party transfer " + sender : null;
-            case "promote" -> config.promote ? "party promote " + sender : null;
+            case "promote" -> config.promote ? "party promote " + (arg == null ? sender : arg) : null;
+            case "demote" -> config.promote ? "party demote " + (arg == null ? sender : arg) : null;
             default -> instance(config, command);
         };
         if (toRun != null) run(toRun);
@@ -122,9 +154,12 @@ public final class PartyCommands {
         long now = System.currentTimeMillis();
         lastCommand = now;
         // Sent from the tick, once it's been long enough since the last message you sent.
-        Minecraft.getInstance().execute(() -> {
-            pending = command;
-            pendingAt = Math.max(now + REPLY_DELAY_MS, lastSent + SEND_GAP_MS);
-        });
+        Minecraft.getInstance().execute(() -> pending.add(new Pending(command, now + REPLY_DELAY_MS)));
+    }
+
+    /** Says something in party chat, queued behind anything else waiting to be sent (Diana drop announcements). */
+    public static void partyChat(String message) {
+        long now = System.currentTimeMillis();
+        Minecraft.getInstance().execute(() -> pending.add(new Pending("pc " + message, now)));
     }
 }

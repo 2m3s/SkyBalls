@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.RegistryAccess;
@@ -37,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,8 +85,48 @@ public final class KeepTerrainLoaded {
     private static int scanDistance = -1;
     private static List<int[]> scanOffsets = List.of();
     private static int scanIndex;
+    /** Ticks the island/server has been unreadable while still in the same world (the scoreboard flickers). */
+    private static int missingSessionTicks;
+    private static final int SESSION_GRACE_TICKS = 60;
+    /** Each chunk cache's storage centre and radius: {centreX, centreZ, radius or -1}, as vanilla keeps them. */
+    private static final Map<ClientChunkCache, int[]> storageShape = new WeakHashMap<>();
 
     private KeepTerrainLoaded() {}
+
+    private static int[] shape(ClientChunkCache cache) {
+        return storageShape.computeIfAbsent(cache, k -> new int[]{0, 0, -1});
+    }
+
+    /** The server moved the chunk storage's centre ({@code SkyBallsKeepTerrainChunkCacheMixin}). */
+    public static void onViewCenter(ClientChunkCache cache, int x, int z) {
+        int[] shape = shape(cache);
+        shape[0] = x;
+        shape[1] = z;
+    }
+
+    /**
+     * The chunk storage is about to be resized to {@code viewDistance}. Vanilla forgets the chunks that don't fit
+     * without unloading them, which leaves Sodium drawing chunks that are gone (a crash in Sodium's chunk renderer), so
+     * they're dropped properly first.
+     */
+    public static void beforeResize(ClientChunkCache cache, int viewDistance) {
+        int[] shape = shape(cache);
+        int newRadius = Math.max(2, viewDistance) + 3;
+        int oldRadius = shape[2];
+        shape[2] = newRadius;
+        if (oldRadius >= 0 && newRadius >= oldRadius) return;
+        int scan = oldRadius >= 0 ? oldRadius : MAX_DISTANCE + 3;
+        int cx = shape[0], cz = shape[1];
+        for (int x = cx - scan; x <= cx + scan; x++) {
+            for (int z = cz - scan; z <= cz + scan; z++) {
+                if (Math.abs(x - cx) <= newRadius && Math.abs(z - cz) <= newRadius) continue;
+                if (cache.getChunk(x, z, ChunkStatus.FULL, false) == null) continue;
+                ChunkPos position = new ChunkPos(x, z);
+                cache.drop(position);
+                retained.remove(position);
+            }
+        }
+    }
 
     public static void init(Path configDir) {
         cacheDir = configDir.resolve("skyballs").resolve("terrain-cache");
@@ -130,9 +172,13 @@ public final class KeepTerrainLoaded {
         ClientLevel level = mc.level;
         Session session = session();
         if (level == null || session == null) {
+            // A moment without the server line (a restart warning, a scoreboard update) isn't leaving the island.
+            if (level != null && active != null && active.level() == level && isEnabledHere() && ++missingSessionTicks < SESSION_GRACE_TICKS) return;
+            missingSessionTicks = 0;
             deactivate(mc);
             return;
         }
+        missingSessionTicks = 0;
         if (active == null || active.level() != level || !active.session().equals(session)) activate(mc, level, session);
         if (active == null || active.level() != level || !active.session().equals(session)) return;
         Integer serverDistance = serverViewDistance(mc);
@@ -307,6 +353,15 @@ public final class KeepTerrainLoaded {
             }
         }
         return server == null ? null : new Session(island, server);
+    }
+
+    /** The feature is on and this island isn't left out (the server line may be missing for a moment). */
+    private static boolean isEnabledHere() {
+        if (BOBBY) return false;
+        SkyBallsConfig c = SkyBallsConfig.current();
+        if (c == null || !c.misc.keepTerrainLoaded.enabled || !SkyBallsLocation.onSkyblock()) return false;
+        String island = SkyBallsLocation.area();
+        return ISLANDS.contains(island) && !excluded(c.misc.keepTerrainLoaded.excludedIslands, island);
     }
 
     private static boolean excluded(String list, String island) {

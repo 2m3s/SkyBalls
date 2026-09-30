@@ -55,6 +55,9 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.combat.DianaBurrows.init();
         com.epic60869.skyballs.features.combat.DianaSphinx.init();
         com.epic60869.skyballs.features.combat.DianaProfitTracker.init(configDir);
+        com.epic60869.skyballs.features.combat.DianaTracker.init(configDir);
+        com.epic60869.skyballs.features.combat.DianaMobHealth.init();
+        com.epic60869.skyballs.features.combat.DianaAchievements.init(configDir);
         com.epic60869.skyballs.features.garden.FarmingProfitTracker.init(configDir);
         com.epic60869.skyballs.features.combat.DianaLobbyCompromised.init();
         com.epic60869.skyballs.features.slayer.SlayerFeatures.init();

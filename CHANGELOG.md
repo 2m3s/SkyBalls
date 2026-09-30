@@ -2,9 +2,21 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## Unreleased
+## 1.3.9.5 — 2026-09-30
+
+### Added
+- Diana Mob Tracker, from SkyHanni's Mythological Creature Tracker: how many of each mythological creature you dug up with their share of the total, your lootshared Inquisitors, King Minos, Manticores and Sphinxes (from SBO), mobs per hour and how many creatures since each rare one, for this session, this mayor term or all time (/sb mobtracker session|season|alltime|reset). Hypixel's "You dug out a ..." message gets how many creatures it's been since the last one of that kind.
+- Diana Rare Drop Announcer, from SBO: your RNG drops (Chimera, Shimmering Wool, Manti-core, Fateful Stinger, Brain Food, Daedalus Stick, Minos Relic, Crown of Greed, Mythological Dye, Myth the Fish, Braided Griffin Feather) in chat with this season's count, the lootshare count and price, as a title, and sent to party chat (pick which drops). Also "Took 12 Inquisitors to get Chimera!", "Took 240 mobs and 1h 2m to get an Inquisitor!" and b2b messages, and optionally "Cocooned a ...!" in party chat. Lootshared drops and rare mobs are counted separately.
+- Diana Mob HP, from SBO: the health of the Diana mobs near you and King Minos's hits left on a HUD, with an optional "HP LOW!" alert for rare mobs.
+- Diana Achievements, from SBO: SBO's Diana achievements (b2b Chimera, 5k burrows in one event, 100 Inquisitors since Chimera, max bestiaries, Crown of Avarice and more) with a title and chat message, and /sb achievements to see them (/sb achievements backtrack checks your saved seasons). Repeat Each Event lets them be earned again every season.
+- Diana party commands, from SBO (Party Commands → Diana Commands, on when Party Commands is): !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>, answered from this season's Diana mob, drop and profit trackers. Also SBO's !demote, !carrot and !time, and !promote / !demote can name a player.
+
+### Changed
+- Diana Profit Tracker: keeps counting burrows and time while the mob tracker, achievements or Diana party commands are on, even with its HUD off.
+- Diana: Rare Mob Sharing has a Shared Mobs section to pick which rare mobs are sent and received: Minos Inquisitors, King Minos and Manticores are on by default and Sphinxes can be turned on. It replaces the All Rare Mobs setting, and other rare mobs are no longer shared.
 
 ### Fixed
+- Keep Terrain Loaded could crash the game with Sodium ("RenderRegion.getResources() is null"): when the chunk storage shrank (like when the scoreboard's server line went missing for a moment during a restart warning), chunks were forgotten without being unloaded, so Sodium kept drawing them. They're unloaded properly now, and a moment without the server line no longer turns the feature off and on.
 - Leaderboards: drops that name the enchantment in the text, like "RARE DROP! Enchanted Book (Chimera 1) (+304 ✯ Magic Find)", now count (as "Chimera I") instead of being missed.
 - Diana: Siamese Lynx Highlight outlines the lynx the angry villager particles are over. It used to find the cats through their nametags and often picked the other one.
 

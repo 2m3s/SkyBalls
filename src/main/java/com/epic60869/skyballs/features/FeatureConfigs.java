@@ -162,6 +162,145 @@ public final class FeatureConfigs {
         public boolean chatAlert = false;
     }
 
+    /** SkyHanni's Mythological Creature Tracker, with SBO's lootshare counts. */
+    public static final class DianaMobTracker {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show how many of each mythological creature you dug up, how many creatures since each rare one and your mobs per hour, in the Hub while you do Diana. Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Show", desc = "This session, this mayor term (Diana's season) or all time. Also /sb mobtracker session|season|alltime, and /sb mobtracker reset to reset the one shown.")
+        @ConfigEditorDropdown
+        public com.epic60869.skyballs.features.combat.DianaProfitTracker.Period period = com.epic60869.skyballs.features.combat.DianaProfitTracker.Period.SESSION;
+
+        @Expose
+        @ConfigOption(name = "Show Percentage", desc = "Each creature's share of all the creatures you dug up.")
+        @ConfigEditorBoolean
+        public boolean showPercentage = true;
+
+        @Expose
+        @ConfigOption(name = "Show Lootshare", desc = "How many of each rare mob you lootshared, after it (SBO's [LS: n]).")
+        @ConfigEditorBoolean
+        public boolean showLootshare = true;
+
+        @Expose
+        @ConfigOption(name = "Creatures Since in Chat", desc = "Add how many creatures you dug up since the last one of that kind to Hypixel's \"You dug out a ...\" message, like SkyHanni.")
+        @ConfigEditorBoolean
+        public boolean sinceInChat = true;
+    }
+
+    /** Which RNG drops Rare Drop Announcer says in party chat. */
+    public static final class DianaPartyDrops {
+        @Expose @ConfigOption(name = "Chimera", desc = "") @ConfigEditorBoolean public boolean chimera = true;
+        @Expose @ConfigOption(name = "Shimmering Wool", desc = "") @ConfigEditorBoolean public boolean wool = true;
+        @Expose @ConfigOption(name = "Manti-core", desc = "") @ConfigEditorBoolean public boolean core = true;
+        @Expose @ConfigOption(name = "Fateful Stinger", desc = "") @ConfigEditorBoolean public boolean stinger = true;
+        @Expose @ConfigOption(name = "Brain Food", desc = "") @ConfigEditorBoolean public boolean brainFood = true;
+        @Expose @ConfigOption(name = "Daedalus Stick", desc = "") @ConfigEditorBoolean public boolean stick = true;
+        @Expose @ConfigOption(name = "Minos Relic", desc = "") @ConfigEditorBoolean public boolean relic = true;
+        @Expose @ConfigOption(name = "Crown of Greed", desc = "") @ConfigEditorBoolean public boolean crown = true;
+        @Expose @ConfigOption(name = "Mythological Dye", desc = "") @ConfigEditorBoolean public boolean dye = true;
+        @Expose @ConfigOption(name = "Myth the Fish", desc = "") @ConfigEditorBoolean public boolean mythFish = true;
+        @Expose @ConfigOption(name = "Braided Griffin Feather", desc = "") @ConfigEditorBoolean public boolean braided = true;
+    }
+
+    /** SBO's loot announcer and since messages. */
+    public static final class DianaDrops {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Announce your Diana RNG drops (Chimera, Wool, Manti-core, Stinger, Brain Food, Stick, Relic, ...) with how many you've had this season and their price, like SBO.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Send to Party", desc = "Say the drop in party chat: \"RARE DROP! Chimera (+304 ✯ Magic Find) #3 (+95.2M coins)\". Pick the drops below.")
+        @ConfigEditorBoolean
+        public boolean sendToParty = true;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Party Drops", desc = "Which drops Send to Party says in party chat.")
+        public DianaPartyDrops partyDrops = new DianaPartyDrops();
+
+        @Expose
+        @ConfigOption(name = "Chat Message", desc = "Your own RARE DROP! line with the drop's count this season (and lootshare count) and price.")
+        @ConfigEditorBoolean
+        public boolean chatMessage = true;
+
+        @Expose
+        @ConfigOption(name = "All Drops in Chat", desc = "Also the small drops (Hilt, Urn, Souvenir, Shelmet, Plushie, Remedies, Feathers, Fragments) in the chat message.")
+        @ConfigEditorBoolean
+        public boolean allDrops = false;
+
+        @Expose
+        @ConfigOption(name = "Title", desc = "Show the drop and its price as a title.")
+        @ConfigEditorBoolean
+        public boolean title = true;
+
+        @Expose
+        @ConfigOption(name = "Crown of Greed Title", desc = "Show a title for Crown of Greed too.")
+        @ConfigEditorBoolean
+        public boolean crownTitle = false;
+
+        @Expose
+        @ConfigOption(name = "Sound", desc = "Play a sound for drops without a title.")
+        @ConfigEditorBoolean
+        public boolean sound = true;
+
+        @Expose
+        @ConfigOption(name = "Since Messages", desc = "\"Took 12 Inquisitors to get Chimera!\", \"Took 240 mobs and 1h 2m to get an Inquisitor!\" and \"b2b Chimera!\" in chat.")
+        @ConfigEditorBoolean
+        public boolean sinceMessages = true;
+
+        @Expose
+        @ConfigOption(name = "Announce Cocoon", desc = "Say \"Cocooned a Minos Inquisitor!\" in party chat when you cocoon a rare mob.")
+        @ConfigEditorBoolean
+        public boolean announceCocoon = false;
+    }
+
+    /** SBO's mythos mob HP overlay. */
+    public static final class DianaMobHealth {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show the nametags (health) of the Diana mobs near you, and King Minos's hits left, on a HUD. Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Low HP Alert (millions)", desc = "A \"HP LOW!\" title when an Inquisitor, King Minos, Manticore or Sphinx gets below this much health, in millions. 0: off.")
+        @ConfigEditorSlider(minValue = 0, maxValue = 50, minStep = 0.5f)
+        public float lowHpAlert = 0;
+
+        @Expose
+        @ConfigOption(name = "Low HP Sound", desc = "Also play a bell with the Low HP Alert.")
+        @ConfigEditorBoolean
+        public boolean lowHpSound = true;
+    }
+
+    /** SBO's Diana achievements. */
+    public static final class DianaAchievements {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Unlock SBO's Diana achievements (b2b Chimera, 5k burrows in one event, 100 Inquisitors since Chimera, ...) with a title and a chat message.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Repeat Each Event", desc = "Achievements can be earned again every Diana season (except the first-time and bestiary ones).")
+        @ConfigEditorBoolean
+        public boolean repeatEachEvent = false;
+
+        @ConfigOption(name = "Achievements", desc = "See your achievements. Also /sb achievements (/sb achievements backtrack checks your saved seasons, /sb achievements lock CONFIRM resets them).")
+        @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton(buttonText = "OPEN")
+        public Runnable open = com.epic60869.skyballs.features.combat.DianaAchievements::open;
+    }
+
+    /** Which rare mobs Rare Mob Sharing sends in party chat and picks up from it. */
+    public static final class DianaSharedMobs {
+        @Expose @ConfigOption(name = "Minos Inquisitor", desc = "Share and receive Minos Inquisitors.") @ConfigEditorBoolean public boolean inquisitor = true;
+        @Expose @ConfigOption(name = "King Minos", desc = "Share and receive King Minos.") @ConfigEditorBoolean public boolean kingMinos = true;
+        @Expose @ConfigOption(name = "Manticore", desc = "Share and receive Manticores.") @ConfigEditorBoolean public boolean manticore = true;
+        @Expose @ConfigOption(name = "Sphinx", desc = "Share and receive Sphinxes.") @ConfigEditorBoolean public boolean sphinx = false;
+    }
+
     /** The Diana warp keys (SBO's): set them in Options > Controls > Key Binds, under SkyBalls. */
     public static final class DianaWarp {
         @ConfigOption(name = "Diana Warp", desc = "You must configure the warp keys from vanilla Minecraft settings, under (ESC) -> Options -> Controls -> Key Binds... scroll till you find SkyBalls and configure it from there.")
@@ -206,6 +345,26 @@ public final class FeatureConfigs {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Mob Tracker", desc = "How many of each mythological creature you dug up and how many since each rare one, like SkyHanni's Mythological Creature Tracker.")
+        public DianaMobTracker mobTracker = new DianaMobTracker();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Rare Drop Announcer", desc = "Your Diana RNG drops in chat, as a title and in party chat, with how many mobs they took, like SBO.")
+        public DianaDrops drops = new DianaDrops();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Mob HP", desc = "The health of the Diana mobs near you on a HUD, and a low HP alert, like SBO.")
+        public DianaMobHealth mobHealth = new DianaMobHealth();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Achievements", desc = "SBO's Diana achievements.")
+        public DianaAchievements achievements = new DianaAchievements();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Lobby Compromised", desc = "Alert when too many non-party players join the lobby while you do Diana, like Skysoft.")
         public DianaLobbyCompromised lobbyCompromised = new DianaLobbyCompromised();
 
@@ -215,14 +374,14 @@ public final class FeatureConfigs {
         public boolean sphinxSolver = false;
 
         @Expose
-        @ConfigOption(name = "Rare Mob Sharing", desc = "When you dig up a rare mob, send its coordinates in party chat. Rare mobs your party shares get a waypoint and a title.")
+        @ConfigOption(name = "Rare Mob Sharing", desc = "When you dig up a rare mob picked in Shared Mobs, send its coordinates in party chat. Rare mobs your party shares get a waypoint and a title.")
         @ConfigEditorBoolean
         public boolean rareMobSharing = false;
 
         @Expose
-        @ConfigOption(name = "All Rare Mobs", desc = "Share and receive every rare Diana mob. Off: only Minos Inquisitors, Manticores and King Minos. Only those three glow either way.")
-        @ConfigEditorBoolean
-        public boolean allRareMobs = false;
+        @Accordion
+        @ConfigOption(name = "Shared Mobs", desc = "Which rare mobs Rare Mob Sharing sends and receives: Minos Inquisitors, King Minos and Manticores by default, Sphinxes too if you turn them on.")
+        public DianaSharedMobs sharedMobs = new DianaSharedMobs();
 
         @Expose
         @ConfigOption(name = "Siamese Lynx Highlight", desc = "Highlight the Siamese Lynx you can hit (the one with angry villager particles) in green.")
@@ -1398,7 +1557,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!warp", desc = "Runs /party warp.") @ConfigEditorBoolean public boolean warp = true;
         @Expose @ConfigOption(name = "!allinvite", desc = "Runs /party settings allinvite.") @ConfigEditorBoolean public boolean allInvite = true;
         @Expose @ConfigOption(name = "!pt / !transfer", desc = "Transfers the party to the player who asked.") @ConfigEditorBoolean public boolean transfer = true;
-        @Expose @ConfigOption(name = "!promote", desc = "Promotes the player who asked.") @ConfigEditorBoolean public boolean promote = false;
+        @Expose @ConfigOption(name = "!promote / !demote", desc = "Promotes or demotes the player who asked, or the player named after it (!promote Name).") @ConfigEditorBoolean public boolean promote = false;
 
         @Expose @ConfigOption(name = "!f1 - !f7", desc = "Joins that Catacombs floor (Odin's queue commands). Only while you're leader.") @ConfigEditorBoolean public boolean floors = true;
         @Expose @ConfigOption(name = "!m1 - !m7", desc = "Joins that Master Mode floor. Only while you're leader.") @ConfigEditorBoolean public boolean masterFloors = true;
@@ -1406,6 +1565,13 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "!fps", desc = "Says your FPS in party chat (Odin's). Works whoever is leader.") @ConfigEditorBoolean public boolean fps = true;
         @Expose @ConfigOption(name = "!ping", desc = "Says your ping in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean ping = true;
         @Expose @ConfigOption(name = "!tps", desc = "Says the server's TPS in party chat. Works whoever is leader.") @ConfigEditorBoolean public boolean tps = true;
+        @Expose @ConfigOption(name = "!carrot", desc = "SBO's Ask Carrot: a magic 8-ball answer in party chat.") @ConfigEditorBoolean public boolean carrot = false;
+        @Expose @ConfigOption(name = "!time", desc = "Says your time in party chat.") @ConfigEditorBoolean public boolean time = false;
+
+        @Expose
+        @ConfigOption(name = "Diana Commands", desc = "SBO's Diana party commands, answered from this season's Diana trackers: !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>.")
+        @ConfigEditorBoolean
+        public boolean diana = true;
     }
 
     public static final class ItemNotification {

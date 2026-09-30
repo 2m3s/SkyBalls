@@ -377,8 +377,15 @@ public final class DianaRareMobs {
             .map(Target::lineLocation).orElse(null);
     }
 
+    /** The rare mobs shared in party chat and received from it (Shared Mobs). */
     private static Set<RareMob> sharedMobs(FeatureConfigs.Diana config) {
-        return config.allRareMobs ? Set.of(RareMob.values()) : SHARABLE;
+        FeatureConfigs.DianaSharedMobs picked = config.sharedMobs == null ? new FeatureConfigs.DianaSharedMobs() : config.sharedMobs;
+        Set<RareMob> mobs = java.util.EnumSet.noneOf(RareMob.class);
+        if (picked.inquisitor) mobs.add(RareMob.MINOS_INQUISITOR);
+        if (picked.kingMinos) mobs.add(RareMob.KING_MINOS);
+        if (picked.manticore) mobs.add(RareMob.MANTICORE);
+        if (picked.sphinx) mobs.add(RareMob.SPHINX);
+        return mobs;
     }
 
     // ------------------------------------------------------------------------------------------------ tick

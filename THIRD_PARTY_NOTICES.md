@@ -105,9 +105,16 @@ SkyBalls's Diana burrows, warp keys and Sphinx solver (`features/combat/DianaBur
 
 The Kotlin code was rewritten in Java. Changes: waypoints are drawn with SkyBalls's world renderer, the guess colours and beacon beam are SkyBalls settings, and the warp keys use SkyBalls's warp settings.
 
+SkyBalls's Diana achievements, mob HP display, rare drop announcer and Diana party commands are also ported from SBO (commit f5663baed4dd7748c80ba0fe52164bfb404ae4d5, Apache License 2.0):
+
+- `features/combat/DianaAchievements.java` and `DianaAchievementsScreen.java`: diana/achievements/ (AchievementManager, Achievement) and guis/AchievementsGUI.kt. The achievement names, descriptions, rarities and ids are SBO's. The ones that need SBO's own server (mob kill totals, the kills leaderboard, Enderman Slayer 9) and "Download SBO" are left out.
+- `features/combat/DianaMobHealth.java`: diana/DianaMobDetect.kt (the mythological mob nametags, King Minos's hits and the low HP alert).
+- `features/combat/DianaTracker.java` (the drop side): diana/DianaTracker.kt and the lootshare tracking in utils/Helper.kt (the RARE DROP handling, lootshared drops and rare mobs, the since counters, back-to-back drops, the best Magic Find and the loot announcer).
+- `features/combat/DianaPartyCommands.java` and the !demote, !carrot and !time commands in `features/misc/PartyCommands.java`: general/PartyCommands.kt.
+
 ## Diana profit tracker and Lobby Compromised
 
-The Diana profit tracker (`features/combat/DianaProfitTracker.java`) follows SkyHanni's DianaProfitTracker (https://github.com/hannibal002/SkyHanni, LGPL-2.1), with SkyHanni-REPO's constants/DianaDrops.json list (MIT License). Lobby Compromised (`features/combat/DianaLobbyCompromised.java`) is ported from Skysoft's DianaLobbyCompromisedWatcher (https://github.com/Akinsoft/Skysoft, LGPL-3.0), reading your party from chat instead of the Hypixel mod API.
+The Diana profit tracker (`features/combat/DianaProfitTracker.java`) follows SkyHanni's DianaProfitTracker (https://github.com/hannibal002/SkyHanni, LGPL-2.1), with SkyHanni-REPO's constants/DianaDrops.json list (MIT License). The mythological creature tracker (the mob side of `features/combat/DianaTracker.java`) follows SkyHanni's MythologicalCreatureTracker (src/main/java/at/hannibal2/skyhanni/features/event/diana/MythologicalCreatureTracker.kt, LGPL-2.1): the creature counts and percentages, the creatures since each rare one, the count added to the "You dug out" message, and the dig-out pattern from GriffinBurrowHelper, with the creature list from SkyHanni-REPO's constants/events/Diana.json (MIT License). Lobby Compromised (`features/combat/DianaLobbyCompromised.java`) is ported from Skysoft's DianaLobbyCompromisedWatcher (https://github.com/Akinsoft/Skysoft, LGPL-3.0), reading your party from chat instead of the Hypixel mod API.
 
 ## SkyOcean
 
