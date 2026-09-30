@@ -76,7 +76,11 @@ public final class SkyBallsLeaderboards {
     /** A message counted less than this long ago is Hypixel (or a relay) sending it again, not a second drop. */
     private static final long DUPLICATE_MS = 250L;
     private static final java.util.Map<String, Long> RECENT = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Pattern ROMAN_LEVEL = Pattern.compile("\\s+[IVXLCDM]+$");
+    /** A level at the end of a name: "Chimera I", or "Chimera 1" as the drop line sometimes writes it. */
+    private static final Pattern ROMAN_LEVEL = Pattern.compile("\\s+(?:[IVXLCDM]+|\\d+)$");
+    /** "Enchanted Book (Chimera 1": the drop pattern leaves the closing bracket out of the item. */
+    private static final Pattern NAMED_IN_BRACKETS = Pattern.compile("^(?<base>.+?)\\s+\\((?<inner>[^()]+)\\)?$");
+    private static final Pattern ARABIC_LEVEL = Pattern.compile("^(?<name>.+?)\\s+(?<level>\\d{1,2})$");
 
     private static void onChat(String text, Component component) {
         process(text, component, true, true);
@@ -99,7 +103,17 @@ public final class SkyBallsLeaderboards {
         String dropItem = drop.matches() ? drop.group("item").trim() : null;
         long dropAmount = dropItem != null && drop.group("amount") != null ? parse(drop.group("amount")) : 1;
         // Enchanted books say only "(Enchanted Book)": the enchantment ("Chimera I") is in the hover.
-        List<String> hoverNames = dropItem != null && component != null ? hoverNames(component) : List.of();
+        List<String> hoverNames = dropItem != null && component != null ? hoverNames(component) : new ArrayList<>();
+        // Newer lines name it in the text too: "RARE DROP! Enchanted Book (Chimera 1) (+304 ✯ Magic Find)".
+        Matcher named = dropItem != null ? NAMED_IN_BRACKETS.matcher(dropItem) : null;
+        if (named != null && named.matches()) {
+            dropItem = named.group("base").trim();
+            String inner = named.group("inner").trim();
+            Matcher level = ARABIC_LEVEL.matcher(inner);
+            // "Chimera I" first, as the hover says it, so the reported detail is the same however the line writes it.
+            if (level.matches()) hoverNames.add(0, level.group("name") + " " + roman(Integer.parseInt(level.group("level"))));
+            hoverNames.add(inner);
+        }
 
         if (dedupe && (dropItem != null || hasChatTracker(running))) {
             String key = line + "|" + String.join("|", hoverNames);

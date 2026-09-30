@@ -2,6 +2,12 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## Unreleased
+
+### Fixed
+- Leaderboards: drops that name the enchantment in the text, like "RARE DROP! Enchanted Book (Chimera 1) (+304 ✯ Magic Find)", now count (as "Chimera I") instead of being missed.
+- Diana: Siamese Lynx Highlight outlines the lynx the angry villager particles are over. It used to find the cats through their nametags and often picked the other one.
+
 ## 1.3.9 — 2026-09-30
 
 ### Added

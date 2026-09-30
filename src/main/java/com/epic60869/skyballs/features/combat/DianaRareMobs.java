@@ -23,6 +23,8 @@ import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.feline.Cat;
+import net.minecraft.world.entity.animal.feline.Ocelot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
@@ -245,6 +247,10 @@ public final class DianaRareMobs {
     private static final Set<RareMob> SHARABLE = Set.of(RareMob.MINOS_INQUISITOR, RareMob.MANTICORE, RareMob.KING_MINOS);
     /** How long a lynx stays marked after its last angry villager particle. */
     private static final long LYNX_PARTICLE_MS = 1_500L;
+    /** Particles this recent decide which lynx it is, so a switch after a hit shows within half a second. */
+    private static final long LYNX_PARTICLE_WINDOW_MS = 500L;
+    /** How far to the side of a cat its particles can be (Hypixel spreads them a little). */
+    private static final double LYNX_PARTICLE_RADIUS = 1.0;
 
     private static final String HEALTH_ZERO = "health reached zero";
     private static final String MOB_DIED = "mob died";
@@ -293,10 +299,10 @@ public final class DianaRareMobs {
     /** Lowercase name -> (name, expiry) of players who said "Loot share secured!". */
     private static final Map<String, Map.Entry<String, Long>> readyPlayers = new HashMap<>();
     private static Map<Entity, Integer> glow = Map.of();
-    /** Where and when the last angry villager particle was: it's over the Siamese Lynx you can hit. */
-    private static Vec3 lynxParticle;
-    private static long lynxParticleAt;
+    /** Recent angry villager particles and when they came: they're over the Siamese Lynx you can hit. */
+    private static final List<Map.Entry<Vec3, Long>> lynxParticles = new ArrayList<>();
     private static LivingEntity hittableLynx;
+    private static long lynxSeenAt;
     private static long nextTargetId;
     private static int ticks;
     private static String serverName;
@@ -554,7 +560,7 @@ public final class DianaRareMobs {
         readyPlayers.clear();
         glow = Map.of();
         hittableLynx = null;
-        lynxParticle = null;
+        lynxParticles.clear();
         nextTargetId = 0;
         ticks = 0;
     }
@@ -807,33 +813,70 @@ public final class DianaRareMobs {
     public static void onParticle(ClientboundLevelParticlesPacket packet) {
         FeatureConfigs.Diana config = config();
         if (config == null || !config.lynxHighlight || packet.getParticle().getType() != ParticleTypes.ANGRY_VILLAGER || !onHub()) return;
-        lynxParticle = new Vec3(packet.getX(), packet.getY(), packet.getZ());
-        lynxParticleAt = System.currentTimeMillis();
+        lynxParticles.add(Map.entry(new Vec3(packet.getX(), packet.getY(), packet.getZ()), System.currentTimeMillis()));
     }
 
-    /** The Siamese Lynx right under the latest angry villager particle, while they keep coming. */
+    /**
+     * The Siamese Lynx the angry villager particles are over. The cats are matched to the particles directly, not
+     * through their nametags: the two cats stand close together and Hypixel spawns both before their nametags, so a
+     * nametag's "entity spawned just before it" is often the other cat.
+     */
     private static void updateHittableLynx(FeatureConfigs.Diana config, long now) {
+        lynxParticles.removeIf(p -> now - p.getValue() > LYNX_PARTICLE_WINDOW_MS);
         Minecraft mc = Minecraft.getInstance();
-        if (config == null || !config.lynxHighlight || lynxParticle == null || now - lynxParticleAt > LYNX_PARTICLE_MS
-            || mc.level == null || mc.player == null || !onHub()) {
+        if (config == null || !config.lynxHighlight || mc.level == null || mc.player == null || !onHub()) {
+            lynxParticles.clear();
             hittableLynx = null;
             return;
         }
-        LivingEntity best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (Signal s : visibleSignals(mc)) {
-            if (s.mob() != RareMob.SIAMESE_LYNXES || !s.entity().isAlive()) continue;
-            Vec3 at = s.entity().position();
-            double dx = at.x - lynxParticle.x, dz = at.z - lynxParticle.z, dy = lynxParticle.y - at.y;
-            double horizontal = dx * dx + dz * dz;
-            if (horizontal > 2.25 || dy < -0.5 || dy > 4) continue;
-            if (horizontal < bestDistance) {
-                bestDistance = horizontal;
-                best = s.entity();
+        if (lynxParticles.isEmpty()) {
+            // Particles stop for a moment between hits: keep the last cat until they've been gone a while.
+            if (hittableLynx != null && (!hittableLynx.isAlive() || now - lynxSeenAt > LYNX_PARTICLE_MS)) hittableLynx = null;
+            return;
+        }
+        List<Entity> entities = new ArrayList<>();
+        for (Entity e : mc.level.entitiesForRendering()) entities.add(e);
+        List<Vec3> lynxTags = new ArrayList<>();
+        for (Entity e : entities) {
+            if (e instanceof ArmorStand stand && stand.hasCustomName()
+                && matchLabel(SkyBallsLocation.strip(stand.getCustomName().getString())) == RareMob.SIAMESE_LYNXES) {
+                lynxTags.add(stand.position());
             }
         }
-        if (best != null) hittableLynx = best;
-        else if (hittableLynx != null && !hittableLynx.isAlive()) hittableLynx = null;
+        LivingEntity best = null;
+        int bestHits = 0;
+        double bestDistance = Double.MAX_VALUE;
+        for (Entity e : entities) {
+            if (!(e instanceof LivingEntity cat) || !cat.isAlive() || !(e instanceof Cat || e instanceof Ocelot)) continue;
+            // Only the lynxes: a cat with a lynx nametag above it (any cat if no lynx nametag can be read).
+            boolean lynx = lynxTags.isEmpty();
+            for (Vec3 tag : lynxTags) {
+                double dx = tag.x - cat.getX(), dz = tag.z - cat.getZ(), dy = tag.y - cat.getY();
+                if (dx * dx + dz * dz <= 4.0 && dy >= -0.5 && dy <= 4.0) lynx = true;
+            }
+            if (!lynx) continue;
+            // Which cat most of the recent particles are over, then the closest to the newest one.
+            int hits = 0;
+            double newest = Double.MAX_VALUE;
+            for (Map.Entry<Vec3, Long> p : lynxParticles) {
+                Vec3 at = p.getKey();
+                double dx = at.x - cat.getX(), dz = at.z - cat.getZ(), dy = at.y - cat.getY();
+                double horizontal = dx * dx + dz * dz;
+                if (horizontal > LYNX_PARTICLE_RADIUS * LYNX_PARTICLE_RADIUS || dy < -0.5 || dy > 3.0) continue;
+                hits++;
+                newest = horizontal;
+            }
+            if (hits == 0) continue;
+            if (hits > bestHits || (hits == bestHits && newest < bestDistance)) {
+                best = cat;
+                bestHits = hits;
+                bestDistance = newest;
+            }
+        }
+        if (best != null) {
+            hittableLynx = best;
+            lynxSeenAt = now;
+        }
     }
 
     // ------------------------------------------------------------------------------------------------ chat
