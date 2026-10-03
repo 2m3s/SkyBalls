@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## test-1.4
+## 1.4 — 2026-10-03
 
 ### Added
 - Inquisitor Gamble (Diana, on by default): when an Inquisitor you dug up dies or you lootshare one, it gets shot on screen. A crosshair sways over its heart while a heartbeat speeds up, then the gun fires: through the heart with "CHIMERA!" if a Chimera dropped, past the body with "MISSED!" if not. Nothing spoils it: SkyBalls's HUDs are hidden while it plays, and the Chimera chat line, drop announcer, rare drop animations and achievement popups wait until it's over. /sb inqgamble hit|miss to preview it.
