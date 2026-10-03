@@ -1,11 +1,15 @@
 package com.epic60869.skyballs.features.sbc;
 
+import com.epic60869.skyballs.SkyBallsGlobalChat;
 import com.epic60869.skyballs.custom.RepoItems;
 import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.mixin.SkyBallsContainerScreenAccessor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -16,17 +20,26 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Items as the mod server sends them ({@code {id, name, lore[], count, rarity, skullTexture?}} with § codes): turning
@@ -48,8 +61,366 @@ public final class SbcItems {
         }
     };
     private static int nextShared = 1;
+    private static final Pattern PUBLIC_ITEM = Pattern.compile("\\[\\[SBITEM\\|([A-Za-z0-9_:.\\-]+)\\|(\\d{1,2})(?:\\|([A-Za-z0-9_-]+))?]]");
+    private static final Pattern ITEM_TOKEN = Pattern.compile("(?i)\\[item]");
+    /** [inv] shares your whole inventory; [brag] still works the same way. */
+    private static final Pattern INV_TOKEN = Pattern.compile("(?i)\\[(?:inv|brag)]");
+    /** A shared inventory, or part of one: {@code [[SBINV|key|part/parts|data]]}. */
+    private static final Pattern INV_MARKER = Pattern.compile("\\[\\[SBINV\\|([a-z0-9]{1,8})\\|(\\d{1,2})/(\\d{1,2})\\|([A-Za-z0-9_-]*)]]");
+    /** Data per public chat message: Hypixel allows 256 characters, a "/msg SomeLongName " command included. */
+    private static final int INV_PART_LENGTH = 170;
+    private static final long FOLLOWUP_DELAY_MS = 350L;
+    /** Chat commands whose text can hold [item] and [inv]; the ones that name a player first take one more word. */
+    private static final Set<String> CHAT_COMMANDS = Set.of("pc", "pchat", "ac", "achat", "gc", "gchat", "oc", "ochat",
+        "cc", "cchat", "shout", "r", "reply");
+    private static final Set<String> PLAYER_CHAT_COMMANDS = Set.of("msg", "w", "tell", "whisper", "message", "t");
+
+    private record Followup(String message, boolean skyBalls, boolean command) {}
+
+    /** Inventories shared in chat, as their parts arrive. */
+    private static final Map<String, SharedInventory> INVENTORIES = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, SharedInventory> eldest) {
+            return size() > 50;
+        }
+    };
+
+    private static final class SharedInventory {
+        final String[] parts;
+        String owner = "";
+
+        SharedInventory(int count) {
+            parts = new String[count];
+        }
+
+        boolean complete() {
+            for (String part : parts) if (part == null) return false;
+            return true;
+        }
+    }
+
+    private static final Queue<Followup> FOLLOWUPS = new ArrayDeque<>();
+    private static long nextFollowupAt;
 
     private SbcItems() {}
+
+    public static void init() {
+        ClientSendMessageEvents.MODIFY_CHAT.register(SbcItems::modifyOutgoingChat);
+        ClientSendMessageEvents.MODIFY_COMMAND.register(SbcItems::modifyOutgoingCommand);
+        ClientTickEvents.END_CLIENT_TICK.register(SbcItems::sendFollowup);
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> FOLLOWUPS.clear());
+    }
+
+    private static boolean sharingEnabled() {
+        return Sbc.config().chat.itemSharing && Flags.isEnabled("chat.items");
+    }
+
+    private static String modifyOutgoingChat(String message) {
+        if (!sharingEnabled()) return message;
+        List<String> expanded = expandInventoryText(message, INV_PART_LENGTH);
+        List<String> prepared = expanded.stream().map(SbcItems::replaceItemTokens).toList();
+        enqueue(prepared.subList(1, prepared.size()), false, false);
+        return prepared.getFirst();
+    }
+
+    /**
+     * [item] and [inv] in party, guild, all, co-op and private messages sent as commands (/pc, /gc, /msg Name, ...),
+     * not just in plain chat.
+     */
+    private static String modifyOutgoingCommand(String command) {
+        if (!sharingEnabled()) return command;
+        if (!command.toLowerCase(Locale.ROOT).contains("[item]") && !INV_TOKEN.matcher(command).find()) return command;
+        String[] words = command.split(" ", 3);
+        String name = words[0].toLowerCase(Locale.ROOT);
+        int prefixWords = CHAT_COMMANDS.contains(name) ? 1 : PLAYER_CHAT_COMMANDS.contains(name) ? 2 : 0;
+        if (prefixWords == 0 || words.length <= prefixWords) return command;
+        String prefix = String.join(" ", java.util.Arrays.copyOf(words, prefixWords));
+        String text = command.substring(prefix.length()).trim();
+        List<String> prepared = expandInventoryText(text, INV_PART_LENGTH).stream().map(SbcItems::replaceItemTokens).toList();
+        enqueue(prepared.subList(1, prepared.size()).stream().map(part -> prefix + " " + part).toList(), false, true);
+        return prefix + " " + prepared.getFirst();
+    }
+
+    /** Expands [inv] for the SkyBalls channel (one message holds it all); [item] remains for its richer attached-item packet. */
+    public static List<String> expandBrag(String message) {
+        return sharingEnabled() ? expandInventoryText(message, Integer.MAX_VALUE) : List.of(message);
+    }
+
+    public static void enqueueSkyBallsFollowups(List<String> messages) {
+        enqueue(messages, true, false);
+    }
+
+    private static void enqueue(List<String> messages, boolean skyBalls, boolean command) {
+        for (String message : messages) FOLLOWUPS.add(new Followup(message, skyBalls, command));
+    }
+
+    private static void sendFollowup(Minecraft mc) {
+        if (FOLLOWUPS.isEmpty() || mc.player == null || System.currentTimeMillis() < nextFollowupAt) return;
+        Followup followup = FOLLOWUPS.poll();
+        if (followup == null) return;
+        nextFollowupAt = System.currentTimeMillis() + FOLLOWUP_DELAY_MS;
+        if (followup.skyBalls()) {
+            JsonObject packet = SbcChat.outgoing(followup.message());
+            if (packet != null) SkyBallsGlobalChat.sendPacket(packet);
+        } else if (followup.command()) {
+            mc.player.connection.sendCommand(followup.message());
+        } else {
+            mc.player.connection.sendChat(followup.message());
+        }
+    }
+
+    private static String replaceItemTokens(String message) {
+        ItemStack stack = heldOrHovered();
+        String marker = publicMarker(stack, true);
+        if (marker == null) return message;
+        Matcher matcher = ITEM_TOKEN.matcher(message);
+        StringBuilder out = new StringBuilder();
+        int cursor = 0;
+        while (matcher.find()) {
+            out.append(message, cursor, matcher.start()).append(marker);
+            cursor = matcher.end();
+        }
+        return cursor == 0 ? message : out.append(message, cursor, message.length()).toString();
+    }
+
+    /**
+     * [inv]: your inventory, hotbar and armour as one compressed marker. Hypixel's chat can't hold it in one message,
+     * so the rest goes in follow-up messages that SkyBalls hides for everyone; it shows as one clickable [Inventory].
+     */
+    private static List<String> expandInventoryText(String message, int partLength) {
+        Matcher token = INV_TOKEN.matcher(message);
+        if (!token.find()) return List.of(message);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return List.of(message);
+        String data = encodeInventory(mc.player.getInventory());
+        List<String> parts = new ArrayList<>();
+        for (int i = 0; i < data.length(); i += partLength) parts.add(data.substring(i, Math.min(data.length(), i + partLength)));
+        if (parts.isEmpty()) parts.add("");
+        String key = Long.toString(Math.floorMod(System.nanoTime() ^ mc.player.getUUID().getLeastSignificantBits(), 2_176_782_336L), 36);
+        List<String> lines = new ArrayList<>();
+        for (int i = 0; i < parts.size(); i++) lines.add("[[SBINV|" + key + "|" + (i + 1) + "/" + parts.size() + "|" + parts.get(i) + "]]");
+        String prefix = INV_TOKEN.matcher(message.substring(0, token.start())).replaceAll("").trim();
+        String suffix = INV_TOKEN.matcher(message.substring(token.end())).replaceAll("").trim();
+        lines.set(0, (prefix.isEmpty() ? "" : prefix + " ") + lines.getFirst() + (suffix.isEmpty() ? "" : " " + suffix));
+        return lines;
+    }
+
+    /** Slots 0-35 then the armour (boots to helmet): "ID" or "ID*count", comma separated, deflated, base64. */
+    private static String encodeInventory(net.minecraft.world.entity.player.Inventory inventory) {
+        List<String> entries = new ArrayList<>();
+        for (int slot = 0; slot < 40; slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            entries.add(stack.isEmpty() ? "" : itemId(stack) + (stack.getCount() > 1 ? "*" + stack.getCount() : ""));
+        }
+        while (!entries.isEmpty() && entries.getLast().isEmpty()) entries.removeLast();
+        byte[] raw = String.join(",", entries).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        java.util.zip.Deflater deflater = new java.util.zip.Deflater(java.util.zip.Deflater.BEST_COMPRESSION, true);
+        deflater.setInput(raw);
+        deflater.finish();
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        while (!deflater.finished()) out.write(buffer, 0, deflater.deflate(buffer));
+        deflater.end();
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(out.toByteArray());
+    }
+
+    /** The 40 slots of a shared inventory (empty strings for empty slots), or null if it can't be read. */
+    private static List<String> decodeInventory(String data) {
+        try {
+            java.util.zip.Inflater inflater = new java.util.zip.Inflater(true);
+            inflater.setInput(Base64.getUrlDecoder().decode(data));
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            while (!inflater.finished() && out.size() <= 16_384) {
+                int n = inflater.inflate(buffer);
+                if (n == 0 && (inflater.needsInput() || inflater.needsDictionary())) break;
+                out.write(buffer, 0, n);
+            }
+            inflater.end();
+            List<String> slots = new ArrayList<>(List.of(out.toString(java.nio.charset.StandardCharsets.UTF_8).split(",", -1)));
+            while (slots.size() < 40) slots.add("");
+            return slots.subList(0, 40);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String itemId(ItemStack stack) {
+        String id = Compat.neuName(stack);
+        return id.isBlank() ? stack.getItem().toString().toUpperCase(Locale.ROOT).replace("MINECRAFT:", "") : id;
+    }
+
+    /** Remembers the inventory parts in a chat line; true if it holds only follow-up parts (hidden from chat). */
+    public static boolean recordInventoryParts(Component message) {
+        String text = message.getString();
+        if (!text.contains("[[SBINV|")) return false;
+        Matcher matcher = INV_MARKER.matcher(text);
+        boolean any = false, onlyFollowups = true;
+        while (matcher.find()) {
+            any = true;
+            int part = Integer.parseInt(matcher.group(2)), count = Integer.parseInt(matcher.group(3));
+            if (count < 1 || part < 1 || part > count) continue;
+            synchronized (INVENTORIES) {
+                SharedInventory inventory = INVENTORIES.get(matcher.group(1));
+                if (inventory == null || inventory.parts.length != count) {
+                    inventory = new SharedInventory(count);
+                    INVENTORIES.put(matcher.group(1), inventory);
+                }
+                inventory.parts[part - 1] = matcher.group(4);
+                if (part == 1) inventory.owner = sender(text.substring(0, matcher.start()));
+            }
+            if (part == 1) onlyFollowups = false;
+        }
+        return any && onlyFollowups && sharingEnabled();
+    }
+
+    /** "Party > [MVP+] Name: " -> "Name". */
+    private static String sender(String before) {
+        int colon = before.lastIndexOf(':');
+        if (colon < 0) return "";
+        String[] words = before.substring(0, colon).trim().split(" ");
+        return words.length == 0 ? "" : words[words.length - 1].replaceAll("[^A-Za-z0-9_]", "");
+    }
+
+    /** The clickable "[Inventory]" a shared inventory shows as. */
+    private static MutableComponent inventoryComponent(String key) {
+        String owner;
+        synchronized (INVENTORIES) {
+            SharedInventory inventory = INVENTORIES.get(key);
+            owner = inventory == null ? "" : inventory.owner;
+        }
+        String label = owner.isEmpty() ? "[Inventory]" : "[" + owner + "'s Inventory]";
+        return Component.literal(label).withStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE)
+            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to see the inventory").withStyle(ChatFormatting.GRAY)))
+            .withClickEvent(new ClickEvent.RunCommand("/sb viewinv " + key)));
+    }
+
+    /** Opens a shared inventory: its 40 slots as items, or an error if it's incomplete or unknown. */
+    static void viewInventory(String key) {
+        SharedInventory inventory;
+        synchronized (INVENTORIES) {
+            inventory = INVENTORIES.get(key);
+        }
+        if (inventory == null) {
+            Sbc.error("That inventory is too old to show.");
+            return;
+        }
+        if (!inventory.complete()) {
+            Sbc.error("That inventory hasn't fully arrived yet. Try again in a moment.");
+            return;
+        }
+        List<String> slots = decodeInventory(String.join("", inventory.parts));
+        if (slots == null) {
+            Sbc.error("Couldn't read that inventory.");
+            return;
+        }
+        List<ItemStack> stacks = new ArrayList<>();
+        for (String slot : slots) {
+            if (slot.isBlank()) {
+                stacks.add(ItemStack.EMPTY);
+                continue;
+            }
+            int star = slot.lastIndexOf('*');
+            String id = star > 0 ? slot.substring(0, star) : slot;
+            int count = 1;
+            if (star > 0) {
+                try {
+                    count = Integer.parseInt(slot.substring(star + 1));
+                } catch (NumberFormatException ignored) {}
+            }
+            ItemStack stack = stack(publicItem(id, count, null));
+            stack.setCount(Math.clamp(count, 1, 64));
+            stacks.add(stack);
+        }
+        Compat.queueOpenScreen(new SbcInventoryScreen(inventory.owner, stacks));
+    }
+
+    private static String publicMarker(ItemStack stack, boolean includeName) {
+        if (stack == null || stack.isEmpty()) return null;
+        String id = Compat.neuName(stack);
+        if (id.isBlank()) id = stack.getItem().toString().toUpperCase(Locale.ROOT).replace("MINECRAFT:", "");
+        String marker = "[[SBITEM|" + id + "|" + Math.clamp(stack.getCount(), 1, 99);
+        if (includeName) {
+            String name = Compat.realName(stack).getString();
+            if (!name.isEmpty()) {
+                marker += "|" + Base64.getUrlEncoder().withoutPadding().encodeToString(name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+        }
+        return marker + "]]";
+    }
+
+    /** Replaces compact public-chat item references with the same clickable preview used by SkyBalls chat. */
+    public static Component decoratePublicItems(Component message) {
+        if (!sharingEnabled()) return message;
+        if (message.getString().contains("[[SBINV|")) {
+            // A line with only follow-up parts is left as it is, for SkyBallsChatHudMixin to see and hide.
+            if (recordInventoryParts(message)) return message;
+            message = replaceInventoryMarkers(message);
+        }
+        if (!message.getString().contains("[[SBITEM|")) return message;
+        MutableComponent result = Component.empty();
+        boolean[] replaced = {false};
+        message.visit((style, value) -> {
+            Matcher matcher = PUBLIC_ITEM.matcher(value);
+            int cursor = 0;
+            while (matcher.find()) {
+                if (matcher.start() > cursor) result.append(Component.literal(value.substring(cursor, matcher.start())).withStyle(style));
+                JsonObject item = publicItem(matcher.group(1), Integer.parseInt(matcher.group(2)), matcher.group(3));
+                result.append(chatComponent(item));
+                cursor = matcher.end();
+                replaced[0] = true;
+            }
+            if (cursor < value.length()) result.append(Component.literal(value.substring(cursor)).withStyle(style));
+            return Optional.empty();
+        }, Style.EMPTY);
+        return replaced[0] ? result : message;
+    }
+
+    /** The first part of a shared inventory becomes a clickable [Inventory]; follow-up parts disappear. */
+    private static Component replaceInventoryMarkers(Component message) {
+        MutableComponent result = Component.empty();
+        message.visit((style, value) -> {
+            Matcher matcher = INV_MARKER.matcher(value);
+            int cursor = 0;
+            while (matcher.find()) {
+                if (matcher.start() > cursor) result.append(Component.literal(value.substring(cursor, matcher.start())).withStyle(style));
+                if (matcher.group(2).equals("1")) result.append(inventoryComponent(matcher.group(1)));
+                cursor = matcher.end();
+            }
+            if (cursor < value.length()) result.append(Component.literal(value.substring(cursor)).withStyle(style));
+            return Optional.empty();
+        }, Style.EMPTY);
+        return result;
+    }
+
+    private static JsonObject publicItem(String id, int count, String encodedName) {
+        JsonObject item = new JsonObject();
+        item.addProperty("id", id);
+        item.addProperty("count", Math.clamp(count, 1, 99));
+        String name = null;
+        if (encodedName != null) {
+            try {
+                name = new String(Base64.getUrlDecoder().decode(encodedName), java.nio.charset.StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException ignored) {}
+        }
+        ItemStack template = RepoItems.itemStack(id);
+        if (name == null || name.isBlank()) {
+            String repoName = RepoItems.displayName(id);
+            if (repoName != null) name = ChatFormatting.stripFormatting(repoName);
+            else if (!template.is(Items.BARRIER)) name = Compat.realName(template).getString();
+            else name = id.replace('_', ' ');
+        }
+        item.addProperty("name", name);
+        if (!template.isEmpty()) {
+            JsonArray lore = new JsonArray();
+            for (Component line : template.getOrDefault(DataComponents.LORE, ItemLore.EMPTY).lines()) {
+                if (lore.size() >= MAX_LORE) break;
+                lore.add(limit(legacy(line), MAX_LINE));
+            }
+            if (!lore.isEmpty()) item.add("lore", lore);
+        }
+        return item;
+    }
 
     // ------------------------------------------------------------------------------------------------ outgoing
 
@@ -195,7 +566,14 @@ public final class SbcItems {
             stack = Compat.createSkull(texture);
         } else {
             ItemStack repo = id.isEmpty() ? ItemStack.EMPTY : RepoItems.itemStack(id);
-            stack = repo == null || repo.isEmpty() ? new ItemStack(Items.PAPER) : repo.copy();
+            if (repo != null && !repo.isEmpty() && !repo.is(Items.BARRIER)) {
+                stack = repo.copy();
+            } else {
+                String registryId = id.contains(":") ? id.toLowerCase(Locale.ROOT) : "minecraft:" + id.toLowerCase(Locale.ROOT);
+                Identifier parsed = Identifier.tryParse(registryId);
+                Item vanilla = parsed == null ? Items.PAPER : BuiltInRegistries.ITEM.getOptional(parsed).orElse(Items.PAPER);
+                stack = new ItemStack(vanilla);
+            }
         }
         stack.setCount((int) Math.max(1, Math.min(99, Sbc.lng(item, "count", 1))));
         stack.set(DataComponents.CUSTOM_NAME, parseLegacy(name(item)));

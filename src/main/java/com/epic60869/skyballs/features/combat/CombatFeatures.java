@@ -193,8 +193,14 @@ public final class CombatFeatures {
             boolean slayer = com.epic60869.skyballs.features.slayer.SlayerBossProfit.isSlayerDrop(item);
             // RARE CROP lines, and anything else that drops in the Garden (pest drops).
             boolean garden = type.contains("CROP") || SkyBallsLocation.inGarden();
-            onRareDrop(config.rareDrops, text.trim(), item, amount, rng, slayer, garden);
-            RareDropTotem.onDrop(m.group("type").trim(), item);
+            // A Chimera's animations wait for the Inquisitor Gamble's shot.
+            InquisitorGamble.checkLine(text.trim());
+            String dropText = text.trim(), dropItem = item, dropType = m.group("type").trim();
+            int dropAmount = amount;
+            InquisitorGamble.afterReveal(() -> {
+                onRareDrop(config.rareDrops, dropText, dropItem, dropAmount, rng, slayer, garden);
+                RareDropTotem.onDrop(dropType, dropItem);
+            });
         }
     }
 

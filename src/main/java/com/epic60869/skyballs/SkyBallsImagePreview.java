@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
@@ -101,14 +102,48 @@ public final class SkyBallsImagePreview {
 
     private static String imageUrl(Style style) {
         if (style == null) return null;
+
         String url = null;
         if (style.getClickEvent() instanceof ClickEvent.OpenUrl open) {
             url = open.uri().toString();
         } else if (style.getHoverEvent() instanceof HoverEvent.ShowText showText) {
-            url = showText.value().getString().trim();
+            url = extractUrl(showText.value());
         }
+
         if (url == null || NOT_IMAGE.containsKey(url)) return null;
-        return IMAGE_URL.matcher(url).matches() || IMAGE_HOST.matcher(url).matches() ? url : null;
+        url = url.trim();
+        String normalized = normalizeUrl(url);
+        if (normalized == null) return null;
+        return IMAGE_URL.matcher(normalized).matches() || IMAGE_HOST.matcher(normalized).matches() ? normalized : null;
+    }
+
+    private static String extractUrl(Component component) {
+        if (component == null) return null;
+        String plain = component.getString();
+        if (plain != null) {
+            String extracted = findUrl(plain);
+            if (extracted != null) return extracted;
+        }
+        for (Component sibling : component.toFlatList()) {
+            String found = findUrl(sibling.getString());
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private static String findUrl(String text) {
+        if (text == null) return null;
+        var matcher = java.util.regex.Pattern.compile("https?://[^\\s<>'\"\\)]+", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(text);
+        if (matcher.find()) return normalizeUrl(matcher.group());
+        return null;
+    }
+
+    private static String normalizeUrl(String value) {
+        if (value == null) return null;
+        String normalized = value.trim().replace("&amp;", "&");
+        normalized = normalized.replaceAll("[\\u0000-\\u001F\\u007F]+$", "");
+        if (normalized.endsWith(".")) normalized = normalized.substring(0, normalized.length() - 1);
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private static Loaded texture(String url) {

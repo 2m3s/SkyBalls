@@ -72,6 +72,24 @@ public final class SkyBallsPriceTooltip {
         return npc == null ? 0 : npc;
     }
 
+    /**
+     * What one {@code id} is worth by a profit tracker's price source (Skysoft's profitTrackerSourcePrice): bazaar
+     * instant sell, sell order or buy order, or NPC sell; lowest BIN when that has no price. 0 if unknown.
+     */
+    public static double price(String id, com.epic60869.skyballs.features.FeatureConfigs.ProfitPriceSource source) {
+        refreshIfStale();
+        Double price = switch (source) {
+            case INSTANT_SELL, BUY_ORDER -> bazaarSell.get(id);
+            case SELL_ORDER -> bazaarBuy.get(id);
+            case NPC_SELL -> npcPrices.get(id);
+        };
+        if (price != null && price > 0) return price;
+        Double bin = lowestBins.get(id);
+        if (bin != null && bin > 0) return bin;
+        PriceHistory.Seen seen = PriceHistory.get(id);
+        return seen == null ? 0 : seen.price();
+    }
+
     /** Starts loading the prices (if they're old or not loaded yet) without asking for one. */
     public static void warmup() {
         refreshIfStale();
@@ -239,7 +257,9 @@ public final class SkyBallsPriceTooltip {
 
     /** The key the auction price API uses: the item id, except for pets, runes and enchanted books. */
     private static String apiId(ItemStack stack, String id) {
-        CompoundTag data = Compat.getCustomData(stack);
+        // Most items are just their id: only read (never copy) the data for the few that aren't.
+        if (!id.equals("PET") && !id.equals("RUNE") && !id.equals("UNIQUE_RUNE") && !id.equals("ENCHANTED_BOOK")) return id;
+        CompoundTag data = Compat.customDataView(stack);
         try {
             switch (id) {
                 case "PET" -> {

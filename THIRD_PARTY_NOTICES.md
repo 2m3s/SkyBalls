@@ -234,9 +234,9 @@ SkyBalls's Hide Status Effects (`features/misc/HideStatusEffects.java` and the S
 
 - License: GNU Lesser General Public License v3.0 (LGPL-3.0)
 
-## Skysoft Server Info Display, Real Time Display and Farming Profit Tracker
+## Skysoft Server Info Display, Real Time Display and Profit Trackers
 
-SkyBalls's Server Info Display and Real Time Display (`features/misc/ServerInfo.java` and the SkyBallsServerInfoPacketMixin mixin) are ported from Skysoft (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): features/misc/ServerInfoDisplay.kt, ServerPingTracker.kt, ServerTpsEstimator.kt, ServerTpsProvider.kt, RealTimeDisplay.kt, config/ServerInfoDisplayConfig.kt, config/RealTimeDisplayConfig.kt and mixin/ServerInfoPacketMixin.java. The Farming Profit Tracker (`features/garden/FarmingProfitTracker.java`) follows Skysoft's Profit Tracker and its Farming preset: features/profit/ (ProfitTracker.kt, ProfitReplenishCosts.kt, ProfitCraftingReconciliation.kt, FarmingKernelProfit.kt, ProfitTrackerRenderable.kt), data/skyblock/ParsedGardenPestKill.kt and the farming items in assets/skysoft/data/profit_tracker_presets.json.
+SkyBalls's Server Info Display and Real Time Display (`features/misc/ServerInfo.java` and the SkyBallsServerInfoPacketMixin mixin) are ported from Skysoft (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): features/misc/ServerInfoDisplay.kt, ServerPingTracker.kt, ServerTpsEstimator.kt, ServerTpsProvider.kt, RealTimeDisplay.kt, config/ServerInfoDisplayConfig.kt, config/RealTimeDisplayConfig.kt and mixin/ServerInfoPacketMixin.java. The Profit Trackers (`features/misc/profit/ProfitTracker.java` and `ProfitTrackerHud.java`) follow Skysoft's Profit Tracker: features/profit/ (ProfitTracker.kt, ProfitTrackerTarget.kt, ProfitTrackerPresets.kt, ProfitTrackerRenderable.kt, ProfitTrackerHud.kt, ProfitReplenishCosts.kt, ProfitCraftingReconciliation.kt, FarmingKernelProfit.kt, SlayerQuestCostCapture.kt), config/ProfitTrackerConfig.kt, utils/gui/OverlayTextStyle.kt and OverlayPanelStyle.kt, data/skyblock/ParsedGardenPestKill.kt, and assets/skysoft/data/profit_tracker_presets.json, copied as assets/skyballs/data/profit_tracker_presets.json.
 
 - License: GNU Lesser General Public License v3.0 (LGPL-3.0)
 
@@ -257,3 +257,29 @@ SkyBalls's Party Commands !fps, !ping, !tps, !f1-!f7, !m1-!m7 and !t1-!t5 (`feat
 SkyBalls's Egg Hits Display (`features/slayer/EggHitsDisplay.java`) is ported from NoFrills (https://github.com/WhatYouThing/NoFrills, commit 1ecf22d3b9cf49a22dcf592e142fc67688e64424, src/main/java/nofrills/features/slayer/EggHitsDisplay.java).
 
 - License: GNU General Public License v3.0 (GPL-3.0)
+
+## Feesh
+
+SkyBalls's fishing features (`features/fishing/FishingFeatures.java`, `FishingData.java` and `FishingRecords.java`) are ported from Feesh (https://github.com/Sleepy-Panda/Feesh, commit 885e356eac0da59345aed844f6e24b364978fde1): the sea creature, rare drop and selectable lists in constants/SeaCreatures.kt, constants/RareDrops.kt, settings/models/ and utils/enums/; features/alerts/ (RareCatchAlert.kt, RareDropAlert.kt, PlayerDeathAlert.kt, TrophyFishDiscoveredAlert.kt, TrophyFrogDiscoveredAlert.kt, PetLevelUpAlert.kt, HotspotGoneAlert.kt, WormholeGoneAlert.kt, LootshareAlert.kt); features/chat/ (CompactCatchMessages.kt, RareCatchMessage.kt, RareDropMessage.kt, PlayerDeathMessage.kt, HotspotFoundMessage.kt); features/overlays/DeployablesTimer.kt and FishingFestivalTracker.kt; features/rendering/RareMobHighlight.kt; and utils/ColorUtils.kt, EntityUtils.kt and HotspotUtils.kt.
+
+- Copyright Sleepy-Panda and Feesh contributors
+- License: Apache License 2.0
+
+## Skysoft Pet Icon
+
+The pet display's icon (`PetIconRenderer.java`) follows Skysoft's pet display (https://github.com/Akinsoft/Skysoft, commit 79259743734d614a75f9d64bb8fa54163bfcfc1d): features/pets/PetDisplayRenderer.kt, utils/renderables/decorators/CircularLayoutRenderable.kt and the defaults in config/features/pets/display/visual/.
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## Skyblocker Quick Navigation
+
+SkyBalls's Inventory Buttons (`features/misc/InventoryButtons.java` and the SkyBallsQuickNavMixin mixin) are ported from Skyblocker's Quick Navigation (https://github.com/SkyblockerMod/Skyblocker, commit dc1176a7523f7065c5dcbe30e79c4452402ddc71): skyblock/quicknav/QuickNav.java, QuickNavButton.java, QuickNavConfirmationButton.java, mixins/QuickNavMixin.java, mixins/QuickNavScreenMixin.java and the default buttons in config/configs/QuickNavigationConfig.java.
+
+- License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+
+## Odin Room Clear, Secret Clicked and Storm PY Timer
+
+SkyBalls's Room Clear Alert (`features/dungeons/RoomClearAlert.java`), Secret Chime and Secret Boxes (`features/dungeons/SecretChime.java`) and Storm PY Timer (in `features/dungeons/DungeonFeatures.java`) are ported from Odin (https://github.com/odtheking/Odin, commit 174500c1c3ba1349b0b4379642bed765da31e1f7): features/impl/dungeon/RoomClear.kt, features/impl/dungeon/SecretClicked.kt, the secret pickup detection in events/EventDispatcher.kt and utils/skyblock/dungeon/DungeonUtils.kt, and features/impl/boss/TickTimers.kt.
+
+- Copyright (c) 2025, odtheking
+- License: BSD 3-Clause License

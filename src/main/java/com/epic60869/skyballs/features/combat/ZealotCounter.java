@@ -64,6 +64,11 @@ public final class ZealotCounter {
     private static long lastCombatXp;
     private static final long XP_WINDOW_MS = 1500;
     private static final java.util.regex.Pattern COMBAT_XP = java.util.regex.Pattern.compile("\\+[\\d,.]+ Combat \\(");
+    private static final long UPTIME_IDLE_MS = 10_000L;
+    private static long uptimeAccumulated;
+    private static long uptimeSegmentStart;
+    private static long uptimeLastKill;
+    private static boolean uptimeRunning;
 
     private static int totalKills, totalEyes, sinceEye;
     private static String lastEyeMessage = "";
@@ -129,11 +134,11 @@ public final class ZealotCounter {
         });
 
         AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
-            if (level.isClientSide() && entity instanceof EnderMan) HIT_BY_YOU.put(entity.getId(), System.currentTimeMillis());
+            if (level.isClientSide() && enabled() && entity instanceof EnderMan) HIT_BY_YOU.put(entity.getId(), System.currentTimeMillis());
             return InteractionResult.PASS;
         });
         UseItemCallback.EVENT.register((player, level, hand) -> {
-            if (level.isClientSide() && inEnd()) {
+            if (level.isClientSide() && enabled()) {
                 String held = SkyBallsLocation.strip(com.epic60869.skyballs.custom.util.Compat.realName(player.getItemInHand(hand)).getString());
                 // The teleport lands a tick or two later, so mark Zealots around you for a few ticks.
                 if (WITHER_BLADES.stream().anyMatch(held::contains)) witherImpactTicks = 4;
@@ -185,6 +190,7 @@ public final class ZealotCounter {
         lines.add(title());
         lines.add(kv(showSession ? "Kills: " : "Total Kills: ", fmt(showSession ? sessionKills : totalKills)));
         lines.add(kv("Since last eye: ", fmt(sinceEye)));
+        lines.add(kv("Uptime: ", formatUptime(uptimeMillis())));
         lines.add(kv("Summoning Eyes: ", fmt(showSession ? sessionEyes : totalEyes)));
         if (withModeSwitch) lines.add(modeLine());
         return lines;
@@ -245,7 +251,15 @@ public final class ZealotCounter {
     }
 
     private static void tick(Minecraft mc) {
-        if (mc.player == null || mc.level == null || !inEnd()) return;
+        updateUptime(System.currentTimeMillis());
+        if (mc.player == null || mc.level == null || !enabled()) {
+            HIT_BY_YOU.clear();
+            COUNTED.clear();
+            PENDING.clear();
+            BEFORE_EYE.clear();
+            witherImpactTicks = 0;
+            return;
+        }
         long now = System.currentTimeMillis();
 
         if (witherImpactTicks > 0) {
@@ -272,7 +286,7 @@ public final class ZealotCounter {
         PENDING.entrySet().removeIf(entry -> {
             long diedAt = entry.getValue();
             if (lastCombatXp >= diedAt - 250 && lastCombatXp <= diedAt + XP_WINDOW_MS) {
-                count(BEFORE_EYE.remove(entry.getKey()));
+                count(BEFORE_EYE.remove(entry.getKey()), diedAt);
                 return true;
             }
             if (now - diedAt > XP_WINDOW_MS) {
@@ -286,7 +300,7 @@ public final class ZealotCounter {
     /** Called when the server says an entity died. */
     public static void onEntityDeath(Entity entity) {
         Minecraft mc = Minecraft.getInstance();
-        if (!(entity instanceof EnderMan) || mc.player == null || mc.level == null || !inEnd()) return;
+        if (!(entity instanceof EnderMan) || mc.player == null || mc.level == null || !enabled()) return;
         countIfYours(mc, entity);
     }
 
@@ -297,11 +311,45 @@ public final class ZealotCounter {
         PENDING.put(entity.getId(), System.currentTimeMillis());
     }
 
-    private static void count(boolean beforeEye) {
+    private static void count(boolean beforeEye, long killedAt) {
         totalKills++;
         sessionKills++;
         if (!beforeEye) sinceEye++;
+        recordKillTime(killedAt);
         if (totalKills % 25 == 0) save();
+    }
+
+    private static void recordKillTime(long killedAt) {
+        if (killedAt < uptimeLastKill) killedAt = uptimeLastKill;
+        updateUptime(killedAt);
+        if (!uptimeRunning) {
+            uptimeSegmentStart = killedAt;
+            uptimeRunning = true;
+        }
+        uptimeLastKill = killedAt;
+    }
+
+    private static void updateUptime(long now) {
+        if (!uptimeRunning || now - uptimeLastKill < UPTIME_IDLE_MS) return;
+        uptimeAccumulated += Math.max(0, uptimeLastKill + UPTIME_IDLE_MS - uptimeSegmentStart);
+        uptimeRunning = false;
+    }
+
+    private static long uptimeMillis() {
+        long now = System.currentTimeMillis();
+        updateUptime(now);
+        if (!uptimeRunning) return uptimeAccumulated;
+        return uptimeAccumulated + Math.max(0, Math.min(now, uptimeLastKill + UPTIME_IDLE_MS) - uptimeSegmentStart);
+    }
+
+    private static String formatUptime(long millis) {
+        long seconds = millis / 1000;
+        long hours = seconds / 3600;
+        long minutes = (seconds / 60) % 60;
+        long remainingSeconds = seconds % 60;
+        return hours > 0
+            ? String.format(Locale.US, "%d:%02d:%02d", hours, minutes, remainingSeconds)
+            : String.format(Locale.US, "%02d:%02d", seconds / 60, remainingSeconds);
     }
 
     // ----- Storage -----

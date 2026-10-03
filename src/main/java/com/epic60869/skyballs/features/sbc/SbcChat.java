@@ -112,7 +112,10 @@ public final class SbcChat {
                             .executes(c -> SbcCommands.run(() -> share(StringArgumentType.getString(c, "message"))))))
                     .then(ClientCommands.literal("viewitem")
                         .then(ClientCommands.argument("key", IntegerArgumentType.integer(1))
-                            .executes(c -> SbcCommands.run(() -> viewItem(IntegerArgumentType.getInteger(c, "key")))))));
+                            .executes(c -> SbcCommands.run(() -> viewItem(IntegerArgumentType.getInteger(c, "key"))))))
+                    .then(ClientCommands.literal("viewinv")
+                        .then(ClientCommands.argument("key", StringArgumentType.word())
+                            .executes(c -> SbcCommands.run(() -> SbcItems.viewInventory(StringArgumentType.getString(c, "key")))))));
             }
         });
         // The reply ends when the chat opened for it closes (sent or not).

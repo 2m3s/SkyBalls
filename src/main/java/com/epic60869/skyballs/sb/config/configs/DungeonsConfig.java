@@ -214,7 +214,7 @@ public class DungeonsConfig {
 
 		public boolean enableSecretWaypoints = true;
 
-		public Waypoint.Type waypointType = Waypoint.Type.WAYPOINT;
+		public Waypoint.Type waypointType = Waypoint.Type.OUTLINE;
 
 		public boolean adaptiveBoxSize = false;
 

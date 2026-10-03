@@ -15,4 +15,10 @@ public interface SkyBallsContainerScreenAccessor {
 
     @Accessor("hoveredSlot")
     Slot skyballs$getHoveredSlot();
+
+    @Accessor("imageWidth")
+    int skyballs$getImageWidth();
+
+    @Accessor("imageHeight")
+    int skyballs$getImageHeight();
 }

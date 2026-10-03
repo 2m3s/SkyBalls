@@ -1,11 +1,17 @@
 package com.epic60869.skyballs.features;
 
+import com.epic60869.skyballs.sb.utils.waypoint.Waypoint;
+import com.epic60869.skyballs.features.fishing.FishingData;
 import com.google.gson.annotations.Expose;
+import java.util.ArrayList;
+import java.util.List;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorColour;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDraggableList;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorText;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
@@ -364,6 +370,11 @@ public final class FeatureConfigs {
         public DianaAchievements achievements = new DianaAchievements();
 
         @Expose
+        @ConfigOption(name = "Inquisitor Gamble", desc = "When an Inquisitor you dug up dies, or you lootshare one, it gets shot on screen: the bullet goes through its heart if a Chimera dropped and misses if not. Try it with /sb inqgamble hit|miss.")
+        @ConfigEditorBoolean
+        public boolean inquisitorGamble = true;
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Lobby Compromised", desc = "Alert when too many non-party players join the lobby while you do Diana, like Skysoft.")
         public DianaLobbyCompromised lobbyCompromised = new DianaLobbyCompromised();
@@ -684,40 +695,221 @@ public final class FeatureConfigs {
         public boolean specialDropAnimation = false;
     }
 
+    /** Fishing, ported from Feesh (https://github.com/Sleepy-Panda/Feesh, Apache-2.0): see features/fishing. */
     public static final class Fishing {
         @Expose
-        @ConfigOption(name = "Stat Display", desc = "HUD with fishing speed, sea creature, trophy fish, double hook and treasure chance from your tab list stats.")
-        @ConfigEditorBoolean
-        public boolean statDisplay = false;
+        @Category(name = "Sea Creatures", desc = "Alerts, party messages and highlights for sea creatures you and your party catch.")
+        public FishingSeaCreatures seaCreatures = new FishingSeaCreatures();
 
         @Expose
-        @ConfigOption(name = "Hook Timer", desc = "HUD showing the time until your fish bites.")
-        @ConfigEditorBoolean
-        public boolean hookTimer = false;
+        @Category(name = "Rare Drops", desc = "Alerts and party messages for rare fishing drops, with their price.")
+        public FishingRareDrops rareDrops = new FishingRareDrops();
 
         @Expose
-        @ConfigOption(name = "Bait Display", desc = "HUD showing your bait and how much is left.")
-        @ConfigEditorBoolean
-        public boolean baitDisplay = false;
+        @Category(name = "Catch Messages", desc = "Shorter sea creature catch messages with rarity colours.")
+        public FishingCatchMessages catchMessages = new FishingCatchMessages();
 
         @Expose
-        @ConfigOption(name = "Rare Sea Creature Alert", desc = "Alert when you catch a rare sea or lava creature.")
-        @ConfigEditorBoolean
-        public boolean rareCreatureAlert = false;
-
-        @Expose
-        @ConfigOption(name = "Alert Rarity", desc = "Minimum sea creature rarity to alert for.")
-        @ConfigEditorDropdown
-        public CreatureRarity alertRarity = CreatureRarity.LEGENDARY;
+        @Category(name = "Alerts", desc = "Trophy discoveries, deployables, maxed pets, hotspots, wormholes, the Fishing Festival and lootshare.")
+        public FishingAlerts alerts = new FishingAlerts();
     }
 
-    public enum CreatureRarity {
-        RARE, EPIC, LEGENDARY, MYTHIC;
+    public static final class FishingSeaCreatures {
+        @Expose
+        @ConfigOption(name = "Alert on Sea Creatures", desc = "A title and a sound when a sea creature from the list is caught by you or your party members. Turn on §eSkyBlock Settings -> Personal -> Fishing Settings -> Sea Creature Chat§7.")
+        @ConfigEditorBoolean
+        public boolean alert = true;
 
-        @Override
-        public String toString() {
-            return name().charAt(0) + name().substring(1).toLowerCase();
-        }
+        @Expose
+        @ConfigOption(name = "Sea Creatures to Alert On", desc = "Which sea creatures to alert on. Add more with the + button, drag to reorder, drag out to remove.")
+        @ConfigEditorDraggableList
+        public List<FishingData.AlertableSeaCreature> alertList = defaultCreatures(FishingData.AlertableSeaCreature.values(), c -> c.enabledByDefault);
+
+        @Expose
+        @ConfigOption(name = "Alert on Cocooned Sea Creature", desc = "Also alert when a sea creature from the list is cocooned by you or your party members.")
+        @ConfigEditorBoolean
+        public boolean alertCocooned = true;
+
+        @Expose
+        @ConfigOption(name = "Alert Source", desc = "\"Own and party\": your catches and your party members'. \"Own\": only yours.")
+        @ConfigEditorDropdown
+        public FishingData.AlertSource alertSource = FishingData.AlertSource.OWN_AND_PARTY;
+
+        @Expose
+        @ConfigOption(name = "Alert When Killed by a Fishing Boss", desc = "A title and a sound when you, or a party member, are killed by a fishing boss (Thunder, Lord Jawbus, Ragnarok, Wiki Tiki, Titanoboa, Nessie, ...).")
+        @ConfigEditorBoolean
+        public boolean alertDeath = true;
+
+        @Expose
+        @ConfigOption(name = "Tell Party When Killed", desc = "Says so in party chat when a fishing boss kills you, so your party's SkyBalls (or Feesh) alerts them to wait for you.")
+        @ConfigEditorBoolean
+        public boolean shareDeath = true;
+
+        @Expose
+        @ConfigOption(name = "Share Sea Creatures to Party", desc = "Says in party chat when you catch a sea creature from the list below (\"--> A YETI has spawned <--\"). Only while you're in a party.")
+        @ConfigEditorBoolean
+        public boolean share = true;
+
+        @Expose
+        @ConfigOption(name = "Sea Creatures to Share", desc = "Which of your catches to share to party chat.")
+        @ConfigEditorDraggableList
+        public List<FishingData.AlertableSeaCreature> shareList = defaultCreatures(FishingData.AlertableSeaCreature.values(), c -> c.enabledByDefault);
+
+        @Expose
+        @ConfigOption(name = "Share Cocooned Sea Creature", desc = "Also says in party chat when you cocoon a sea creature from the list.")
+        @ConfigEditorBoolean
+        public boolean shareCocooned = true;
+
+        @Expose
+        @ConfigOption(name = "Highlight Sea Creatures", desc = "A glowing outline in the creature's rarity colour on the sea creatures below. Only while you can see them: never through walls.")
+        @ConfigEditorBoolean
+        public boolean highlight = false;
+
+        @Expose
+        @ConfigOption(name = "Sea Creatures to Highlight", desc = "Which sea creatures get the outline.")
+        @ConfigEditorDraggableList
+        public List<FishingData.HighlightableSeaCreature> highlightList = defaultCreatures(FishingData.HighlightableSeaCreature.values(), c -> c.enabledByDefault);
+    }
+
+    public static final class FishingRareDrops {
+        @Expose
+        @ConfigOption(name = "Alert on Rare Drops", desc = "A title when a rare fishing drop from the list drops for you (or your party, see Alert Source).")
+        @ConfigEditorBoolean
+        public boolean alert = true;
+
+        @Expose
+        @ConfigOption(name = "Rare Drops to Alert On", desc = "ALL counts every drop in the list, including ones added later.")
+        @ConfigEditorDraggableList
+        public List<FishingData.RareDropType> alertList = new ArrayList<>(List.of(FishingData.RareDropType.ALL));
+
+        @Expose
+        @ConfigOption(name = "Alert Source", desc = "\"Own\": only your drops. \"Own and party\": also party members' drops they shared.")
+        @ConfigEditorDropdown
+        public FishingData.AlertSource alertSource = FishingData.AlertSource.OWN;
+
+        @Expose
+        @ConfigOption(name = "Show Price in Title", desc = "Show what the dropped item is worth in the alert's title. \"Own\": only for your drops. \"Own and party\": for party members' too. \"Off\": no price.")
+        @ConfigEditorDropdown
+        public FishingData.PriceScope priceScope = FishingData.PriceScope.OWN_AND_PARTY;
+
+        @Expose
+        @ConfigOption(name = "Share Rare Drops to Party", desc = "Says in party chat when a rare drop from the list drops for you (\"--> A Deep Sea Orb has dropped <--\").")
+        @ConfigEditorBoolean
+        public boolean share = true;
+
+        @Expose
+        @ConfigOption(name = "Rare Drops to Share", desc = "ALL counts every drop in the list, including ones added later.")
+        @ConfigEditorDraggableList
+        public List<FishingData.RareDropType> shareList = new ArrayList<>(List.of(FishingData.RareDropType.ALL));
+
+        @Expose
+        @ConfigOption(name = "Include Magic Find", desc = "Add the drop's ✯ Magic Find to the party message.")
+        @ConfigEditorBoolean
+        public boolean shareMagicFind = true;
+    }
+
+    public static final class FishingCatchMessages {
+        @Expose
+        @ConfigOption(name = "Compact Catch Messages", desc = "Shortens the double hook and sea creature catch messages: instead of \"It's a Double Hook! Woot Woot!\" and \"What is this creature!?\" you see \"DOUBLE HOOK! A Yeti has spawned!\".")
+        @ConfigEditorBoolean
+        public boolean compact = false;
+
+        @Expose
+        @ConfigOption(name = "Gradient for Rarity", desc = "Colour the sea creature's name with a gradient of its rarity instead of one colour.")
+        @ConfigEditorBoolean
+        public boolean gradient = false;
+
+        @Expose
+        @ConfigOption(name = "Double Hook Template", desc = "Shown before the catch message on a double hook. Use & or § for colours. Empty for the default (&b&lDOUBLE HOOK!).")
+        @ConfigEditorText
+        public String doubleHookTemplate = "&b&lDOUBLE HOOK!";
+
+        @Expose
+        @ConfigOption(name = "Catch Message Template", desc = "The catch message. {Article}/{article}: A or An; {sc}: the sea creature, in its rarity colour. Use & or § for colours. Empty for the default.")
+        @ConfigEditorText
+        public String catchTemplate = "&7{Article} {sc} &7has spawned!";
+
+        @ConfigOption(name = "Send Test Message", desc = "Shows a sample catch message and a sample double hook with your settings.")
+        @ConfigEditorButton(buttonText = "SEND")
+        public Runnable test = () -> com.epic60869.skyballs.features.fishing.FishingFeatures.sendTestCatchMessages();
+    }
+
+    public static final class FishingAlerts {
+        @Expose
+        @ConfigOption(name = "Alert on New Trophy Fish", desc = "A title when you discover a new Trophy Fish on the Crimson Isle.")
+        @ConfigEditorBoolean
+        public boolean trophyFish = true;
+
+        @Expose
+        @ConfigOption(name = "Alert on New Trophy Frog", desc = "A title when you discover a new Trophy Frog on the Lotus Atoll.")
+        @ConfigEditorBoolean
+        public boolean trophyFrog = true;
+
+        @Expose
+        @ConfigOption(name = "Alert When Deployable Expires Soon", desc = "A title and a sound when one of your deployables below is about to run out.")
+        @ConfigEditorBoolean
+        public boolean deployables = true;
+
+        @Expose
+        @ConfigOption(name = "Deployables to Alert On", desc = "Which of your deployables to alert on.")
+        @ConfigEditorDraggableList
+        public List<FishingData.DeployableType> deployableList = new ArrayList<>(List.of(FishingData.DeployableType.TOTEM_OF_CORRUPTION));
+
+        @Expose
+        @ConfigOption(name = "Seconds Before (Long Deployables)", desc = "How long before it runs out to alert, for deployables that last 3 minutes or more.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 60, minStep = 1)
+        public int deployableSeconds = 10;
+
+        @Expose
+        @ConfigOption(name = "Seconds Before (Short Deployables)", desc = "How long before it runs out to alert, for deployables that last a minute or less (power orbs).")
+        @ConfigEditorSlider(minValue = 1, maxValue = 30, minStep = 1)
+        public int shortDeployableSeconds = 5;
+
+        @Expose
+        @ConfigOption(name = "Alert When Pet Reaches Max Level", desc = "A title and a sound when a pet reaches level 100 (or 200).")
+        @ConfigEditorBoolean
+        public boolean petMaxLevel = true;
+
+        @Expose
+        @ConfigOption(name = "Show Estimated Pet Level-Up Price", desc = "When a pet reaches max level, says in chat what it's worth now and the profit over a level 1 one (lowest BINs).")
+        @ConfigEditorBoolean
+        public boolean petLevelUpPrice = true;
+
+        @Expose
+        @ConfigOption(name = "Alert When Hotspot Is Gone", desc = "A title and a sound when the hotspot you were fishing in disappears.")
+        @ConfigEditorBoolean
+        public boolean hotspotGone = true;
+
+        @Expose
+        @ConfigOption(name = "Alert When Wormhole Is Gone", desc = "A title and a sound when your Wormhole closes up.")
+        @ConfigEditorBoolean
+        public boolean wormholeGone = true;
+
+        @Expose
+        @ConfigOption(name = "Offer Sharing Found Hotspots", desc = "When you come near a hotspot, a chat message with buttons to share its location and perk to party or all chat.")
+        @ConfigEditorBoolean
+        public boolean shareHotspots = true;
+
+        @Expose
+        @ConfigOption(name = "Alert on Fishing Festival Ended", desc = "A title and your shark counts in chat when the Fishing Festival ends.")
+        @ConfigEditorBoolean
+        public boolean festivalEnded = true;
+
+        @Expose
+        @ConfigOption(name = "Track Festival Personal Best", desc = "Your best total sharks and Great White Sharks in one Fishing Festival, announced when you beat them.")
+        @ConfigEditorBoolean
+        public boolean festivalPersonalBest = true;
+
+        @Expose
+        @ConfigOption(name = "Alert on Lootshare! in Party Chat", desc = "A title and a sound when a party member says \"Lootshare!\" in party chat.")
+        @ConfigEditorBoolean
+        public boolean lootshare = true;
+    }
+
+    private static <T extends Enum<T>> List<T> defaultCreatures(T[] values, java.util.function.Predicate<T> enabled) {
+        List<T> list = new ArrayList<>();
+        for (T value : values) if (enabled.test(value)) list.add(value);
+        return list;
     }
 
     public static final class MiningFeatures {
@@ -794,6 +986,46 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Ultrasequencer Numbers", desc = "Show the click order as numbers on every Ultrasequencer slot, instead of only highlighting the next one.")
         @ConfigEditorBoolean
         public boolean ultrasequencerNumbers = true;
+
+        @Expose
+        @ConfigOption(name = "Prevent Misclicks", desc = "Block incorrect Chronomatron and Ultrasequencer clicks, including clicks before the pattern is ready.")
+        @ConfigEditorBoolean
+        public boolean preventMisclicks = true;
+    }
+
+    public static final class WardrobeHotkeys {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Use configurable keys to equip Wardrobe slots while its menu is open.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Loadout Hotkeys Enabled", desc = "Use configurable keys to equip Loadouts while the Loadouts menu is open.")
+        @ConfigEditorBoolean
+        public boolean loadoutEnabled = false;
+
+        @Expose @ConfigOption(name = "Wardrobe Slot 1 Key", desc = "Select slot 1 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_1) public int slot1Key = org.lwjgl.glfw.GLFW.GLFW_KEY_1;
+        @Expose @ConfigOption(name = "Wardrobe Slot 2 Key", desc = "Select slot 2 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_2) public int slot2Key = org.lwjgl.glfw.GLFW.GLFW_KEY_2;
+        @Expose @ConfigOption(name = "Wardrobe Slot 3 Key", desc = "Select slot 3 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_3) public int slot3Key = org.lwjgl.glfw.GLFW.GLFW_KEY_3;
+        @Expose @ConfigOption(name = "Wardrobe Slot 4 Key", desc = "Select slot 4 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_4) public int slot4Key = org.lwjgl.glfw.GLFW.GLFW_KEY_4;
+        @Expose @ConfigOption(name = "Wardrobe Slot 5 Key", desc = "Select slot 5 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_5) public int slot5Key = org.lwjgl.glfw.GLFW.GLFW_KEY_5;
+        @Expose @ConfigOption(name = "Wardrobe Slot 6 Key", desc = "Select slot 6 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_6) public int slot6Key = org.lwjgl.glfw.GLFW.GLFW_KEY_6;
+        @Expose @ConfigOption(name = "Wardrobe Slot 7 Key", desc = "Select slot 7 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_7) public int slot7Key = org.lwjgl.glfw.GLFW.GLFW_KEY_7;
+        @Expose @ConfigOption(name = "Wardrobe Slot 8 Key", desc = "Select slot 8 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_8) public int slot8Key = org.lwjgl.glfw.GLFW.GLFW_KEY_8;
+        @Expose @ConfigOption(name = "Wardrobe Slot 9 Key", desc = "Select slot 9 on the current Wardrobe page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_9) public int slot9Key = org.lwjgl.glfw.GLFW.GLFW_KEY_9;
+
+        @Expose @ConfigOption(name = "Loadout Slot 1 Key", desc = "Select loadout 1 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_1) public int loadoutSlot1Key = org.lwjgl.glfw.GLFW.GLFW_KEY_1;
+        @Expose @ConfigOption(name = "Loadout Slot 2 Key", desc = "Select loadout 2 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_2) public int loadoutSlot2Key = org.lwjgl.glfw.GLFW.GLFW_KEY_2;
+        @Expose @ConfigOption(name = "Loadout Slot 3 Key", desc = "Select loadout 3 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_3) public int loadoutSlot3Key = org.lwjgl.glfw.GLFW.GLFW_KEY_3;
+        @Expose @ConfigOption(name = "Loadout Slot 4 Key", desc = "Select loadout 4 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_4) public int loadoutSlot4Key = org.lwjgl.glfw.GLFW.GLFW_KEY_4;
+        @Expose @ConfigOption(name = "Loadout Slot 5 Key", desc = "Select loadout 5 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_5) public int loadoutSlot5Key = org.lwjgl.glfw.GLFW.GLFW_KEY_5;
+        @Expose @ConfigOption(name = "Loadout Slot 6 Key", desc = "Select loadout 6 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_6) public int loadoutSlot6Key = org.lwjgl.glfw.GLFW.GLFW_KEY_6;
+        @Expose @ConfigOption(name = "Loadout Slot 7 Key", desc = "Select loadout 7 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_7) public int loadoutSlot7Key = org.lwjgl.glfw.GLFW.GLFW_KEY_7;
+        @Expose @ConfigOption(name = "Loadout Slot 8 Key", desc = "Select loadout 8 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_8) public int loadoutSlot8Key = org.lwjgl.glfw.GLFW.GLFW_KEY_8;
+        @Expose @ConfigOption(name = "Loadout Slot 9 Key", desc = "Select loadout 9 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_9) public int loadoutSlot9Key = org.lwjgl.glfw.GLFW.GLFW_KEY_9;
+        @Expose @ConfigOption(name = "Loadout Slot 10 Key", desc = "Select loadout 10 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_0) public int loadoutSlot10Key = org.lwjgl.glfw.GLFW.GLFW_KEY_0;
+        @Expose @ConfigOption(name = "Loadout Slot 11 Key", desc = "Select loadout 11 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_MINUS) public int loadoutSlot11Key = org.lwjgl.glfw.GLFW.GLFW_KEY_MINUS;
+        @Expose @ConfigOption(name = "Loadout Slot 12 Key", desc = "Select loadout 12 on the current page.") @io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind(defaultKey = org.lwjgl.glfw.GLFW.GLFW_KEY_EQUAL) public int loadoutSlot12Key = org.lwjgl.glfw.GLFW.GLFW_KEY_EQUAL;
     }
 
     public static final class Runecrafting {
@@ -893,6 +1125,11 @@ public final class FeatureConfigs {
         public boolean secretWaypoints = false;
 
         @Expose
+        @ConfigOption(name = "Waypoint Type", desc = "Choose how dungeon secret waypoints are drawn. Outline is a clean boxless marker; filled waypoint includes the box and beacon beam.")
+        @ConfigEditorDropdown
+        public Waypoint.Type waypointType = Waypoint.Type.OUTLINE;
+
+        @Expose
         @ConfigOption(name = "Show Routes", desc = "Show a secret route for the current room: yours if you recorded one, otherwise Stella's. Record with /sb route start and /sb route stop; share with /sb export; import a Stella (or SecretRoutes) export with /sb route import (clipboard) or /sb route import <file>.")
         @ConfigEditorBoolean
         public boolean routes = false;
@@ -911,6 +1148,95 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Announce Key Spawn", desc = "Show a title when a Wither or Blood key spawns.")
         @ConfigEditorBoolean
         public boolean announceKeySpawn = false;
+
+        @Expose
+        @ConfigOption(name = "Room Clear Alert", desc = "Odin's Room Clear: a title and a ding when the room you're in is cleared (white checkmark, \"Room Cleared!\") or has all its secrets done (green checkmark, \"Room Complete!\"). Not for the entrance or fairy room.")
+        @ConfigEditorBoolean
+        public boolean roomClearAlert = false;
+
+        @Expose
+        @ConfigOption(name = "Room Clear Alert Mode", desc = "Which checkmarks to alert on: both, only all secrets done (green) or only room cleared (white).")
+        @ConfigEditorDropdown
+        public RoomClearMode roomClearMode = RoomClearMode.BOTH;
+
+        @Expose
+        @ConfigOption(name = "Secret Chime", desc = "Odin's Secret Chime: a sound when you get a secret (a chest, lever, wither essence or redstone key, a dungeon item picked up, or a secret bat killed).")
+        @ConfigEditorBoolean
+        public boolean secretChime = true;
+
+        @Expose
+        @ConfigOption(name = "Chime Sound", desc = "The sound's id, like Odin's default entity.blaze.hurt, or entity.experience_orb.pickup, block.note_block.pling...")
+        @ConfigEditorText
+        public String secretChimeSound = "entity.blaze.hurt";
+
+        @Expose
+        @ConfigOption(name = "Chime Pitch", desc = "Pitch of the chime.")
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 2f, minStep = 0.01f)
+        public float secretChimePitch = 1f;
+
+        @Expose
+        @ConfigOption(name = "Chime Volume", desc = "Volume of the chime.")
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 1f, minStep = 0.01f)
+        public float secretChimeVolume = 1f;
+
+        @Expose
+        @ConfigOption(name = "Chime In Boss", desc = "Also chime for chests and levers in the boss room.")
+        @ConfigEditorBoolean
+        public boolean secretChimeInBoss = false;
+
+        @ConfigOption(name = "Play Chime", desc = "Plays the chime with these settings.")
+        @ConfigEditorButton(buttonText = "PLAY")
+        public Runnable playChime = com.epic60869.skyballs.features.dungeons.SecretChime::play;
+
+        @Expose
+        @ConfigOption(name = "Secret Boxes", desc = "Odin's Secret Boxes: a highlight box on each secret you get for a few seconds (red when the chest is locked).")
+        @ConfigEditorBoolean
+        public boolean secretBoxes = true;
+
+        @Expose
+        @ConfigOption(name = "Box Colour", desc = "The secret box's colour.")
+        @ConfigEditorColour
+        public String secretBoxColour = "0:204:255:170:0";
+
+        @Expose
+        @ConfigOption(name = "Locked Colour", desc = "The box's colour when the chest is locked.")
+        @ConfigEditorColour
+        public String secretBoxLockedColour = "0:204:255:85:85";
+
+        @Expose
+        @ConfigOption(name = "Box Time", desc = "Seconds the box stays.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 120, minStep = 0.5f)
+        public float secretBoxSeconds = 7;
+
+        @Expose
+        @ConfigOption(name = "Boxes Through Walls", desc = "Show the boxes through walls.")
+        @ConfigEditorBoolean
+        public boolean secretBoxThroughWalls = false;
+
+        @Expose
+        @ConfigOption(name = "Item Boxes", desc = "Also box dungeon items you pick up.")
+        @ConfigEditorBoolean
+        public boolean secretBoxItems = true;
+
+        @Expose
+        @ConfigOption(name = "Boxes In Boss", desc = "Also box chests and levers in the boss room.")
+        @ConfigEditorBoolean
+        public boolean secretBoxInBoss = false;
+    }
+
+    public enum RoomClearMode {
+        BOTH("Both"), GREEN("Secrets Done (Green)"), WHITE("Room Cleared (White)");
+
+        private final String label;
+
+        RoomClearMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
     public static final class DungeonMobs {
@@ -966,7 +1292,7 @@ public final class FeatureConfigs {
     }
 
     public static final class Terminals {
-        @Expose @ConfigOption(name = "Terminal Solver", desc = "Which terminal solver to use. Odin: covers the terminal and shows what to click. NoammAddons: its big centred panel with the terminal's name, slot styles and colours.") @ConfigEditorDropdown public TerminalStyle solverStyle = TerminalStyle.ODIN;
+        @Expose @ConfigOption(name = "Terminal Solver", desc = "Which terminal solver to use. Odin: covers the terminal and shows what to click. NoammAddons: its big centred panel with the terminal's name, slot styles and colours.") @ConfigEditorDropdown public TerminalStyle solverStyle = TerminalStyle.NOAMM;
         @Expose @ConfigOption(name = "NoammAddons: Scale", desc = "Size of the NoammAddons terminal panel.") @ConfigEditorSlider(minValue = 0.3f, maxValue = 2f, minStep = 0.05f) public float noammScale = 1f;
         @Expose @ConfigOption(name = "NoammAddons: Slot Style", desc = "How solution slots are drawn in the NoammAddons panel.") @ConfigEditorDropdown public NoammSlotStyle noammSlotStyle = NoammSlotStyle.RECT;
         @Expose @ConfigOption(name = "NoammAddons: Show Numbers", desc = "Show the number on each slot in Click in order!") @ConfigEditorBoolean public boolean noammShowNumbers = false;
@@ -978,7 +1304,7 @@ public final class FeatureConfigs {
         @Expose @ConfigOption(name = "Lag Protection Ticks", desc = "Server ticks (50ms each) before clicks go through.") @ConfigEditorSlider(minValue = 7, maxValue = 16, minStep = 1) public int lagProtectionTicks = 8;
         @Expose @ConfigOption(name = "Rubix Left Clicks Only", desc = "Only use left clicks for the rubix terminal instead of the fewest clicks.") @ConfigEditorBoolean public boolean rubixLeftClicksOnly = false;
         @Expose @ConfigOption(name = "Melody Solver", desc = "Show the melody solver.") @ConfigEditorBoolean public boolean melodySolver = false;
-        @Expose @ConfigOption(name = "Odin Device Solvers", desc = "Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: Skyblocker's.") @ConfigEditorBoolean public boolean odinDevices = false;
+        @Expose @ConfigOption(name = "Odin Device Solvers", desc = "Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Off: Skyblocker's. Set this to false if you want the NoammAddons path.") @ConfigEditorBoolean public boolean odinDevices = false;
         @Expose @ConfigOption(name = "SS Block Wrong Clicks", desc = "Simon Says: ignore clicks on any button but the next one. Hold shift to click anyway.") @ConfigEditorBoolean public boolean ssBlockWrong = true;
         @Expose @ConfigOption(name = "SS Announce Progress", desc = "Send \"SS n/5\" to party chat when you click the last button of a round.") @ConfigEditorBoolean public boolean ssAnnounce = false;
         @Expose @ConfigOption(name = "SS First", desc = "") @ConfigEditorColour public String ssFirstColor = "0:128:85:255:85";
@@ -1037,6 +1363,11 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Goldor Tick Period", desc = "Server ticks between Goldor's death ticks.")
         @ConfigEditorSlider(minValue = 20, maxValue = 100, minStep = 1)
         public int goldorTickPeriod = 50;
+
+        @Expose
+        @ConfigOption(name = "Storm PY Timer", desc = "Odin's Storm PY HUD: when Storm calls his lightning (\"ENERGY HEED MY CALL!\" / \"THUNDER LET ME BE YOUR CATALYST!\"), counts down 95 ticks to when to crush him under the purple pillar. Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean pyTimer = false;
 
         @Expose
         @ConfigOption(name = "Mask Timers", desc = "HUD with the Spirit Mask, Bonzo's Mask and Phoenix pet: invincibility time (gold), cooldown (red) or ready (green), counted in server ticks. Your worn mask is marked with a purple bar.")
@@ -1483,34 +1814,205 @@ public final class FeatureConfigs {
     }
 
     /** Skysoft's Farming Profit Tracker. */
-    public static final class FarmingProfitTracker {
+    /** Profit Trackers, ported from Skysoft (LGPL-3.0): see features/misc/profit/ProfitTracker. */
+    public static final class ProfitTrackers {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "In the Garden, show what your crops and Garden drops were worth, Bountiful coins, Kernels, pests vacuumed, total profit, profit per hour and your farming time (Skysoft's Farming Profit Tracker). Move it in /sb gui.")
+        @Category(name = "Farming", desc = "Track Farming profit in the Garden.")
+        public ProfitTrackerSettings farming = new ProfitTrackerSettings(ProfitSummaryLine.farmingDefaults());
+
+        @Expose
+        @Category(name = "Fishing", desc = "Track Fishing profit while you fish.")
+        public ProfitTrackerSettings fishing = new ProfitTrackerSettings(ProfitSummaryLine.resourceDefaults());
+
+        @Expose
+        @Category(name = "Foraging", desc = "Track Foraging profit in the Park, the Hub's forest, the Moonglade Marsh and Torrhus Canyon.")
+        public ProfitTrackerSettings foraging = new ProfitTrackerSettings(ProfitSummaryLine.resourceDefaults());
+
+        @Expose
+        @Category(name = "Mining", desc = "Track Mining profit in the mining islands.")
+        public ProfitTrackerSettings mining = new ProfitTrackerSettings(ProfitSummaryLine.resourceDefaults());
+
+        @Expose
+        @Category(name = "Mythological Ritual", desc = "Track Mythological Ritual (Diana) profit in the Hub with a spade in your hotbar.")
+        public ProfitTrackerSettings mythologicalRitual = new ProfitTrackerSettings(ProfitSummaryLine.mythologicalDefaults());
+
+        @Expose
+        @Category(name = "Zombie Slayer", desc = "Track Zombie Slayer profit.")
+        public ProfitTrackerSettings zombie = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+
+        @Expose
+        @Category(name = "Spider Slayer", desc = "Track Spider Slayer profit.")
+        public ProfitTrackerSettings spider = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+
+        @Expose
+        @Category(name = "Wolf Slayer", desc = "Track Wolf Slayer profit.")
+        public ProfitTrackerSettings wolf = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+
+        @Expose
+        @Category(name = "Enderman Slayer", desc = "Track Enderman Slayer profit.")
+        public ProfitTrackerSettings enderman = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+
+        @Expose
+        @Category(name = "Blaze Slayer", desc = "Track Blaze Slayer profit.")
+        public ProfitTrackerSettings blaze = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+
+        @Expose
+        @Category(name = "Vampire Slayer", desc = "Track Vampire Slayer profit.")
+        public ProfitTrackerSettings vampire = new ProfitTrackerSettings(ProfitSummaryLine.slayerDefaults());
+    }
+
+    public static final class ProfitTrackerSettings {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Track profit for this activity: what your drops are worth, coins, costs, profit per hour and uptime. With a menu open, click its Display Mode, Price Source and Reset lines, and scroll its items. Move it in /sb gui.")
         @ConfigEditorBoolean
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Show", desc = "Which totals the HUD shows: this session, today or in total. Also /sb farmingtracker session|today|total, and /sb farmingtracker reset to reset the one shown.")
-        @ConfigEditorDropdown
-        public com.epic60869.skyballs.features.garden.FarmingProfitTracker.Period period = com.epic60869.skyballs.features.garden.FarmingProfitTracker.Period.SESSION;
+        @ConfigOption(name = "Settings", desc = "Profit Tracker settings.")
+        @Accordion
+        public ProfitTrackerOptions settings = new ProfitTrackerOptions();
 
         @Expose
-        @ConfigOption(name = "Pause After", desc = "Stop the farming time after a while without farming.")
+        @ConfigOption(name = "Details", desc = "Profit Tracker appearance.")
+        @Accordion
+        public ProfitTrackerDetails details;
+
+        /** Which totals the HUD shows (cycled with its Display Mode line). */
+        @Expose
+        public com.epic60869.skyballs.features.misc.profit.ProfitTracker.Period period = com.epic60869.skyballs.features.misc.profit.ProfitTracker.Period.SESSION;
+
+        public ProfitTrackerSettings() {
+            this(ProfitSummaryLine.standardDefaults());
+        }
+
+        public ProfitTrackerSettings(List<ProfitSummaryLine> summaryLines) {
+            details = new ProfitTrackerDetails(summaryLines);
+        }
+    }
+
+    public static final class ProfitTrackerOptions {
+        @Expose
+        @ConfigOption(name = "Price Source", desc = "How tracked items are valued (lowest BIN when the bazaar doesn't sell it).")
+        @ConfigEditorDropdown
+        public ProfitPriceSource priceSource = ProfitPriceSource.INSTANT_SELL;
+
+        @Expose
+        @ConfigOption(name = "Pause After", desc = "Pause time tracking after a while without tracked activity.")
         @ConfigEditorBoolean
         public boolean pauseAfter = true;
 
         @Expose
-        @ConfigOption(name = "Inactivity Time", desc = "Seconds without farming before the time pauses.")
+        @ConfigOption(name = "Inactivity Time", desc = "Seconds without tracked activity before time tracking pauses.")
         @ConfigEditorSlider(minValue = 15, maxValue = 900, minStep = 15)
         public int pauseAfterSeconds = 60;
 
         @Expose
-        @ConfigOption(name = "Maximum Items", desc = "Most item rows shown at once (the most valuable first).")
+        @ConfigOption(name = "Maximum Items", desc = "Most tracked item rows shown at once.")
         @ConfigEditorSlider(minValue = 1, maxValue = 15, minStep = 1)
         public int maximumItems = 8;
     }
 
-    /** Skysoft's Server Info Display and Real Time Display: FPS, TPS, ping and time HUDs. */
+    public static final class ProfitTrackerDetails {
+        @Expose
+        @ConfigOption(name = "Show Item Icons", desc = "Show item icons beside tracked drops.")
+        @ConfigEditorBoolean
+        public boolean showItemIcons = true;
+
+        @Expose
+        @ConfigOption(name = "Quantity Position", desc = "Where item quantities are shown.")
+        @ConfigEditorDropdown
+        public ProfitQuantityPosition quantityPosition = ProfitQuantityPosition.RIGHT;
+
+        @Expose
+        @ConfigOption(name = "Highlight Changes", desc = "Briefly highlight item quantities when they change.")
+        @ConfigEditorBoolean
+        public boolean highlightChanges = true;
+
+        @Expose
+        @ConfigOption(name = "Summary Lines", desc = "Choose and reorder the summary lines shown by the tracker.")
+        @ConfigEditorDraggableList
+        public List<ProfitSummaryLine> summaryLines;
+
+        @Expose
+        @ConfigOption(name = "Show Background", desc = "Draw a dark background behind the Profit Tracker.")
+        @ConfigEditorBoolean
+        public boolean showBackground = false;
+
+        public ProfitTrackerDetails() {
+            this(ProfitSummaryLine.standardDefaults());
+        }
+
+        public ProfitTrackerDetails(List<ProfitSummaryLine> summaryLines) {
+            this.summaryLines = new ArrayList<>(summaryLines);
+        }
+    }
+
+    public enum ProfitPriceSource {
+        INSTANT_SELL("Instant Sell"), SELL_ORDER("Sell Order"), BUY_ORDER("Buy Order"), NPC_SELL("NPC Sell");
+
+        private final String label;
+
+        ProfitPriceSource(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    public enum ProfitQuantityPosition {
+        LEFT("Left"), RIGHT("Right");
+
+        private final String label;
+
+        ProfitQuantityPosition(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    public enum ProfitSummaryLine {
+        COINS("Coins"), KERNEL_PROFIT("Kernel Profit"), QUEST_COSTS("Costs"), TOTAL_PROFIT("Total Profit"),
+        PROFIT_PER_HOUR("Profit/h"), ACTIONS("Actions"), UPTIME("Uptime");
+
+        private final String label;
+
+        ProfitSummaryLine(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+
+        static List<ProfitSummaryLine> farmingDefaults() {
+            return List.of(values());
+        }
+
+        static List<ProfitSummaryLine> standardDefaults() {
+            return List.of(COINS, QUEST_COSTS, TOTAL_PROFIT, PROFIT_PER_HOUR, ACTIONS, UPTIME);
+        }
+
+        static List<ProfitSummaryLine> slayerDefaults() {
+            return standardDefaults();
+        }
+
+        static List<ProfitSummaryLine> resourceDefaults() {
+            return List.of(TOTAL_PROFIT, PROFIT_PER_HOUR, UPTIME);
+        }
+
+        static List<ProfitSummaryLine> mythologicalDefaults() {
+            return List.of(TOTAL_PROFIT, PROFIT_PER_HOUR, ACTIONS, UPTIME);
+        }
+    }
+
     public static final class ServerInfoDisplay {
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show your FPS, the server's TPS, your ping and the time on a HUD (Skysoft's Server Info and Real Time Displays). Move it in /sb gui.")

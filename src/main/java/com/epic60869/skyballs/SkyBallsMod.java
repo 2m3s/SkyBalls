@@ -58,7 +58,8 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.combat.DianaTracker.init(configDir);
         com.epic60869.skyballs.features.combat.DianaMobHealth.init();
         com.epic60869.skyballs.features.combat.DianaAchievements.init(configDir);
-        com.epic60869.skyballs.features.garden.FarmingProfitTracker.init(configDir);
+        com.epic60869.skyballs.features.combat.InquisitorGamble.init();
+        com.epic60869.skyballs.features.misc.profit.ProfitTracker.init(configDir);
         com.epic60869.skyballs.features.combat.DianaLobbyCompromised.init();
         com.epic60869.skyballs.features.slayer.SlayerFeatures.init();
         com.epic60869.skyballs.features.slayer.EndermanSlayer.init();
@@ -70,11 +71,13 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.slayer.SlayerBossProfit.init(configDir);
         com.epic60869.skyballs.features.garden.GardenFeatures.init();
         com.epic60869.skyballs.features.fishing.FishingFeatures.init();
+        com.epic60869.skyballs.features.dungeons.SecretChime.init();
         com.epic60869.skyballs.features.mining.MiningFeatures.init();
         com.epic60869.skyballs.features.mining.CrystalHollowsWaypoints.init();
         com.epic60869.skyballs.features.mining.PickaxeAbility.init();
         com.epic60869.skyballs.features.mining.PristineRecord.init(configDir);
         com.epic60869.skyballs.features.portfolio.Portfolio.init(configDir);
+        com.epic60869.skyballs.features.portfolio.BazaarNotifications.init();
         com.epic60869.skyballs.features.skills.SkillFeatures.init();
         com.epic60869.skyballs.features.dungeons.SkyBallsDungeons.init();
         com.epic60869.skyballs.features.dungeons.DungeonFeatures.init(configDir);
@@ -92,6 +95,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         SkyBallsToggleCommands.init();
         com.epic60869.skyballs.features.misc.CopyChat.init();
         com.epic60869.skyballs.features.misc.SlotLocking.init();
+        com.epic60869.skyballs.features.misc.WardrobeHotkeys.init();
         com.epic60869.skyballs.features.misc.storage.StorageOverlay.init(configDir);
         com.epic60869.skyballs.features.misc.ItemEmojis.init(configDir);
         com.epic60869.skyballs.features.misc.HypixelButton.init();
@@ -104,6 +108,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.misc.EtherwarpOverlay.init();
         com.epic60869.skyballs.features.misc.ScreenshotShare.init();
         com.epic60869.skyballs.features.misc.JoinCommands.init();
+        com.epic60869.skyballs.features.misc.InventoryButtons.init();
         com.epic60869.skyballs.features.dungeons.CaseOpening.init();
         SkyBallsChangelog.init();
         SkyBallsNopoFeatures.init(configDir);
@@ -270,6 +275,9 @@ public final class SkyBallsMod implements ClientModInitializer {
     private void tick(Minecraft minecraft) {
         while (SkyBallsKeyMappings.SEARCH.consumeClick()) {
             openStorageSearch();
+        }
+        while (SkyBallsKeyMappings.SLAYER_BOSS_SELECT.consumeClick()) {
+            com.epic60869.skyballs.features.slayer.SlayerFeatures.selectNextBossOwner();
         }
         SkyBallsStorageSearch.tick(minecraft);
         SkyBallsNopoFeatures.tick(minecraft);

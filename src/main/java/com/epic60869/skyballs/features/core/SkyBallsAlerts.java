@@ -29,12 +29,17 @@ public final class SkyBallsAlerts {
 
     /** Shows a title and subtitle in the middle of the screen and plays a ding. */
     public static void title(Component title, Component subtitle) {
+        title(title, subtitle, true);
+    }
+
+    /** Shows a title and subtitle in the middle of the screen, with a ding or silently. */
+    public static void title(Component title, Component subtitle, boolean ding) {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> {
             mc.gui.hud.setTimes(5, 40, 10);
             mc.gui.hud.setTitle(title);
             mc.gui.hud.setSubtitle(subtitle == null ? Component.empty() : subtitle);
-            ding();
+            if (ding) ding();
         });
     }
 

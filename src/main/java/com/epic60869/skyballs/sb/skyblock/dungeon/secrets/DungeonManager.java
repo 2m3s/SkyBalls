@@ -733,6 +733,7 @@ public class DungeonManager {
 		if (room.clearState == Room.ClearState.GREEN_CHECKED) return;
 		switch (getRoomCheckmarkColour(map, room, null)) {
 			case DungeonMapUtils.GREEN_COLOR -> {
+				com.epic60869.skyballs.features.dungeons.RoomClearAlert.onCheckmark(room, currentRoom, room.clearState, true);
 				room.clearState = Room.ClearState.GREEN_CHECKED;
 				// All of the secrets in the room must've been found
 				room.secretCountOutdated = false;
@@ -743,11 +744,15 @@ public class DungeonManager {
 			}
 			case DungeonMapUtils.WHITE_COLOR -> {
 				if (room.clearState == Room.ClearState.WHITE_CHECKED) return;
+				com.epic60869.skyballs.features.dungeons.RoomClearAlert.onCheckmark(room, currentRoom, room.clearState, false);
 				room.clearState = Room.ClearState.WHITE_CHECKED;
 				room.secretCountOutdated = true;
 			}
 			case DungeonMapUtils.RED_COLOR -> room.clearState = Room.ClearState.FAILED;
-			default -> room.clearState = Room.ClearState.UNCLEARED;
+			default -> {
+				room.clearState = Room.ClearState.UNCLEARED;
+				com.epic60869.skyballs.features.dungeons.RoomClearAlert.onUncleared(room);
+			}
 		}
 	}
 

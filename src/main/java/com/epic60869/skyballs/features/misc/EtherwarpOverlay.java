@@ -89,7 +89,8 @@ public final class EtherwarpOverlay {
     /** The item's SkyBlock data if it can etherwarp (Odin's isEtherwarpItem), else null. */
     private static CompoundTag etherwarpData(ItemStack stack) {
         if (stack.isEmpty()) return null;
-        CompoundTag data = Compat.getCustomData(stack);
+        // Read without copying: this runs every frame.
+        CompoundTag data = Compat.customDataView(stack);
         if (data.getIntOr("ethermerge", 0) == 1 || data.getStringOr("id", "").equals("ETHERWARP_CONDUIT")) return data;
         return null;
     }

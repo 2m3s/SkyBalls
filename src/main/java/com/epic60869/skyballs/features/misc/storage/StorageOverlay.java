@@ -74,6 +74,7 @@ public final class StorageOverlay {
 
     public static void init(Path configDir) {
         StorageData.init(configDir);
+        StorageValueHud.init();
         // Firmament remembers a page each time its contents arrive; checking the open page every few ticks does the same.
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (++ticks % 5 == 0) rememberContent(currentHandler);

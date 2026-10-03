@@ -132,6 +132,8 @@ public final class OdinPuzzleSolvers {
     private static List<BlockPos> tpCorrect = new ArrayList<>();
     private static BlockPos tpBest;
     private static final List<ArmorStand> blazes = new ArrayList<>();
+    /** The quiz room this run, once you've been in it. */
+    private static Room quizRoom;
     private static int waterPattern = -1;
     private static final Map<Lever, double[]> waterSolution = new EnumMap<>(Lever.class);
     private static final Map<Lever, Integer> leverClicks = new EnumMap<>(Lever.class);
@@ -193,6 +195,11 @@ public final class OdinPuzzleSolvers {
         return room != null && QUIZ.equals(room.getName());
     }
 
+    /** The blaze puzzle needs no room frame (its room has no blue terracotta roof corner to find one by). */
+    private static boolean inBlaze() {
+        return room != null && (BLAZE_HIGH.equals(room.getName()) || BLAZE_LOW.equals(room.getName()));
+    }
+
     public static void init() {
         loadData();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> reset());
@@ -218,7 +225,19 @@ public final class OdinPuzzleSolvers {
     private static void reset() {
         room = null;
         frame = null;
+        quizRoom = null;
         resetRoomState();
+        resetQuiz();
+    }
+
+    /**
+     * The quiz is kept apart from the other puzzles: Oruo asks the next question while you may be outside his room,
+     * and walking out and back in mustn't forget the answer.
+     */
+    private static void resetQuiz() {
+        java.util.Arrays.fill(quizOptions, null);
+        java.util.Arrays.fill(quizCorrect, false);
+        quizAnswers = null;
     }
 
     private static void resetRoomState() {
@@ -227,9 +246,6 @@ public final class OdinPuzzleSolvers {
         beamPairs.clear();
         weirdosCorrect = null;
         weirdosWrong.clear();
-        java.util.Arrays.fill(quizOptions, null);
-        java.util.Arrays.fill(quizCorrect, false);
-        quizAnswers = null;
         tpPads.clear();
         tpVisited.clear();
         tpCorrect = new ArrayList<>();
@@ -255,7 +271,10 @@ public final class OdinPuzzleSolvers {
             room = current;
             frame = findFrame(mc.level, current);
             resetRoomState();
-            if (inQuiz()) {
+            if (inQuiz() && current != quizRoom) {
+                // Another quiz room is another run; the answers read so far (maybe before you got here) are this one's.
+                if (quizRoom != null) resetQuiz();
+                quizRoom = current;
                 // The quiz uses Skyblocker's room transform, so it works even when the roof corner block isn't found.
                 quizOptions[0] = current.relativeToActual(new BlockPos(20, 70, 6));
                 quizOptions[1] = current.relativeToActual(new BlockPos(15, 70, 9));
@@ -263,9 +282,9 @@ public final class OdinPuzzleSolvers {
             }
             if (frame != null) onRoomEnter(mc.level, config);
         }
+        if (++ticks % 5 == 0 && config.blaze && inBlaze()) scanBlazes(mc);
         if (frame == null) return;
-        if (++ticks % 5 == 0) {
-            if (config.blaze && (in(BLAZE_HIGH) || in(BLAZE_LOW))) scanBlazes(mc);
+        if (ticks % 5 == 0) {
             if (config.waterBoard && in(WATER) && waterPattern < 0) scanWater(mc.level, config.waterOptimized);
             if (config.creeperBeams && in(BEAMS)) scanBeams(mc.level);
         }
@@ -350,7 +369,7 @@ public final class OdinPuzzleSolvers {
         blazes.clear();
         blazes.addAll(hp.keySet());
         Comparator<ArmorStand> byHp = Comparator.comparingInt(hp::get);
-        blazes.sort(in(BLAZE_LOW) ? byHp.reversed() : byHp);
+        blazes.sort(BLAZE_LOW.equals(room.getName()) ? byHp.reversed() : byHp);
     }
 
     // ----- Water Board -----
@@ -491,7 +510,8 @@ public final class OdinPuzzleSolvers {
             }
         }
 
-        if (config.trivia && inQuiz()) {
+        // Read wherever you are in the dungeon: a question can come while you're outside the quiz room.
+        if (config.trivia && SkyBallsLocation.inDungeon()) {
             if (text.startsWith("[STATUE] Oruo the Omniscient: ") && text.endsWith("correctly!")) {
                 if (text.contains("answered the final question")) {
                     quizAnswers = null;
@@ -555,7 +575,7 @@ public final class OdinPuzzleSolvers {
             }
             if (tpBest != null) collector.submitLineFromCursor(new Vec3(tpBest.getX() + 0.5, tpBest.getY() + 0.8, tpBest.getZ() + 0.5), new float[]{0.33f, 1f, 0.33f}, 1f, 2f);
         }
-        if (config.blaze && (in(BLAZE_HIGH) || in(BLAZE_LOW)) && !blazes.isEmpty()) {
+        if (config.blaze && inBlaze() && !blazes.isEmpty()) {
             blazes.removeIf(b -> !b.isAlive());
             float[][] colours = {{0.33f, 1f, 0.33f}, {1f, 0.67f, 0f}, {1f, 1f, 1f}};
             for (int i = 0; i < blazes.size(); i++) {

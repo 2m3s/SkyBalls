@@ -58,9 +58,20 @@ public final class KeepTerrainLoaded {
         "Lotus Atoll");
     private static final Pattern SERVER_LINE = Pattern.compile("\\d{2}/\\d{2}/\\d{2}\\s+(\\S+)");
     private static final boolean BOBBY = FabricLoader.getInstance().isModLoaded("bobby");
-    private static final int MAX_CONCURRENT_LOADS = 8;
+    private static final int MAX_CONCURRENT_LOADS = 16;
     private static final int MAX_SCAN_CHECKS_PER_TICK = 64;
-    private static final int MAX_SAVES_PER_TICK = 8;
+    private static final int MAX_SAVES_PER_TICK = 16;
+    /**
+     * Turning a chunk packet back into bytes for the cache takes a while (a whole chunk's blocks and light); done on the
+     * render thread for every chunk the server sends, it stuttered the game when joining an island. The packet isn't
+     * changed after it arrives, so it's encoded here instead.
+     */
+    private static final java.util.concurrent.ExecutorService ENCODER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "SkyBalls terrain cache");
+        thread.setDaemon(true);
+        thread.setPriority(Thread.MIN_PRIORITY);
+        return thread;
+    });
     private static final int MAX_PENDING_SAVES = 512;
     private static final int MAX_DISTANCE = 32;
     private static final int MAX_PACKET_BYTES = 4 * 1024 * 1024;
@@ -85,9 +96,21 @@ public final class KeepTerrainLoaded {
     private static int scanDistance = -1;
     private static List<int[]> scanOffsets = List.of();
     private static int scanIndex;
-    /** Ticks the island/server has been unreadable while still in the same world (the scoreboard flickers). */
-    private static int missingSessionTicks;
-    private static final int SESSION_GRACE_TICKS = 60;
+    /**
+     * The island/server read since joining this world, and for how many ticks it has read the same. The tab list and
+     * scoreboard can still show the last island for a moment after a world change, so a session only starts once it
+     * has read the same for {@link #STABLE_TICKS}. Once started it stays until the world changes: Hypixel always sends
+     * a new world for a new island or server, and re-reading it every tick (the tab list and scoreboard flicker) is what
+     * made the terrain drop and reload at random.
+     */
+    private static Session candidate;
+    private static int candidateTicks;
+    /**
+     * The last session's island and server. A new world there (Hypixel rebuilds it when you die, for example) starts
+     * keeping terrain at once, so the cached terrain comes back right away instead of after the stable reading wait.
+     */
+    private static Session lastSession;
+    private static final int STABLE_TICKS = 40;
     /** Each chunk cache's storage centre and radius: {centreX, centreZ, radius or -1}, as vanilla keeps them. */
     private static final Map<ClientChunkCache, int[]> storageShape = new WeakHashMap<>();
 
@@ -136,14 +159,20 @@ public final class KeepTerrainLoaded {
 
     /** The client keeps chunks this far out ({@code SkyBallsKeepTerrainLoadedMixin}). */
     public static int storageViewDistance(int viewDistance) {
-        if (restoringServerDistance || session() == null) return viewDistance;
-        return Math.max(viewDistance, cacheDistance(Minecraft.getInstance()));
+        if (restoringServerDistance) return viewDistance;
+        Minecraft mc = Minecraft.getInstance();
+        if (!keeping(mc.level)) return viewDistance;
+        return Math.max(viewDistance, cacheDistance(mc));
+    }
+
+    /** This world's terrain is being kept (a session started in it and the feature is still on for its island). */
+    private static boolean keeping(ClientLevel level) {
+        return level != null && active != null && active.level() == level && enabledFor(active.session().island());
     }
 
     /** The server unloads a chunk: keep it instead, if we're keeping this island's terrain. */
     public static boolean didRetain(ClientLevel level, ChunkPos position) {
-        Session session = session();
-        if (session == null || active == null || active.level() != level || !active.session().equals(session)) return false;
+        if (!keeping(level)) return false;
         LevelChunk chunk = level.getChunkSource().getChunk(position.x(), position.z(), ChunkStatus.FULL, false);
         if (chunk == null) return false;
         chunk.clearAllBlockEntities();
@@ -153,9 +182,7 @@ public final class KeepTerrainLoaded {
 
     /** The server sent a chunk: remember it on disk. */
     public static void onServerChunk(ClientLevel level, ClientboundLevelChunkWithLightPacket packet) {
-        if (applyingCached || active == null || active.level() != level) return;
-        Session session = session();
-        if (session == null || !active.session().equals(session)) return;
+        if (applyingCached || !keeping(level)) return;
         ChunkPos position = new ChunkPos(packet.getX(), packet.getZ());
         retained.remove(position);
         Loading key = new Loading(active.storage(), position.pack());
@@ -170,17 +197,23 @@ public final class KeepTerrainLoaded {
     private static void tick(Minecraft mc) {
         processPendingSaves();
         ClientLevel level = mc.level;
-        Session session = session();
-        if (level == null || session == null) {
-            // A moment without the server line (a restart warning, a scoreboard update) isn't leaving the island.
-            if (level != null && active != null && active.level() == level && isEnabledHere() && ++missingSessionTicks < SESSION_GRACE_TICKS) return;
-            missingSessionTicks = 0;
-            deactivate(mc);
+        if (active != null && !keeping(level)) deactivate(mc);
+        if (level == null) {
+            candidate = null;
             return;
         }
-        missingSessionTicks = 0;
-        if (active == null || active.level() != level || !active.session().equals(session)) activate(mc, level, session);
-        if (active == null || active.level() != level || !active.session().equals(session)) return;
+        if (active == null) {
+            Session session = session();
+            if (session == null || !session.equals(candidate)) {
+                candidate = session;
+                candidateTicks = 0;
+                return;
+            }
+            if (++candidateTicks < STABLE_TICKS && !session.equals(lastSession)) return;
+            activate(mc, level, session);
+            if (active == null) return;
+        }
+        Session session = active.session();
         Integer serverDistance = serverViewDistance(mc);
         if (serverDistance == null) return;
         int distance = cacheDistance(mc);
@@ -192,15 +225,11 @@ public final class KeepTerrainLoaded {
     }
 
     private static void activate(Minecraft mc, ClientLevel level, Session session) {
-        if (active != null && active.level() == level) {
-            releaseRetained(level);
-            resizeToServerDistance(mc, level);
-        } else {
-            retained.clear();
-        }
+        retained.clear();
         Integer serverDistance = serverViewDistance(mc);
         if (serverDistance == null) return;
         active = new Active(level, session, storageFor(session));
+        lastSession = session;
         int distance = cacheDistance(mc);
         level.getChunkSource().updateViewRadius(Math.max(serverDistance, distance));
         if (mc.player != null) resetScan(mc.player.chunkPosition(), distance);
@@ -212,11 +241,13 @@ public final class KeepTerrainLoaded {
             if (!it.hasNext()) return;
             PendingSave save = it.next();
             it.remove();
-            try {
-                save.storage().save(new ChunkPos(save.packet().getX(), save.packet().getZ()), encode(save.packet(), save.registries()), save.sections());
-            } catch (Exception e) {
-                System.err.println("[SkyBalls] Couldn't cache a terrain chunk: " + e);
-            }
+            ENCODER.execute(() -> {
+                try {
+                    save.storage().save(new ChunkPos(save.packet().getX(), save.packet().getZ()), encode(save.packet(), save.registries()), save.sections());
+                } catch (Exception e) {
+                    System.err.println("[SkyBalls] Couldn't cache a terrain chunk: " + e);
+                }
+            });
         }
     }
 
@@ -287,6 +318,8 @@ public final class KeepTerrainLoaded {
             resizeToServerDistance(mc, active.level());
         }
         active = null;
+        candidate = null;
+        candidateTicks = 0;
         scanCenter = null;
         scanDistance = -1;
         scanOffsets = List.of();
@@ -339,11 +372,9 @@ public final class KeepTerrainLoaded {
 
     /** The island and server you're on, if this island's terrain is kept. */
     private static Session session() {
-        if (BOBBY) return null;
-        SkyBallsConfig c = SkyBallsConfig.current();
-        if (c == null || !c.misc.keepTerrainLoaded.enabled || !SkyBallsLocation.onSkyblock()) return null;
+        if (!SkyBallsLocation.onSkyblock()) return null;
         String island = SkyBallsLocation.area();
-        if (!ISLANDS.contains(island) || excluded(c.misc.keepTerrainLoaded.excludedIslands, island)) return null;
+        if (!enabledFor(island)) return null;
         String server = null;
         for (String line : SkyBallsLocation.scoreboard()) {
             Matcher m = SERVER_LINE.matcher(line);
@@ -355,12 +386,11 @@ public final class KeepTerrainLoaded {
         return server == null ? null : new Session(island, server);
     }
 
-    /** The feature is on and this island isn't left out (the server line may be missing for a moment). */
-    private static boolean isEnabledHere() {
+    /** The feature is on and this island's terrain is kept (it's one of the islands and isn't left out). */
+    private static boolean enabledFor(String island) {
         if (BOBBY) return false;
         SkyBallsConfig c = SkyBallsConfig.current();
-        if (c == null || !c.misc.keepTerrainLoaded.enabled || !SkyBallsLocation.onSkyblock()) return false;
-        String island = SkyBallsLocation.area();
+        if (c == null || !c.misc.keepTerrainLoaded.enabled) return false;
         return ISLANDS.contains(island) && !excluded(c.misc.keepTerrainLoaded.excludedIslands, island);
     }
 
@@ -373,16 +403,23 @@ public final class KeepTerrainLoaded {
     private static void close() {
         pendingSaves.clear();
         loading.clear();
-        for (Storage storage : storages.values()) {
-            try {
-                storage.close();
-            } catch (Exception e) {
-                System.err.println("[SkyBalls] Couldn't close the terrain cache: " + e);
+        // Closed after the saves still being encoded, on their thread.
+        List<Storage> closing = new ArrayList<>(storages.values());
+        ENCODER.execute(() -> {
+            for (Storage storage : closing) {
+                try {
+                    storage.close();
+                } catch (Exception e) {
+                    System.err.println("[SkyBalls] Couldn't close the terrain cache: " + e);
+                }
             }
-        }
+        });
         storages.clear();
         retained.clear();
         active = null;
+        lastSession = null;
+        candidate = null;
+        candidateTicks = 0;
         restoringServerDistance = false;
         applyingCached = false;
         scanCenter = null;

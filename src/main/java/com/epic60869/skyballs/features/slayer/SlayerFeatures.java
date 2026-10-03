@@ -39,6 +39,8 @@ public final class SlayerFeatures {
 
     private static List<Component> bossLines = List.of();
     private static LivingEntity boss;
+    /** Null follows your boss; otherwise the owner whose boss phase is shown. */
+    private static String selectedBossOwner;
 
     private static int ticks;
 
@@ -65,8 +67,9 @@ public final class SlayerFeatures {
         FeatureConfigs.Slayer config = config();
         boolean needed = (config != null && config.phaseDisplay) || SlayerTimes.enabled()
             || EndermanSlayer.needsBoss() || BlazeSlayer.needsBoss();
-        // Only during a slayer quest: no boss can be yours otherwise, and the scan reads every nametag nearby.
-        if (mc.player == null || mc.level == null || !needed || !SkyBallsLocation.onSkyblock() || !onSlayerQuest()) {
+        // Without an explicit target, only scan during your quest; a selected player's boss can be observed separately.
+        if (mc.player == null || mc.level == null || !needed || !SkyBallsLocation.onSkyblock()
+            || (selectedBossOwner == null && !onSlayerQuest())) {
             clearBoss();
             return;
         }
@@ -91,14 +94,55 @@ public final class SlayerFeatures {
     }
 
     private static boolean isOwnerTag(String text, String name) {
-        // Most nametags nearby aren't a boss's: skip them before stripping and splitting.
-        if (!text.contains("Spawned by")) return false;
+        String owner = ownerName(text);
+        return owner != null && owner.equalsIgnoreCase(name);
+    }
+
+    private static String ownerName(String text) {
+        if (!text.contains("Spawned by")) return null;
         for (String line : SkyBallsLocation.strip(text).split("\n")) {
             String trimmed = line.trim();
-            if (trimmed.startsWith("Spawned by:")
-                && trimmed.substring("Spawned by:".length()).trim().toLowerCase(Locale.ROOT).equals(name)) return true;
+            if (trimmed.startsWith("Spawned by:")) {
+                String owner = trimmed.substring("Spawned by:".length()).trim();
+                return owner.isEmpty() ? null : owner.toLowerCase(Locale.ROOT);
+            }
         }
-        return false;
+        return null;
+    }
+
+    private static List<Entity> ownerTags(Minecraft mc) {
+        double rangeSq = SEARCH_RANGE * SEARCH_RANGE;
+        AABB searchArea = mc.player.getBoundingBox().inflate(SEARCH_RANGE);
+        List<Entity> owners = mc.level.getEntities((Entity) null, searchArea, entity -> {
+            if (entity.distanceToSqr(mc.player) > rangeSq) return false;
+            Component tag = nametag(entity);
+            return tag != null && ownerName(tag.getString()) != null;
+        });
+        owners.sort(Comparator.comparingDouble(mc.player::distanceToSqr));
+        return owners;
+    }
+
+    /** Cycles the phase HUD between nearby slayer bosses, returning to your own boss after the last one. */
+    public static void selectNextBossOwner() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+
+        String ownName = mc.player.getGameProfile().name().toLowerCase(Locale.ROOT);
+        List<String> candidates = new ArrayList<>();
+        candidates.add(ownName);
+        ownerTags(mc).stream()
+            .map(entity -> ownerName(nametag(entity).getString()))
+            .filter(owner -> !owner.equals(ownName))
+            .distinct()
+            .forEach(candidates::add);
+
+        String current = selectedBossOwner == null ? ownName : selectedBossOwner;
+        int index = candidates.indexOf(current);
+        String next = candidates.get(index < 0 ? 0 : (index + 1) % candidates.size());
+        selectedBossOwner = next.equals(ownName) ? null : next;
+        phaseBoss = "";
+        maxHealth = 0;
+        mc.player.sendSystemMessage(Component.translatable("chat.skyballs.slayer_boss_target", next));
     }
 
     /**
@@ -107,21 +151,28 @@ public final class SlayerFeatures {
      */
     private static void updateBossLines(Minecraft mc) {
         String name = mc.player.getGameProfile().name().toLowerCase(Locale.ROOT);
-        double rangeSq = SEARCH_RANGE * SEARCH_RANGE;
-        Entity owner = null;
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity.distanceToSqr(mc.player) > rangeSq) continue;
-            Component tag = nametag(entity);
-            if (tag != null && isOwnerTag(tag.getString(), name)) {
-                owner = entity;
-                break;
-            }
-        }
+        List<Entity> owners = ownerTags(mc);
+        Entity ownOwner = owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), name)).findFirst().orElse(null);
+        boss = ownOwner == null ? null : mobNear(mc, ownOwner);
+        List<Component> ownLines = ownOwner == null ? List.of() : bossHealthLines(mc, ownOwner);
+        SlayerTimes.onBoss(ownLines.isEmpty() ? null : SkyBallsLocation.strip(ownLines.get(0).getString()));
+
+        String targetOwner = selectedBossOwner == null ? name : selectedBossOwner;
+        Entity owner = owners.stream().filter(entity -> isOwnerTag(nametag(entity).getString(), targetOwner)).findFirst().orElse(null);
         if (owner == null) {
-            clearBoss();
+            bossLines = List.of();
+            maxHealth = 0;
+            phaseBoss = "";
             return;
         }
-        boss = mobNear(mc, owner);
+        List<Component> lines = targetOwner.equals(name) ? new ArrayList<>(ownLines) : bossHealthLines(mc, owner);
+        String health = lines.isEmpty() ? "" : SkyBallsLocation.strip(lines.get(0).getString());
+        if (!lines.isEmpty()) lines.set(0, withPhase(lines.get(0), health));
+        if (targetOwner.equals(name) && isTarantula(health)) addEggSacLines(mc, lines);
+        bossLines = lines;
+    }
+
+    private static List<Component> bossHealthLines(Minecraft mc, Entity owner) {
         AABB area = owner.getBoundingBox().inflate(1.5, 3, 1.5);
         List<Entity> tags = mc.level.getEntities((Entity) null, area, e -> nametag(e) != null);
         tags.sort(Comparator.comparingDouble((Entity e) -> e.getY()).reversed());
@@ -136,11 +187,7 @@ public final class SlayerFeatures {
             }
             if (!lines.isEmpty()) break;
         }
-        String health = lines.isEmpty() ? "" : SkyBallsLocation.strip(lines.get(0).getString());
-        SlayerTimes.onBoss(health);
-        if (!lines.isEmpty()) lines.set(0, withPhase(lines.get(0), health));
-        if (isTarantula(health)) addEggSacLines(mc, lines);
-        bossLines = lines;
+        return lines;
     }
 
     private static void clearBoss() {

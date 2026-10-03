@@ -908,7 +908,20 @@ public final class CollectionTracker {
         return lines;
     }
 
+    private static List<Component> cachedLines = List.of();
+    private static long cachedLinesTick = -1;
+
+    /** The HUD's lines, built once per client tick (the HUD asks for them several times a frame). */
     private static List<Component> liveLines() {
+        long tick = Minecraft.getInstance().level == null ? -1 : Minecraft.getInstance().level.getGameTime();
+        if (tick != cachedLinesTick || tick < 0) {
+            cachedLines = buildLiveLines();
+            cachedLinesTick = tick;
+        }
+        return cachedLines;
+    }
+
+    private static List<Component> buildLiveLines() {
         Long api = apiAmounts.get(current);
         long live = (api == null ? 0 : api) + pendingAmount(current);
         // Once your profile has loaded, a collection Elite has no number for starts at 0.

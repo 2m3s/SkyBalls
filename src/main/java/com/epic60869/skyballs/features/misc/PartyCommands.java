@@ -96,7 +96,8 @@ public final class PartyCommands {
         if (m.group("more") != null) return;
 
         if (config.diana) {
-            String diana = command.equals("help") ? "Diana party commands: " + String.join(", ", com.epic60869.skyballs.features.combat.DianaPartyCommands.HELP)
+            // A short list: a party message over 256 characters gets you disconnected.
+            String diana = command.equals("help") ? "Diana: !chim !inq !king !manti !sphinx !relic !stick !core !wool !mobs !burrows !profit !since <drop/mob>"
                 : com.epic60869.skyballs.features.combat.DianaPartyCommands.reply(command, arg, me());
             if (diana != null) {
                 run("pc " + diana);

@@ -86,6 +86,10 @@ public final class DungeonFeatures {
     private static long serverTicks;
     private static long stormStartTick = -1;
     private static long goldorStartTick = -1;
+    /** The server tick Storm called his lightning (the purple pillar crush, Odin's PY timer), once per run. */
+    private static long pyStartTick = -1;
+    private static boolean pyTriggered;
+    private static final int PY_TICKS = 95;
 
     // ----- Masks (Odin's InvincibilityTimer), counted in server ticks -----
     private enum Invincibility {
@@ -193,6 +197,12 @@ public final class DungeonFeatures {
             DungeonFeatures::tickLines,
             List.of(kv("Storm pillars: ", "12 ticks")),
             200, 740);
+        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("storm_py", () -> config() != null && config().timers.pyTimer);
+        SkyBallsHuds.register("storm_py", "Storm PY Timer",
+            () -> config() != null && config().timers.pyTimer && pyStartTick >= 0 && serverTicks - pyStartTick <= PY_TICKS,
+            () -> List.of(pyLine(PY_TICKS - (serverTicks - pyStartTick))),
+            List.of(pyLine(PY_TICKS)),
+            200, 760);
         com.epic60869.skyballs.features.core.SkyBallsHuds.setting("mask_timers", () -> config() != null && config().timers.maskTimers);
         SkyBallsHuds.register("mask_timers", "Mask Timers",
             () -> config() != null && config().timers.maskTimers && SkyBallsLocation.inDungeon(),
@@ -216,6 +226,8 @@ public final class DungeonFeatures {
         splitFloor = "";
         stormStartTick = -1;
         goldorStartTick = -1;
+        pyStartTick = -1;
+        pyTriggered = false;
         goldorReached = false;
         dragonPhase = false;
         for (Invincibility type : Invincibility.values()) {
@@ -411,6 +423,13 @@ public final class DungeonFeatures {
         return lines;
     }
 
+    /** Odin's formatTimer: "PY: 4.75s", green over two thirds of the time left, gold over a third, then red. */
+    private static Component pyLine(long ticks) {
+        ChatFormatting colour = ticks >= PY_TICKS * 0.66 ? ChatFormatting.GREEN : ticks >= PY_TICKS * 0.33 ? ChatFormatting.GOLD : ChatFormatting.RED;
+        return Component.literal("PY: ").withStyle(ChatFormatting.AQUA)
+            .append(Component.literal(String.format(java.util.Locale.US, "%.2fs", Math.max(0, ticks) / 20f)).withStyle(colour));
+    }
+
     // ----- Masks -----
 
     private static Component maskPreview(String name, String value, ChatFormatting color, boolean worn) {
@@ -511,6 +530,10 @@ public final class DungeonFeatures {
         else onSplitMessage(text);
 
         // Boss phases for the tick timers and debuff counting.
+        if (!pyTriggered && (text.equals("[BOSS] Storm: ENERGY HEED MY CALL!") || text.equals("[BOSS] Storm: THUNDER LET ME BE YOUR CATALYST!"))) {
+            pyTriggered = true;
+            pyStartTick = serverTicks;
+        }
         if (text.startsWith("[BOSS] Storm: Pathetic Maxor, just like expected.")) stormStartTick = serverTicks;
         else if (text.startsWith("[BOSS] Goldor: Who dares trespass into my domain?")) {
             goldorStartTick = serverTicks;

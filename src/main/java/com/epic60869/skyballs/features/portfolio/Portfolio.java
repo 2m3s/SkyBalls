@@ -154,6 +154,8 @@ public final class Portfolio {
     private static volatile Map<String, Double> averages = Map.of();
     private static volatile Map<String, Double> bazaarSell = Map.of();
     private static volatile Map<String, Double> bazaarBuy = Map.of();
+    private static volatile Map<String, Double> bestSellOffers = Map.of();
+    private static volatile Map<String, Double> bestBuyOrders = Map.of();
     private static volatile Map<String, String> names = Map.of();
     /** Rune price keys (e.g. AXE_SHATTER_RUNE_3) to names ("Barkshatter Rune III") and head textures, from the NEU repo. */
     private static volatile Map<String, String> runeNames = Map.of();
@@ -258,6 +260,17 @@ public final class Portfolio {
         return seen == null ? 0 : seen.price();
     }
 
+    /** Resolves a displayed Bazaar product name to the API's product id. */
+    public static String bazaarProductId(String name) {
+        return resolve(name);
+    }
+
+    /** Best current order-book price for an item: top buy order when {@code buyOrder}, top sell offer otherwise. */
+    public static double bazaarOrderBookPrice(String id, boolean buyOrder) {
+        Double price = (buyOrder ? bestBuyOrders : bestSellOffers).get(id);
+        return price == null ? 0 : price;
+    }
+
     /** What you'd pay right now: the lowest BIN, or the bazaar buy price. 0 when unknown. */
     private static double currentBuyPrice(String id) {
         Double bin = lowestBins.get(id);
@@ -276,14 +289,25 @@ public final class Portfolio {
                 JsonObject bazaar = fetch(BAZAAR_URL);
                 if (bazaar != null && bazaar.has("products")) {
                     Map<String, Double> sell = new HashMap<>(), buy = new HashMap<>();
+                    Map<String, Double> bestSells = new HashMap<>(), bestBuys = new HashMap<>();
                     for (var e : bazaar.getAsJsonObject("products").entrySet()) {
-                        JsonObject status = e.getValue().getAsJsonObject().getAsJsonObject("quick_status");
-                        if (status == null) continue;
-                        sell.put(e.getKey(), status.get("sellPrice").getAsDouble());
-                        buy.put(e.getKey(), status.get("buyPrice").getAsDouble());
+                        JsonObject product = e.getValue().getAsJsonObject();
+                        JsonObject status = product.getAsJsonObject("quick_status");
+                        if (status != null) {
+                            sell.put(e.getKey(), status.get("sellPrice").getAsDouble());
+                            buy.put(e.getKey(), status.get("buyPrice").getAsDouble());
+                        }
+                        if (product.has("sell_summary") && product.getAsJsonArray("sell_summary").size() > 0) {
+                            bestSells.put(e.getKey(), product.getAsJsonArray("sell_summary").get(0).getAsJsonObject().get("pricePerUnit").getAsDouble());
+                        }
+                        if (product.has("buy_summary") && product.getAsJsonArray("buy_summary").size() > 0) {
+                            bestBuys.put(e.getKey(), product.getAsJsonArray("buy_summary").get(0).getAsJsonObject().get("pricePerUnit").getAsDouble());
+                        }
                     }
                     bazaarSell = sell;
                     bazaarBuy = buy;
+                    bestSellOffers = bestSells;
+                    bestBuyOrders = bestBuys;
                 }
                 Map<String, Double> bins = numbers(fetch(LOWEST_BINS_URL));
                 if (!bins.isEmpty()) {

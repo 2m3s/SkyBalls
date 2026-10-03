@@ -27,6 +27,7 @@ public final class Sbc {
         SbcCrashReports.init();
         SbcServer.init();
         SbcCommands.init();
+        SbcItems.init();
         SbcChat.init();
         SbcChatOverlay.init();
         SbcSocial.init();

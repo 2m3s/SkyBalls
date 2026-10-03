@@ -125,13 +125,15 @@ public final class SkyBallsHuds {
     private static void renderAll(GuiGraphicsExtractor graphics) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
+        // Hidden while the Inquisitor Gamble plays, so a tracker doesn't show the Chimera first.
+        if (com.epic60869.skyballs.features.combat.InquisitorGamble.holding()) return;
         // Positions saved before the reference size existed were placed on this screen size.
         if (refWidth <= 0 || refHeight <= 0) setReferenceToScreen();
         for (Element element : ELEMENTS.values()) {
             if (!safe(element.enabled())) continue;
             if (element.custom() != null) {
                 try {
-                    if (element.custom().visible()) renderCustom(graphics, element, false);
+                    if (customVisible(element)) renderCustom(graphics, element, false);
                 } catch (Exception e) {
                     com.epic60869.skyballs.features.sbc.SbcCrashReports.report(e, "HUD " + element.id());
                 }
@@ -218,10 +220,37 @@ public final class SkyBallsHuds {
         return Math.max(0, Math.min(y, Minecraft.getInstance().getWindow().getGuiScaledHeight() - h));
     }
 
+    /**
+     * A custom HUD's visibility and size, worked out once per client tick: like text HUDs' lines, they only change as
+     * often as the game state, and asking every frame (several times) was costly for HUDs that build their content.
+     */
+    private static final Map<String, Boolean> TICK_VISIBLE = new java.util.HashMap<>();
+    private static final Map<String, int[]> TICK_SIZE = new java.util.HashMap<>();
+    private static long customTick = -1;
+
+    private static void refreshCustomCache() {
+        if (customTick != clientTicks) {
+            TICK_VISIBLE.clear();
+            TICK_SIZE.clear();
+            customTick = clientTicks;
+        }
+    }
+
+    private static boolean customVisible(Element element) {
+        refreshCustomCache();
+        return TICK_VISIBLE.computeIfAbsent(element.id(), id -> element.custom().visible());
+    }
+
+    private static int[] customSize(Element element) {
+        refreshCustomCache();
+        return TICK_SIZE.computeIfAbsent(element.id(), id -> new int[]{element.custom().width(), element.custom().height()});
+    }
+
     public static void renderCustom(GuiGraphicsExtractor graphics, Element element, boolean preview) {
         Placement p = placement(element.id());
-        int x = mapX(p.x, Math.round(element.custom().width() * p.scale));
-        int y = mapY(p.y, Math.round(element.custom().height() * p.scale));
+        int[] size = customSize(element);
+        int x = mapX(p.x, Math.round(size[0] * p.scale));
+        int y = mapY(p.y, Math.round(size[1] * p.scale));
         graphics.pose().pushMatrix();
         graphics.pose().translate((float) x, (float) y);
         graphics.pose().scale(p.scale, p.scale);

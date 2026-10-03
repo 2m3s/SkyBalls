@@ -86,7 +86,7 @@ public final class SkyBallsItemBackgrounds {
         if (stack.isEmpty()) return SkyBallsItemRarity.UNKNOWN;
 
         // Pets
-        CompoundTag customData = Compat.getCustomData(stack);
+        CompoundTag customData = Compat.customDataView(stack);
         if (customData.getStringOr("id", "").equals("PET")) {
             try {
                 JsonObject petInfo = JsonParser.parseString(customData.getStringOr("petInfo", "")).getAsJsonObject();

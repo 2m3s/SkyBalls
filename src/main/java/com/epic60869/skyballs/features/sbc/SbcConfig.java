@@ -86,7 +86,7 @@ public final class SbcConfig {
         public boolean mentionCompletion = true;
 
         @Expose
-        @ConfigOption(name = "Item Sharing", desc = "Show items shared in SkyBalls chat as [Item Name] with its tooltip, and let you share yours with /sb share, the Share Item key or [item] in a message.")
+        @ConfigOption(name = "Item Sharing", desc = "Show shared items as clickable [Item Name] previews in every chat. Use [item] for the held item, or [inv] to share your whole inventory as one clickable [Inventory] that opens it in a menu. Works in plain chat and in /pc, /gc, /ac, /cc, /oc, /msg and /r. Recipients need SkyBalls to see the previews.")
         @ConfigEditorBoolean
         public boolean itemSharing = true;
 
@@ -225,6 +225,11 @@ public final class SbcConfig {
         @ConfigOption(name = "Cooldown HUD", desc = "A HUD listing abilities that are cooling down. Move it with /sb gui.")
         @ConfigEditorBoolean
         public boolean hud = false;
+
+        @Expose
+        @ConfigOption(name = "Deployable Timers HUD", desc = "Show active timers for deployed power orbs and SOS Flare. Move it with /sb gui.")
+        @ConfigEditorBoolean
+        public boolean deployableHud = false;
 
         @Expose
         @ConfigOption(name = "Ready Sound", desc = "Play a sound when an ability is ready again.")

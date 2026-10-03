@@ -145,5 +145,7 @@
   "text.skyblocker.quit_discard": "Quit & Discard Changes",
   "key.skyballs.diana_guess_warp": "Diana: Warp to Burrow",
   "key.skyballs.diana_rare_mob_warp": "Diana: Warp to Rare Mob",
-  "key.skyballs.diana_sphinx_solver": "Diana: Sphinx Solver (use at your own risk)"
+  "key.skyballs.diana_sphinx_solver": "Diana: Sphinx Solver (use at your own risk)",
+  "key.skyballs.slayer_boss_select": "Slayer: Cycle Boss Phase Target",
+  "chat.skyballs.slayer_boss_target": "Slayer phase target: %s"
 }

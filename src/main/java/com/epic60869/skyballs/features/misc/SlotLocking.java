@@ -1,7 +1,10 @@
 package com.epic60869.skyballs.features.misc;
 
 import com.epic60869.skyballs.SkyBallsConfig;
+import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.mixin.SkyBallsContainerScreenAccessor;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.ChatFormatting;
@@ -10,18 +13,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Slot locking and slot binding. Neither clicks anything for you that you couldn't click yourself, so both are
- * allowed: locking only stops your own clicks and drops, binding turns a shift-click into the same swap you'd do with
- * a number key.
+ * Item protection and slot binding. Protected items cannot be dropped; binding turns a shift-click into the same swap
+ * you'd do with a number key.
  * <ul>
- *   <li>Lock (like SkyblockAddons): press the lock key (L) over an inventory slot. A locked slot can't be clicked,
- *   moved, swapped or dropped, and Q does nothing while it's your selected hotbar slot. Press L again to unlock.</li>
+ *   <li>Protect: run /sb protect while holding an item. Protection follows the item as it moves between slots.</li>
  *   <li>Bind (Odin's Slot Binds): in your inventory, press the bind key (B) over a slot, then over another (one must be
  *   in the hotbar). Shift-clicking either then swaps them. Press B on a bound slot to remove the bind. A line joins
  *   bound slots while you hover one.</li>
@@ -44,32 +45,72 @@ public final class SlotLocking {
             ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> render(container, g, mouseX, mouseY));
             ScreenEvents.remove(screen).register(s -> pendingBind = null);
         });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            for (String root : Compat.COMMAND_ROOTS) {
+                dispatcher.register(ClientCommands.literal(root)
+                    .then(ClientCommands.literal("protect").executes(context -> toggleProtection())));
+            }
+        });
     }
 
-    // ---------------------------------------------------------------- locks
+    // ------------------------------------------------------------ protection
 
-    /** The player inventory index of a slot (0-8 hotbar, 9-35 inventory), or -1 for container / armour slots. */
-    private static int inventoryIndex(Slot slot) {
-        if (slot == null || !(slot.container instanceof Inventory)) return -1;
-        int index = slot.getContainerSlot();
-        return index >= 0 && index < 36 ? index : -1;
+    private static String protectionKey(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return "";
+        String uuid = Compat.uuid(stack);
+        if (!uuid.isBlank()) return "uuid:" + uuid;
+        String id = Compat.neuName(stack);
+        if (id.isBlank()) id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        return "item:" + id;
     }
 
-    public static boolean isLocked(int inventoryIndex) {
+    public static boolean isProtected(ItemStack stack) {
         SkyBallsConfig.SlotLocking c = config();
-        return c != null && c.enabled && inventoryIndex >= 0 && c.locked.contains(inventoryIndex);
+        String key = protectionKey(stack);
+        return c != null && !key.isEmpty() && c.protectedItems.contains(key);
+    }
+
+    private static int toggleProtection() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return 0;
+        ItemStack stack = mc.player.getMainHandItem();
+        String key = protectionKey(stack);
+        if (key.isEmpty()) {
+            say(Component.literal("Hold an item to protect or unprotect it.").withStyle(ChatFormatting.RED));
+            return 0;
+        }
+        SkyBallsConfig.SlotLocking c = config();
+        if (c == null) return 0;
+        String name = Compat.realName(stack).getString();
+        if (c.protectedItems.remove(key)) {
+            say(Component.literal("Removed drop protection from ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal(name).withStyle(ChatFormatting.WHITE)));
+        } else {
+            c.protectedItems.add(key);
+            say(Component.literal("★ Protected ").withStyle(ChatFormatting.GOLD)
+                .append(Component.literal(name).withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(" from dropping.").withStyle(ChatFormatting.GREEN)));
+        }
+        SkyBallsConfig.saveCurrent(SkyBallsConfig.current());
+        return 1;
     }
 
     /**
-     * Called for every slot click in a menu (ContainerSolverScreenMixin); true cancels it. Blocks anything touching a
-     * locked slot, including number-key swaps into a locked hotbar slot, and turns a shift-click on a bound slot into
-     * the bound swap.
+    * Called for every slot click in a menu (ContainerSolverScreenMixin); true cancels protected-item drops or handles
+    * a shift-click on a bound slot.
      */
     public static boolean onSlotClicked(AbstractContainerScreen<?> screen, Slot slot, int button, ContainerInput input) {
         SkyBallsConfig.SlotLocking c = config();
-        if (c == null || !c.enabled) return false;
-        if (isLocked(inventoryIndex(slot))) return true;
-        if (input == ContainerInput.SWAP && button >= 0 && button < 9 && isLocked(button)) return true;
+        if (c == null) return false;
+        if (input == ContainerInput.THROW || slot == null && input == ContainerInput.PICKUP) {
+            ItemStack dropped = slot == null ? screen.getMenu().getCarried() : slot.getItem();
+            if (isProtected(dropped)) {
+                say(Component.literal("★ ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal("That item is protected. Use /sb protect to unprotect it.").withStyle(ChatFormatting.RED)));
+                return true;
+            }
+        }
+        if (!c.enabled) return false;
 
         // Slot binds: shift-click in your own inventory swaps with the bound hotbar slot.
         if (screen instanceof InventoryScreen && input == ContainerInput.QUICK_MOVE && slot != null) {
@@ -89,19 +130,19 @@ public final class SlotLocking {
             }
             Minecraft mc = Minecraft.getInstance();
             if (mc.gameMode == null || mc.player == null) return false;
-            if (isLocked(hotbar) || isLocked(inventoryIndex(screen.getMenu().getSlot(from)))) return true;
             mc.gameMode.handleContainerInput(screen.getMenu().containerId, from, hotbar, ContainerInput.SWAP, mc.player);
             return true;
         }
         return false;
     }
 
-    /** Q in the world: nothing drops while your selected hotbar slot is locked. */
+    /** Q in the world: nothing drops while the selected item is protected. */
     public static boolean blockDrop() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
-        boolean blocked = isLocked(mc.player.getInventory().getSelectedSlot());
-        if (blocked) say(Component.literal("That slot is locked (press L over it in your inventory to unlock).").withStyle(ChatFormatting.RED));
+        boolean blocked = isProtected(mc.player.getMainHandItem());
+        if (blocked) say(Component.literal("★ ").withStyle(ChatFormatting.GOLD)
+            .append(Component.literal("That item is protected. Use /sb protect to unprotect it.").withStyle(ChatFormatting.RED)));
         return blocked;
     }
 
@@ -118,15 +159,6 @@ public final class SlotLocking {
         SkyBallsConfig.SlotLocking c = config();
         if (c == null || !c.enabled || key == GLFW.GLFW_KEY_UNKNOWN) return false;
         Slot hovered = ((SkyBallsContainerScreenAccessor) screen).skyballs$getHoveredSlot();
-        if (key == c.lockKey) {
-            int index = inventoryIndex(hovered);
-            if (index < 0) return false;
-            if (!c.locked.remove((Integer) index)) c.locked.add(index);
-            SkyBallsConfig.saveCurrent(SkyBallsConfig.current());
-            Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, c.locked.contains(index) ? 1.2f : 0.8f));
-            return true;
-        }
         if (key == c.bindKey && screen instanceof InventoryScreen) {
             if (hovered == null || hovered.index < 5 || hovered.index >= 45) return false;
             int clicked = hovered.index;
@@ -166,20 +198,19 @@ public final class SlotLocking {
 
     private static void render(AbstractContainerScreen<?> screen, GuiGraphicsExtractor g, int mouseX, int mouseY) {
         SkyBallsConfig.SlotLocking c = config();
-        if (c == null || !c.enabled) return;
+        if (c == null) return;
         SkyBallsContainerScreenAccessor access = (SkyBallsContainerScreenAccessor) screen;
         int left = access.skyballs$getLeftPos();
         int top = access.skyballs$getTopPos();
         for (Slot slot : screen.getMenu().slots) {
-            if (!isLocked(inventoryIndex(slot))) continue;
+            if (!isProtected(slot.getItem())) continue;
             int x = left + slot.x;
             int y = top + slot.y;
-            g.fill(x, y, x + 16, y + 16, 0x60FF3030);
-            g.outline(x, y, 16, 16, 0xC0FF3030);
-            g.text(Minecraft.getInstance().font, "🔒", x + 9, y - 1, 0xFFFFFFFF, true);
+            g.outline(x, y, 16, 16, 0xFF55DD99);
+            g.text(Minecraft.getInstance().font, "★", x + 8, y - 1, 0xFFFFD54F, true);
         }
 
-        if (!(screen instanceof InventoryScreen)) return;
+        if (!c.enabled || !(screen instanceof InventoryScreen)) return;
         Slot hovered = access.skyballs$getHoveredSlot();
         Integer startIndex = pendingBind != null ? pendingBind : hovered == null ? null : Integer.valueOf(hovered.index);
         if (startIndex == null || startIndex < 5 || startIndex >= 45) return;

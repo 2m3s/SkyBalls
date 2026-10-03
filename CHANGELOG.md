@@ -2,6 +2,51 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## test-1.4
+
+### Added
+- Inquisitor Gamble (Diana, on by default): when an Inquisitor you dug up dies or you lootshare one, it gets shot on screen. A crosshair sways over its heart while a heartbeat speeds up, then the gun fires: through the heart with "CHIMERA!" if a Chimera dropped, past the body with "MISSED!" if not. Nothing spoils it: SkyBalls's HUDs are hidden while it plays, and the Chimera chat line, drop announcer, rare drop animations and achievement popups wait until it's over. /sb inqgamble hit|miss to preview it.
+- Item Protect (/sb protect): protect the held item from dropping; protection follows its UUID as it moves, and a star marks protected items. Slot binding remains available separately.
+- Inventory Buttons (Misc), ported from Skyblocker's Quick Navigation: up to 14 creative-inventory tabs above and below every SkyBlock menu (Skills, Collections, Pets, Armor Sets, Sacks, Accessories, Storage, Home, Garden, Hub, Dungeon Hub, Auction House, Bazaar, Craft). The tab for the menu you're in is drawn selected; warps need a double click. Each tab's icon, menu title, command and tooltip can be changed.
+- Wardrobe and Loadout Hotkeys (Misc): configurable keys equip slots on the current Armor Sets or Loadouts page, like SkyHanni.
+- Item Sharing: [item] adds the held item to messages in plain chat and in /pc, /gc, /ac, /cc, /oc, /msg and /r, as well as SkyBalls chat. [inv] shares your whole inventory, hotbar and armour as one clickable [Name's Inventory] that opens it in a menu for other SkyBalls users ([brag] does the same).
+- Bazaar notifications (Misc > Bazaar): track orders from setup messages or the Manage Orders screen, notify in chat when an order becomes outbid, and play sounds for outbid and filled orders.
+- Storage Value Breakdown: show an estimated total and the most valuable contents when an Ender Chest page or backpack is open.
+- Deployable Timers HUD: countdowns for active Power Orbs and SOS Flare, separate from item cooldowns.
+- Zealot Tracker uptime: counts active farming time from confirmed kills and includes a 10-second grace period after the last kill.
+- Slayer Boss Phase target keybind: cycle the health/phase HUD through nearby players' slayer bosses while personal kill timing continues to follow your own.
+- Experimental Table Prevent Misclicks: block incorrect Chronomatron and Ultrasequencer clicks, including early clicks before the pattern is ready. On by default (also for existing settings).
+- Fishing, ported from Feesh (replaces the old fishing stats, hook timer, bait and rare creature alert):
+  - Alerts when you or your party catch or cocoon a sea creature from a list you choose (own or own and party), and when a fishing boss kills you or a party member.
+  - Party messages for your catches, cocoons and deaths, and for your rare drops (with Magic Find).
+  - Rare drop alerts (own by default) with the item's price in the title.
+  - Compact catch messages ("DOUBLE HOOK! A Yeti has spawned!") with rarity colours or gradients and your own double hook and catch templates.
+  - Alerts for new Trophy Fish and Trophy Frogs, deployables about to run out (pick which), pets reaching max level with their estimated price, hotspots and wormholes closing, the Fishing Festival ending (with your shark counts and personal bests) and "Lootshare!" in party chat.
+  - Hotspot sharing: coming near a hotspot offers buttons to share it to party or all chat.
+  - Sea creature highlights in their rarity colour, never through walls.
+- Profit Trackers, ported from Skysoft: Farming, Fishing, Foraging, Mining, Mythological Ritual and all six slayers, each shown while you do it, in Skysoft's layout and colours: item icons, quantities that light up when they change, coins, quest costs, Kernels, actions, profit per hour and uptime, for this session, today or in total. With a menu open, click Display Mode, Price Source and Reset (with Cancel / Confirm) and scroll the items. The Farming Profit Tracker's settings and totals move over.
+- Pet Display: Skysoft's pet icon, your pet's head (or skin) with its held item, on a circle in its rarity colour inside a level progress ring.
+- Room Clear Alert (Dungeons > Secrets), from Odin: "Room Cleared!" when your room gets its white checkmark and "Room Complete!" when all its secrets are done.
+- Secret Chime and Secret Boxes (Dungeons > Secrets), from Odin's Secret Clicked: a sound and a gold highlight box for a few seconds when you get a secret (a chest, lever, wither essence or redstone key, a dungeon item picked up, or a secret bat killed). The box turns red if the chest was locked. The sound, pitch, volume, box colours and time can be changed, with Play Chime to preview it.
+- Storm PY Timer (Dungeons > Timers and Alerts), from Odin's Tick Timers: when Storm calls his lightning, a HUD counts down the 95 ticks to when to crush him under the purple pillar.
+
+### Changed
+- Dungeon secret waypoints default to outline-only rendering, and the NoammAddons terminal solver is the default.
+- Pest spawn timer and pest-spawn alerts follow SkyHanni's parsing and notification behavior.
+- Pet Display caches the active pet's tab-list icon so it remains visible across tab-row refreshes.
+
+### Fixed
+- Spirit Leap menu: the Spirit Leap chest no longer shows behind SkyBalls's leap menu (and the inventory tabs and Profit Tracker stay off it).
+- Blaze puzzle solver (higher or lower) works again: it waited for a roof marker the blaze rooms don't have, so it never started.
+- Quiz solver: leaving the room while a question was being asked no longer loses the answer, and questions asked while you're outside the room are still read.
+- Party Commands: !help no longer disconnects you. It sent every Diana command in one message, which was over Minecraft's 256-character limit; now it's a short list.
+- Keep Terrain Loaded no longer drops and reloads the terrain at random: the island and server it keeps terrain for are now fixed for the whole visit once read, instead of being re-read from the tab list and scoreboard (which flicker) every tick.
+- Keep Terrain Loaded: chunks are saved to the terrain cache on a background thread instead of the game's (it stuttered joining an island), cached terrain loads twice as fast, and when Hypixel rebuilds the world on the same island and server (dying, for example) the cached terrain comes back at once instead of after two seconds.
+- Performance: HUDs that draw themselves (Collection Tracker, Profit Trackers, Crystal Hollows map) work out their size and contents once per tick instead of several times a frame; the Profit Tracker no longer re-checks your activity 11 times a frame; item price lookups in inventory scans no longer copy every item's data; the Hypixel check run for every item drawn is worked out once per connection; the pet icon's rings use fewer draw calls.
+- Chat image previews now extract URLs from nested hover content and link styles, so hovering a preview works across more chat components.
+- Case Opening's GOLD GOLD GOLD sound is registered correctly, so it plays when a Legendary-or-better winner starts spinning.
+- Disabled Zealot Tracker no longer scans nearby entities; Slayer Boss Phase searches nearby owner tags spatially instead of walking every rendered entity.
+
 ## 1.3.9.5 — 2026-09-30
 
 ### Added

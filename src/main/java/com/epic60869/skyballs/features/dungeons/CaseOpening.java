@@ -15,7 +15,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
@@ -51,6 +53,8 @@ public final class CaseOpening {
     private static final Pattern CROESUS_RUN = Pattern.compile("^(?:Master )?Catacombs - Floor [IV]+$");
     private static final Pattern CHEST_HEAD = Pattern.compile("^(?<type>Wood|Gold|Diamond|Emerald|Obsidian|Bedrock)(?: Chest)?");
     private static final Identifier GOLD_SOUND = Identifier.fromNamespaceAndPath("skyballs", "gold");
+    private static final SoundEvent GOLD_SOUND_EVENT = Registry.register(BuiltInRegistries.SOUND_EVENT, GOLD_SOUND,
+        SoundEvent.createVariableRangeEvent(GOLD_SOUND));
 
     private static final int ITEM_SCALE = 4;
     private static final int ITEMS = 50;
@@ -335,7 +339,7 @@ public final class CaseOpening {
     private static void playGold() {
         Minecraft mc = Minecraft.getInstance();
         boolean custom = mc.getResourceManager().getResource(Identifier.fromNamespaceAndPath("skyballs", "sounds/gold.ogg")).isPresent();
-        SoundEvent sound = custom ? SoundEvent.createVariableRangeEvent(GOLD_SOUND) : SoundEvents.UI_TOAST_CHALLENGE_COMPLETE;
+        SoundEvent sound = custom ? GOLD_SOUND_EVENT : SoundEvents.UI_TOAST_CHALLENGE_COMPLETE;
         mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, 1f, 1f));
     }
 }

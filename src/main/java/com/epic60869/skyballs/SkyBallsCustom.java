@@ -56,17 +56,28 @@ public final class SkyBallsCustom {
         mc.execute(() -> mc.gui.setScreen(new CustomizeScreen(parent, false)));
     }
 
+    private static Object hypixelConnection;
+    private static String hypixelBrand;
+    private static boolean hypixelServer;
+
     /**
      * Whether the client is connected to Hypixel. Checks the server brand Hypixel sends as well as
-     * the address, since the address can carry a port, an alias or come through a proxy.
+     * the address, since the address can carry a port, an alias or come through a proxy. Worked out once per
+     * connection: it's asked for every item drawn (SkyBallsDataComponentHolderMixin).
      */
     public static boolean isHypixel(Minecraft mc) {
         try {
-            if (mc.getConnection() == null) return false;
-            String brand = mc.getConnection().serverBrand();
-            if (brand != null && brand.toLowerCase(Locale.ROOT).contains("hypixel")) return true;
-            if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null
-                && mc.getCurrentServer().ip.toLowerCase(Locale.ROOT).contains("hypixel")) return true;
+            var connection = mc.getConnection();
+            if (connection == null) return false;
+            String brand = connection.serverBrand();
+            if (connection != hypixelConnection || !java.util.Objects.equals(brand, hypixelBrand)) {
+                hypixelConnection = connection;
+                hypixelBrand = brand;
+                hypixelServer = (brand != null && brand.toLowerCase(Locale.ROOT).contains("hypixel"))
+                    || (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null
+                        && mc.getCurrentServer().ip.toLowerCase(Locale.ROOT).contains("hypixel"));
+            }
+            if (hypixelServer) return true;
             return com.epic60869.skyballs.features.core.SkyBallsLocation.onSkyblock();
         } catch (Throwable ignored) {
             return false;

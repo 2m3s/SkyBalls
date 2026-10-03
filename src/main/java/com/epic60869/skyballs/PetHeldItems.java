@@ -67,6 +67,11 @@ public final class PetHeldItems {
         if (!id.equals(old)) save();
     }
 
+    /** The held item's id, or null if unknown ("" for none). */
+    public static String heldItemId(String petName) {
+        return HELD.get(key(petName));
+    }
+
     /** The held item's name in its rarity colour, or null if unknown or none. */
     public static Component heldItem(String petName) {
         String id = HELD.get(key(petName));

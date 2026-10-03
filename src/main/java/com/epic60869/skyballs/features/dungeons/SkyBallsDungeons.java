@@ -115,6 +115,7 @@ public final class SkyBallsDungeons {
         sb.dungeons.puzzleSolvers.solveTeleportMaze = false; // Odin solver in OdinPuzzleSolvers
 
         sb.dungeons.secretWaypoints.enableSecretWaypoints = d.secrets.secretWaypoints;
+        sb.dungeons.secretWaypoints.waypointType = d.secrets.waypointType;
         // SkyBalls's own door highlight replaces Skyblocker's blood-rush door box.
         sb.dungeons.doorHighlight.enableDoorHighlight = !d.secrets.doorHighlight;
 
@@ -132,10 +133,10 @@ public final class SkyBallsDungeons {
         sb.helpers.experiments.enableChronomatronSolver = skyballs.misc.experimentalTable.chronomatron;
         sb.helpers.experiments.enableSuperpairsSolver = skyballs.misc.experimentalTable.superpairs;
         sb.helpers.experiments.enableUltrasequencerSolver = skyballs.misc.experimentalTable.ultrasequencer;
+        sb.helpers.experiments.blockIncorrectClicks = skyballs.misc.experimentalTable.preventMisclicks;
 
-        // Display only: never block clicks, and never post to party chat automatically.
+        // Dungeon terminals remain display-only; experiment misclick blocking is user-configurable above.
         sb.dungeons.terminals.blockIncorrectClicks = false;
-        sb.helpers.experiments.blockIncorrectClicks = false;
         sb.dungeons.mimicMessage.sendMimicMessage = false;
         sb.dungeons.princeMessage.sendPrinceMessage = false;
         sb.dungeons.batMessage.sendBatMessage = false;

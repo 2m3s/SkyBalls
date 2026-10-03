@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.ObjectContents;
 import net.minecraft.network.chat.contents.objects.AtlasSprite;
 import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.Style;
@@ -69,6 +70,7 @@ public final class SkyBallsNopoFeatures {
     private static final String CROP_FEVER = "WOAH! You caught a case of the CROP FEVER for 60 seconds!";
 
     private static List<Component> petDisplay = null;
+    private static final Map<String, Component> PET_ICON_CACHE = new HashMap<>();
     private static int petTick;
     private static String currentPet = "";
     private static int currentOverflowLevel = -1;
@@ -118,6 +120,7 @@ public final class SkyBallsNopoFeatures {
                 // Every pet's held item, for the pet HUD when you switch to it later.
                 String shownName = clean(com.epic60869.skyballs.custom.util.Compat.realName(slot.getItem()).getString());
                 PetHeldItems.fromMenu(shownName, json.has("heldItem") && !json.get("heldItem").isJsonNull() ? json.get("heldItem").getAsString() : "");
+                PetIconRenderer.fromMenu(shownName, json.has("skin") && !json.get("skin").isJsonNull() ? json.get("skin").getAsString() : "");
                 if (!json.has("active") || !json.get("active").getAsBoolean() || !json.has("exp")) continue;
                 activePetExp = json.get("exp").getAsFloat();
                 activePetTier = json.has("tier") ? json.get("tier").getAsString() : "LEGENDARY";
@@ -214,32 +217,49 @@ public final class SkyBallsNopoFeatures {
         var font = Minecraft.getInstance().font;
         int w = 0;
         for (Component line : shownPetLines()) w = Math.max(w, font.width(line));
-        return Math.max(1, Math.round(w * petHudScale()));
+        return Math.max(1, Math.round((w + petIconSpace()) * petHudScale()));
+    }
+
+    /** Room the Skysoft pet icon takes beside the text, or 0 when it's off. */
+    private static int petIconSpace() {
+        SkyBallsConfig config = SkyBallsConfig.current();
+        return config != null && config.misc.pets.display.icon ? PetIconRenderer.size() + 3 : 0;
     }
 
     /** Scaled on-screen height of the pet HUD, matching exactly what is drawn. */
     public static int petHudHeight() {
-        return Math.max(1, Math.round((shownPetLines().size() * PET_LINE_HEIGHT - 2) * petHudScale()));
+        int height = Math.max(shownPetLines().size() * PET_LINE_HEIGHT - 2, petIconSpace() > 0 ? PetIconRenderer.size() : 0);
+        return Math.max(1, Math.round(height * petHudScale()));
     }
 
     public static void renderPetHudPreview(GuiGraphicsExtractor context, int x, int y) {
-        renderPetHudAt(context, shownPetLines(), x, y);
+        renderPetHudAt(context, shownPetLines(), x, y, true);
     }
 
     private static void renderPetHudAt(GuiGraphicsExtractor context, List<Component> lines, int x, int y) {
+        renderPetHudAt(context, lines, x, y, false);
+    }
+
+    private static void renderPetHudAt(GuiGraphicsExtractor context, List<Component> lines, int x, int y, boolean preview) {
         var font = Minecraft.getInstance().font;
         float scale = petHudScale();
         context.pose().pushMatrix();
         context.pose().translate((float) x, (float) y);
         context.pose().scale(scale, scale);
         SkyBallsConfig config = SkyBallsConfig.current();
+        int iconSpace = petIconSpace();
+        int textHeight = lines.size() * PET_LINE_HEIGHT - 2;
+        int height = Math.max(textHeight, iconSpace > 0 ? PetIconRenderer.size() : 0);
         if (config != null && config.misc.pets.display.background && !lines.isEmpty()) {
             int w = 0;
             for (Component line : lines) w = Math.max(w, font.width(line));
-            context.fill(-2, -2, w + 2, lines.size() * PET_LINE_HEIGHT, 0x80000000);
+            context.fill(-2, -2, iconSpace + w + 2, height + 2, 0x80000000);
         }
+        // Skysoft draws the text to the right of the icon, centred on it.
+        if (iconSpace > 0) PetIconRenderer.render(context, 0, (height - PetIconRenderer.size()) / 2, preview);
+        int textTop = (height - textHeight) / 2;
         for (int i = 0; i < lines.size(); i++) {
-            context.text(font, lines.get(i), 0, i * PET_LINE_HEIGHT, -1);
+            context.text(font, lines.get(i), iconSpace, textTop + i * PET_LINE_HEIGHT, -1);
         }
         context.pose().popMatrix();
     }
@@ -370,6 +390,7 @@ public final class SkyBallsNopoFeatures {
 
         if (petName.isBlank()) {
             petDisplay = null;
+            PetIconRenderer.clear();
             currentPet = "";
             currentOverflowLevel = -1;
             return;
@@ -396,6 +417,7 @@ public final class SkyBallsNopoFeatures {
         }
 
         petDisplay = List.copyOf(display);
+        PetIconRenderer.update(petName, nameComponent, display);
     }
 
     private static boolean overflowLevelsEnabled() {
@@ -426,6 +448,8 @@ public final class SkyBallsNopoFeatures {
         String full = original.getString();
         int lvlStart = full.indexOf("[Lvl");
         MutableComponent out = Component.literal(" ");
+        Component icon = cachePetIcon(original, petName);
+        if (icon != null) out.append(icon).append(Component.literal(" "));
         if (overflow > 0) {
             // Show the overflow level instead of Hypixel's capped one.
             out.append(Component.literal("[Lvl ").withStyle(ChatFormatting.GRAY))
@@ -463,6 +487,22 @@ public final class SkyBallsNopoFeatures {
             return Optional.empty();
         }, Style.EMPTY);
         return out;
+    }
+
+    private static Component cachePetIcon(Component component, String petName) {
+        Component icon = findPetIcon(component);
+        String key = petName.toLowerCase(Locale.ROOT);
+        if (icon != null) PET_ICON_CACHE.put(key, icon);
+        return PET_ICON_CACHE.get(key);
+    }
+
+    private static Component findPetIcon(Component component) {
+        if (component.getContents() instanceof ObjectContents contents && contents.contents() instanceof AtlasSprite) return component;
+        for (Component sibling : component.getSiblings()) {
+            Component icon = findPetIcon(sibling);
+            if (icon != null) return icon;
+        }
+        return null;
     }
 
     /** The pet's name in its rarity colour, as the tab list shows it. */

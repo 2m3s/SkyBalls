@@ -157,6 +157,15 @@ public final class Compat {
 		return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 	}
 
+	/**
+	 * The item's custom data without copying it, for reading only (don't change it). {@link #getCustomData} copies the
+	 * whole tag, which per-tick scans over every slot did many times a second.
+	 */
+	public static CompoundTag customDataView(ItemStack stack) {
+		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+		return data == null ? new CompoundTag() : ((com.epic60869.skyballs.mixin.SkyBallsCustomDataAccessor) (Object) data).skyballs$getTag();
+	}
+
 	public static List<ItemStack> getArmor(LivingEntity entity) {
 		return EquipmentSlotGroup.ARMOR.slots().stream()
 				.filter(es -> es.getType() == EquipmentSlot.Type.HUMANOID_ARMOR)

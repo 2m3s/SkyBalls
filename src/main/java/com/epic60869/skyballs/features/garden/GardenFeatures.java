@@ -23,9 +23,10 @@ import java.util.regex.Pattern;
 
 /** Yaw/pitch, pest cooldown, blocks per second and the dye / Ray of Helios animation. */
 public final class GardenFeatures {
-    // Pest patterns from SkyHanni's repo (MIT).
+    // Pest patterns from SkyHanni's repo (MIT): cooldown from the tab list and the in-game spawn alert.
     private static final Pattern PEST_SPAWN = Pattern.compile("^\\w+! (?:A|\\d) .*Pests? (?:has|have) (?:appeared|spawned) in ");
     private static final Pattern TAB_COOLDOWN = Pattern.compile("^\\s*Cooldown: (?<time>\\d{1,2}[ms](?: \\d{1,2}s?)?)?(?<ready>READY)?(?<max>MAX PESTS)?");
+    private static final Pattern PEST_SPAWN_ALERT = Pattern.compile(".*Pests? (?:has|have) (?:appeared|spawned) in .*Garden.*");
     private static final Pattern SPECIAL_DROP = Pattern.compile("(?<item>[A-Z][\\w' ]* Dye|Ray of Helios)");
     private static final String[] FACINGS = {"South", "South West", "West", "North West", "North", "North East", "East", "South East"};
 
@@ -118,6 +119,10 @@ public final class GardenFeatures {
         String text = message.text();
         if (PEST_SPAWN.matcher(text).find()) {
             lastPestSpawn = System.currentTimeMillis();
+            if (PEST_SPAWN_ALERT.matcher(text).matches() || PEST_SPAWN_ALERT.matcher(text).find()) {
+                SkyBallsAlerts.title(Component.literal("Pests Spawned!").withStyle(ChatFormatting.RED), Component.literal("Garden").withStyle(ChatFormatting.GOLD));
+                SkyBallsAlerts.chat(Component.literal("Pests have spawned in the Garden!").withStyle(ChatFormatting.RED));
+            }
             return;
         }
         FeatureConfigs.Garden config = config();

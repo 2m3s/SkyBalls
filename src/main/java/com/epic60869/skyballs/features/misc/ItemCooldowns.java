@@ -61,6 +61,13 @@ public final class ItemCooldowns {
         new Special(Pattern.compile("^Second Wind Activated! Your Spirit Mask saved your life!"), List.of("SPIRIT_MASK", "STARRED_SPIRIT_MASK"), 30_000L));
 
     private static final Map<String, Cooldown> ACTIVE = new ConcurrentHashMap<>();
+    private static final Map<String, Cooldown> DEPLOYED = new ConcurrentHashMap<>();
+    private static final Map<String, Cooldown> DEPLOYABLES = Map.of(
+        "RADIANT_POWER_ORB", new Cooldown("RADIANT_POWER_ORB", "Radiant Orb", 0, 30_000L),
+        "MANA_FLUX_POWER_ORB", new Cooldown("MANA_FLUX_POWER_ORB", "Mana Flux", 0, 30_000L),
+        "OVERFLUX_POWER_ORB", new Cooldown("OVERFLUX_POWER_ORB", "Overflux", 0, 60_000L),
+        "PLASMAFLUX_POWER_ORB", new Cooldown("PLASMAFLUX_POWER_ORB", "Plasmaflux", 0, 60_000L),
+        "SOS_FLARE", new Cooldown("SOS_FLARE", "SOS Flare", 0, 30_000L));
     /** A mana ability that was clicked, waiting for the action bar to confirm it was used. */
     private static String pendingId;
     private static Ability pendingAbility;
@@ -90,7 +97,9 @@ public final class ItemCooldowns {
             if (pendingId == null || System.currentTimeMillis() - pendingAt > 1_000L) return;
             Matcher m = USED.matcher(message.text());
             if (m.find() && m.group(1).trim().equalsIgnoreCase(pendingAbility.name())) {
-                start(pendingId, pendingAbility.name(), pendingAbility.cooldownMs());
+                String id = pendingId;
+                start(id, pendingAbility.name(), pendingAbility.cooldownMs());
+                startDeployable(id);
                 pendingId = null;
             }
         });
@@ -120,16 +129,21 @@ public final class ItemCooldowns {
             }
         });
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            if (ACTIVE.isEmpty()) return;
             long now = System.currentTimeMillis();
-            ACTIVE.values().removeIf(c -> {
-                if (now - c.start() < c.duration()) return false;
-                if (config().readySound && mc.player != null) SkyBallsAlerts.play(SoundEvents.NOTE_BLOCK_PLING.value(), 2f, 0.6f);
-                return true;
-            });
+            if (!ACTIVE.isEmpty()) {
+                ACTIVE.values().removeIf(c -> {
+                    if (now - c.start() < c.duration()) return false;
+                    if (config().readySound && mc.player != null) SkyBallsAlerts.play(SoundEvents.NOTE_BLOCK_PLING.value(), 2f, 0.6f);
+                    return true;
+                });
+            }
+            DEPLOYED.values().removeIf(c -> now - c.start() >= c.duration());
         });
         SkyBallsHuds.register("itemCooldowns", "Item Cooldowns", () -> config().enabled && config().hud, ItemCooldowns::hudLines,
             List.of(Component.literal("Instant Transmission: ").withStyle(ChatFormatting.GOLD).append(Component.literal("1.4s").withStyle(ChatFormatting.WHITE))), 8, 200);
+        SkyBallsHuds.register("deployable_timers", "Deployable Timers", () -> config().enabled && config().deployableHud,
+            ItemCooldowns::deployableLines,
+            List.of(Component.literal("Overflux: ").withStyle(ChatFormatting.GOLD).append(Component.literal("42.0s").withStyle(ChatFormatting.WHITE))), 8, 120);
     }
 
     private static void onUse(ItemStack stack, boolean hookOut) {
@@ -160,6 +174,7 @@ public final class ItemCooldowns {
                 pendingAt = System.currentTimeMillis();
             } else {
                 start(id, chosen.name(), chosen.cooldownMs());
+                startDeployable(id);
             }
         } catch (Exception e) {
             SbcCrashReports.report(e, "item cooldowns");
@@ -169,6 +184,12 @@ public final class ItemCooldowns {
     private static void start(String id, String name, long duration) {
         if (duration <= 0) return;
         ACTIVE.put(id, new Cooldown(id, name, System.currentTimeMillis(), duration));
+    }
+
+    private static void startDeployable(String id) {
+        Cooldown template = DEPLOYABLES.get(id);
+        if (template == null) return;
+        DEPLOYED.put(id, new Cooldown(id, template.name(), System.currentTimeMillis(), template.duration()));
     }
 
     /** Right-click abilities with their cooldown and mana cost, from the lore. */
@@ -238,6 +259,20 @@ public final class ItemCooldowns {
             lines.add(Component.literal(name + ": ").withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(String.format(Locale.ENGLISH, "%.1fs", left)).withStyle(ChatFormatting.WHITE)));
         });
+        return lines;
+    }
+
+    private static List<Component> deployableLines() {
+        if (DEPLOYED.isEmpty()) return List.of();
+        long now = System.currentTimeMillis();
+        List<Component> lines = new ArrayList<>();
+        DEPLOYED.values().stream()
+            .sorted((a, b) -> Long.compare(a.start() + a.duration(), b.start() + b.duration()))
+            .forEach(c -> {
+                double left = Math.max(0, c.start() + c.duration() - now) / 1000.0;
+                lines.add(Component.literal(c.name() + ": ").withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(String.format(Locale.ENGLISH, "%.1fs", left)).withStyle(ChatFormatting.WHITE)));
+            });
         return lines;
     }
 }

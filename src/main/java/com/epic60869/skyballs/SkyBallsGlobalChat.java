@@ -99,8 +99,10 @@ public final class SkyBallsGlobalChat {
         String clean = String.valueOf(message == null ? "" : message).trim();
         if (clean.isEmpty()) return;
         // The reply being written and an [item] in the text go with the message.
-        JsonObject packet = com.epic60869.skyballs.features.sbc.SbcChat.outgoing(clean);
+        java.util.List<String> expanded = com.epic60869.skyballs.features.sbc.SbcItems.expandBrag(clean);
+        JsonObject packet = com.epic60869.skyballs.features.sbc.SbcChat.outgoing(expanded.getFirst());
         if (packet != null) sendPacket(packet);
+        com.epic60869.skyballs.features.sbc.SbcItems.enqueueSkyBallsFollowups(expanded.subList(1, expanded.size()));
     }
 
     /** Sends a SkyBalls chat "message" packet (text, reply, item), or queues it until connected. */

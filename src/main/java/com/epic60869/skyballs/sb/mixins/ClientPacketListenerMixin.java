@@ -46,6 +46,7 @@ public abstract class ClientPacketListenerMixin {
 	@Inject(method = "handleTakeItemEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/item/ItemEntity;getItem()Lnet/minecraft/world/item/ItemStack;"))
 	private void skyballs$onItemPickup(ClientboundTakeItemEntityPacket packet, CallbackInfo ci, @Local(name = "itemEntity") ItemEntity itemEntity) {
 		DungeonManager.onItemPickup(itemEntity);
+		com.epic60869.skyballs.features.dungeons.SecretChime.onItemPickup(itemEntity);
 	}
 
 	@ModifyExpressionValue(method = "handleEntityEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundEntityEventPacket;getEntity(Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/entity/Entity;"))
@@ -66,5 +67,6 @@ public abstract class ClientPacketListenerMixin {
 	@Inject(method = "handleSoundEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER))
 	private void skyballs$onSound(ClientboundSoundPacket packet, CallbackInfo ci) {
 		com.epic60869.skyballs.features.dungeons.DungeonRoutes.onSound(packet.getSound().value(), packet.getX(), packet.getY(), packet.getZ());
+		com.epic60869.skyballs.features.dungeons.SecretChime.onSound(packet.getSound().value(), packet.getX(), packet.getY(), packet.getZ(), packet.getVolume());
 	}
 }

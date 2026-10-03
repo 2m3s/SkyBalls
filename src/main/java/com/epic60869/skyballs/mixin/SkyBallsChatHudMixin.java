@@ -36,7 +36,7 @@ public abstract class SkyBallsChatHudMixin {
         ordinal = 0
     )
     private Component skyballs$replaceSimpleChat(Component message) {
-        return com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(SkyBallsNick.replaceOtherNamesInChat(SkyBallsNick.replaceOwnNameInChat(com.epic60869.skyballs.features.misc.ScreenshotShare.decorate(message)))));
+        return com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(SkyBallsNick.replaceOtherNamesInChat(SkyBallsNick.replaceOwnNameInChat(com.epic60869.skyballs.features.misc.ScreenshotShare.decorate(com.epic60869.skyballs.features.sbc.SbcItems.decoratePublicItems(message))))));
     }
 
     @ModifyVariable(
@@ -46,7 +46,17 @@ public abstract class SkyBallsChatHudMixin {
         ordinal = 0
     )
     private Component skyballs$replaceFullChat(Component message) {
-        return com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(SkyBallsNick.replaceOtherNamesInChat(SkyBallsNick.replaceOwnNameInChat(com.epic60869.skyballs.features.misc.ScreenshotShare.decorate(message)))));
+        return com.epic60869.skyballs.features.misc.ItemEmojis.replace(SkyBallsNopoFeatures.replaceChatEmojis(SkyBallsNick.replaceOtherNamesInChat(SkyBallsNick.replaceOwnNameInChat(com.epic60869.skyballs.features.misc.ScreenshotShare.decorate(com.epic60869.skyballs.features.sbc.SbcItems.decoratePublicItems(message))))));
+    }
+
+    /** The follow-up parts of an inventory shared with [inv] are remembered, not shown (the first part is the link). */
+    @Inject(
+        method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
+        at = @At("HEAD"), cancellable = true
+    )
+    private void skyballs$hideInventoryParts(Component message, MessageSignature signature,
+                                             GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
+        if (com.epic60869.skyballs.features.sbc.SbcItems.recordInventoryParts(message)) ci.cancel();
     }
 
     @Inject(

@@ -51,6 +51,10 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         public boolean firstBootAcknowledged = false;
+
+        /** Which changed defaults this config has already been given (see migrateConfigShape). */
+        @Expose
+        public int defaultsVersion = 1;
     }
 
     public static final class Chat {
@@ -110,11 +114,6 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Pest Highlight", desc = "Outline pests in the Garden, with an optional line or beacon to the nearest one and a pests/plots HUD.")
         public com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight pestHighlight = new com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Profit Tracker", desc = "What your farming in the Garden made: crops, drops, Bountiful coins, Kernels and profit per hour (Skysoft's).")
-        public com.epic60869.skyballs.features.FeatureConfigs.FarmingProfitTracker profitTracker = new com.epic60869.skyballs.features.FeatureConfigs.FarmingProfitTracker();
 
     }
 
@@ -270,14 +269,23 @@ public final class SkyBallsConfig extends Config {
         public Pets pets = new Pets();
 
         @Expose
+        @Category(name = "Bazaar", desc = "Notifications for your Bazaar orders, like Bazaar Utils.")
+        public BazaarNotificationsSettings bazaar = new BazaarNotificationsSettings();
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Party Commands", desc = "Let party members use !warp, !allinvite, !pt, !f7, !m7 and !t5 when you are leader, and ask your !fps, !ping and !tps.")
         public com.epic60869.skyballs.features.FeatureConfigs.PartyCommands partyCommands = new com.epic60869.skyballs.features.FeatureConfigs.PartyCommands();
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Slot Locking & Binding", desc = "Lock inventory slots (L) and bind hotbar slots to inventory slots (B).")
+        @ConfigOption(name = "Item Protect & Slot Binding", desc = "Protect held items from dropping with /sb protect, and bind hotbar slots to inventory slots.")
         public SlotLocking slotLocking = new SlotLocking();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Wardrobe & Loadout Hotkeys", desc = "Equip Wardrobe or Loadout slots on the open page with configurable keys, like SkyHanni.")
+        public com.epic60869.skyballs.features.FeatureConfigs.WardrobeHotkeys wardrobeHotkeys = new com.epic60869.skyballs.features.FeatureConfigs.WardrobeHotkeys();
 
         @Expose
         @Accordion
@@ -364,6 +372,11 @@ public final class SkyBallsConfig extends Config {
         public TooltipScroll tooltipScroll = new TooltipScroll();
 
         @Expose
+        @Accordion
+        @ConfigOption(name = "Inventory Buttons", desc = "Quick action buttons with custom icons and commands on inventory/container screens.")
+        public InventoryButtonsSettings inventoryButtons = new InventoryButtonsSettings();
+
+        @Expose
         @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub, /crypts, /garden and other warp names without /warp (SkyHanni's and Skysoft's short warp commands). In the Garden, /home warps to the Garden, /barn goes to the barn and /tp <plot> to a plot.")
         @ConfigEditorBoolean
         public boolean warpShortcuts = false;
@@ -437,6 +450,126 @@ public final class SkyBallsConfig extends Config {
         public long collectionTrackerGoal = 0;
     }
 
+    /** Misc > Inventory Buttons, ported from Skyblocker's Quick Navigation (LGPL-3.0): see features/misc/InventoryButtons. */
+    public static final class InventoryButtonsSettings {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Skyblocker's Quick Navigation: up to 14 tabs above and below every SkyBlock menu, like the creative inventory's, that run a command. The tab for the menu you're in is drawn selected. Home, Garden and the hubs need a double click.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Button 1 (Skills)", desc = "Top tab 1.")
+        @Accordion
+        public QuickNavButton button1 = new QuickNavButton(false, "minecraft:diamond_sword", "Your Skills", "/skills", "Skills");
+
+        @Expose
+        @ConfigOption(name = "Button 2 (Collections)", desc = "Top tab 2.")
+        @Accordion
+        public QuickNavButton button2 = new QuickNavButton(false, "minecraft:painting", "Collections", "/collection", "Collections");
+
+        @Expose
+        @ConfigOption(name = "Button 3 (Pets)", desc = "Top tab 3.")
+        @Accordion
+        public QuickNavButton button3 = new QuickNavButton(false, "minecraft:bone", "(?:\\(\\d+/\\d+\\) )?Pets", "/pets", "Pets");
+
+        @Expose
+        @ConfigOption(name = "Button 4 (Armor Sets)", desc = "Top tab 4.")
+        @Accordion
+        public QuickNavButton button4 = new QuickNavButton(false, "minecraft:leather_chestplate#8991416", "\\(\\d+/\\d+\\) Armor Sets", "/armor", "Armor Sets");
+
+        @Expose
+        @ConfigOption(name = "Button 5 (Sacks)", desc = "Top tab 5.")
+        @Accordion
+        public QuickNavButton button5 = new QuickNavButton(false, "skull:ewogICJ0aW1lc3RhbXAiIDogMTU5MTMxMDU4NTYwOSwKICAicHJvZmlsZUlkIiA6ICI0MWQzYWJjMmQ3NDk0MDBjOTA5MGQ1NDM0ZDAzODMxYiIsCiAgInByb2ZpbGVOYW1lIiA6ICJNZWdha2xvb24iLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODBhMDc3ZTI0OGQxNDI3NzJlYTgwMDg2NGY4YzU3OGI5ZDM2ODg1YjI5ZGFmODM2YjY0YTcwNjg4MmI2ZWMxMCIKICAgIH0KICB9Cn0=", "Sack of Sacks", "/sacks", "Sacks");
+
+        @Expose
+        @ConfigOption(name = "Button 6 (Accessories)", desc = "Top tab 6.")
+        @Accordion
+        public QuickNavButton button6 = new QuickNavButton(false, "skull:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTYxYTkxOGMwYzQ5YmE4ZDA1M2U1MjJjYjkxYWJjNzQ2ODkzNjdiNGQ4YWEwNmJmYzFiYTkxNTQ3MzA5ODVmZiJ9fX0=", "Accessory Bag(?: \\(\\d/\\d\\))?", "/accessories", "Accessories");
+
+        @Expose
+        @ConfigOption(name = "Button 7 (Storage)", desc = "Top tab 7.")
+        @Accordion
+        public QuickNavButton button7 = new QuickNavButton(false, "minecraft:ender_chest", "(?:Rift )?Storage(?: \\(\\d/\\d\\))?", "/storage", "Storage");
+
+        @Expose
+        @ConfigOption(name = "Button 8 (Home)", desc = "Bottom tab 1.")
+        @Accordion
+        public QuickNavButton button8 = new QuickNavButton(true, "skull:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzljODg4MWU0MjkxNWE5ZDI5YmI2MWExNmZiMjZkMDU5OTEzMjA0ZDI2NWRmNWI0MzliM2Q3OTJhY2Q1NiJ9fX0=", "none", "/is", "Home");
+
+        @Expose
+        @ConfigOption(name = "Button 9 (Garden)", desc = "Bottom tab 2.")
+        @Accordion
+        public QuickNavButton button9 = new QuickNavButton(true, "skull:eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjQ4ODBkMmMxZTdiODZlODc1MjJlMjA4ODI2NTZmNDViYWZkNDJmOTQ5MzJiMmM1ZTBkNmVjYWE0OTBjYjRjIn19fQ==", "none", "/warp garden", "Garden");
+
+        @Expose
+        @ConfigOption(name = "Button 10 (Skyblock Hub)", desc = "Bottom tab 3.")
+        @Accordion
+        public QuickNavButton button10 = new QuickNavButton(true, "skull:e3RleHR1cmVzOntTS0lOOnt1cmw6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDdjYzY2ODc0MjNkMDU3MGQ1NTZhYzUzZTA2NzZjYjU2M2JiZGQ5NzE3Y2Q4MjY5YmRlYmVkNmY2ZDRlN2JmOCJ9fX0=", "none", "/hub", "Skyblock Hub");
+
+        @Expose
+        @ConfigOption(name = "Button 11 (Dungeons Hub)", desc = "Bottom tab 4.")
+        @Accordion
+        public QuickNavButton button11 = new QuickNavButton(true, "skull:e3RleHR1cmVzOntTS0lOOnt1cmw6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzg5MWQ1YjI3M2ZmMGJjNTBjOTYwYjJjZDg2ZWVmMWM0MGExYjk0MDMyYWU3MWU3NTQ3NWE1NjhhODI1NzQyMSJ9fX0=", "none", "/warp dungeon_hub", "Dungeons Hub");
+
+        @Expose
+        @ConfigOption(name = "Button 12 (Auction House)", desc = "Bottom tab 5.")
+        @Accordion
+        public QuickNavButton button12 = new QuickNavButton(false, "minecraft:gold_block", "^(?:Auctions Browser|Co-op Auction House|Auction House|Manage Auctions|Your Bids|BIN Auction View|Auction View|Auctions:.*)$", "/ah", "Auction House");
+
+        @Expose
+        @ConfigOption(name = "Button 13 (Bazaar)", desc = "Bottom tab 6.")
+        @Accordion
+        public QuickNavButton button13 = new QuickNavButton(false, "skull:e3RleHR1cmVzOntTS0lOOnt1cmw6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmZlMmRjZGE0MWVjM2FmZjhhZjUwZjI3MmVjMmUwNmE4ZjUwOWUwZjgwN2YyMzU1YTFmNWEzM2MxYjY2ZTliNCJ9fX0=", "(?:Co-op )?Bazaar .*", "/bz", "Bazaar");
+
+        @Expose
+        @ConfigOption(name = "Button 14 (Crafting Table)", desc = "Bottom tab 7.")
+        @Accordion
+        public QuickNavButton button14 = new QuickNavButton(false, "minecraft:crafting_table", "Craft Item", "/craft", "Crafting Table");
+    }
+
+    public static final class QuickNavButton {
+        @Expose
+        @ConfigOption(name = "Show", desc = "Show this tab.")
+        @ConfigEditorBoolean
+        public boolean render = true;
+
+        @Expose
+        @ConfigOption(name = "Double Click", desc = "Only run the command on a second click within a second (for warps).")
+        @ConfigEditorBoolean
+        public boolean doubleClick = false;
+
+        @Expose
+        @ConfigOption(name = "Icon", desc = "The tab's item: a Minecraft item (minecraft:bone), a SkyBlock item id (ASPECT_OF_THE_END), or skull:<texture> for a player head. Add #<colour> for a dyed leather item (minecraft:leather_chestplate#8991416).")
+        @ConfigEditorText
+        public String icon = "minecraft:barrier";
+
+        @Expose
+        @ConfigOption(name = "Menu Title", desc = "A regex for the menu title this tab belongs to: it's drawn selected in that menu. \"none\" for no menu.")
+        @ConfigEditorText
+        public String uiTitle = "none";
+
+        @Expose
+        @ConfigOption(name = "Command", desc = "What clicking the tab runs, for example /pets or /warp hub.")
+        @ConfigEditorText
+        public String command = "";
+
+        @Expose
+        @ConfigOption(name = "Tooltip", desc = "The text shown when you hover the tab.")
+        @ConfigEditorText
+        public String tooltip = "";
+
+        public QuickNavButton() {}
+
+        public QuickNavButton(boolean doubleClick, String icon, String uiTitle, String command, String tooltip) {
+            this.doubleClick = doubleClick;
+            this.icon = icon;
+            this.uiTitle = uiTitle;
+            this.command = command;
+            this.tooltip = tooltip;
+        }
+    }
+
     public static final class Screenshots {
         @Expose
         @ConfigOption(name = "Screenshot Sharing", desc = "After F2, the screenshot message gets an [Upload] button that gives you a link to post in /sbc, like Skysoft. Uploads are public to anyone with the link.")
@@ -506,7 +639,11 @@ public final class SkyBallsConfig extends Config {
     public Farming farming = new Farming();
 
     @Expose
-    @Category(name = "Fishing", desc = "Fishing stats, hook timer, bait and rare creature alerts.")
+    @Category(name = "Profit Trackers", desc = "Skysoft's Profit Trackers: Farming, Fishing, Foraging, Mining, Mythological Ritual and the six slayers.")
+    public com.epic60869.skyballs.features.FeatureConfigs.ProfitTrackers profitTrackers = new com.epic60869.skyballs.features.FeatureConfigs.ProfitTrackers();
+
+    @Expose
+    @Category(name = "Fishing", desc = "Feesh's sea creature and rare drop alerts, party sharing, compact catch messages, highlights and fishing alerts.")
     public com.epic60869.skyballs.features.FeatureConfigs.Fishing fishing = new com.epic60869.skyballs.features.FeatureConfigs.Fishing();
 
     @Expose
@@ -624,14 +761,9 @@ public final class SkyBallsConfig extends Config {
 
     public static final class SlotLocking {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Slot locking and slot binding. Locked slots can't be clicked, moved or dropped; bound slots swap with a shift-click (Odin's Slot Binds).")
+        @ConfigOption(name = "Slot Binding", desc = "Enable binding hotbar slots to inventory slots (Odin's Slot Binds). Item protection is toggled separately with /sb protect.")
         @ConfigEditorBoolean
         public boolean enabled = false;
-
-        @Expose
-        @ConfigOption(name = "Lock Key", desc = "Press over a slot in your inventory to lock or unlock it.")
-        @ConfigEditorKeybind(defaultKey = GLFW.GLFW_KEY_L)
-        public int lockKey = GLFW.GLFW_KEY_L;
 
         @Expose
         @ConfigOption(name = "Bind Key", desc = "In your inventory: press over a slot, then over another (one in the hotbar), to bind them. Press on a bound slot to unbind.")
@@ -643,13 +775,35 @@ public final class SkyBallsConfig extends Config {
         @ConfigEditorBoolean
         public boolean lineOnlyWithShift = false;
 
-        /** Locked player inventory slots (0-8 hotbar, 9-35 inventory). */
+        /** Protected item UUIDs, or item IDs for items without a UUID. */
         @Expose
-        public java.util.List<Integer> locked = new java.util.ArrayList<>();
+        public java.util.List<String> protectedItems = new java.util.ArrayList<>();
 
         /** Slot binds, by inventory screen slot (36-44 is the hotbar). */
         @Expose
         public java.util.Map<Integer, Integer> binds = new java.util.HashMap<>();
+    }
+
+    public static final class BazaarNotificationsSettings {
+        @Expose
+        @ConfigOption(name = "Order Notifications", desc = "Track your Bazaar orders and notify when an order is outbid or filled.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Chat on Outbid", desc = "Show a clickable chat notification when a tracked order becomes outbid.")
+        @ConfigEditorBoolean
+        public boolean outbidChat = true;
+
+        @Expose
+        @ConfigOption(name = "Sound on Outbid", desc = "Play a sound when a tracked order becomes outbid.")
+        @ConfigEditorBoolean
+        public boolean outbidSound = true;
+
+        @Expose
+        @ConfigOption(name = "Sound on Order Filled", desc = "Play a sound when one of your Bazaar orders or offers fills.")
+        @ConfigEditorBoolean
+        public boolean filledSound = true;
     }
 
     public static final class CopyChat {
@@ -791,6 +945,26 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Show Held Item", desc = "Show what your pet is holding under it. Hypixel's tab list doesn't say, so it's learned from the Pets menu (open it once), \"Your pet is now holding ...\" and Autopet messages.")
         @ConfigEditorBoolean
         public boolean heldItem = true;
+
+        @Expose
+        @ConfigOption(name = "Pet Icon", desc = "Skysoft's pet icon beside the text: your pet's head (its skin, once you've opened the Pets menu) with its held item in the corner.")
+        @ConfigEditorBoolean
+        public boolean icon = true;
+
+        @Expose
+        @ConfigOption(name = "Rarity Background", desc = "Put the pet icon on a circle in the pet's rarity colour.")
+        @ConfigEditorBoolean
+        public boolean iconRarityBackground = true;
+
+        @Expose
+        @ConfigOption(name = "Level Progress Ring", desc = "A ring around the icon showing how far the pet is to its next level (cyan), with a grey divider.")
+        @ConfigEditorBoolean
+        public boolean iconXpRing = true;
+
+        @Expose
+        @ConfigOption(name = "Held Item Icon", desc = "Show the pet's held item on the bottom-right of its icon.")
+        @ConfigEditorBoolean
+        public boolean iconHeldItem = true;
 
         @Expose
         @ConfigOption(name = "Scale", desc = "Scale the pet HUD.")
@@ -945,6 +1119,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Storage Overlay", desc = "Firmament's storage overlay (ported from Firmament): /storage, your Ender Chest pages and backpacks open as one scrollable view of every page, with your inventory and a search box. Click a page to open it; the open page works like the normal menu. \"Edit Pages\" shows the normal Storage menu. /sb storage opens it even with this off.")
         @ConfigEditorBoolean
         public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Storage Value Breakdown", desc = "Show the estimated total value and most valuable items when an Ender Chest page or backpack is open.")
+        @ConfigEditorBoolean
+        public boolean valueBreakdown = false;
 
         @Expose @ConfigOption(name = "Dark Mode", desc = "Draw the storage overlay's backgrounds, slots and scroll bar dark instead of Minecraft's light grey.") @ConfigEditorBoolean public boolean darkMode = false;
         @Expose @ConfigOption(name = "Dark Mode Shade", desc = "How dark Dark Mode is: the colour the overlay's textures are tinted with (darker is darker).") @ConfigEditorColour public String darkModeShade = "0:255:70:70:78";
@@ -1355,6 +1534,29 @@ public final class SkyBallsConfig extends Config {
                 else dungeons.remove(key);
                 changed = true;
             }
+        }
+
+        // Farming > Farming Profit Tracker became Profit Trackers > Farming.
+        if (root.has("farming") && root.get("farming").isJsonObject() && root.getAsJsonObject("farming").has("profitTracker")) {
+            JsonObject old = root.getAsJsonObject("farming").remove("profitTracker").getAsJsonObject();
+            JsonObject farmingTracker = childObject(childObject(root, "profitTrackers"), "farming");
+            if (old.has("enabled")) farmingTracker.add("enabled", old.get("enabled"));
+            if (old.has("period")) farmingTracker.add("period", old.get("period"));
+            JsonObject settings = childObject(farmingTracker, "settings");
+            for (String key : new String[]{"pauseAfter", "pauseAfterSeconds", "maximumItems"}) {
+                if (old.has(key)) settings.add(key, old.get(key));
+            }
+            changed = true;
+        }
+
+        // Changed defaults, applied once to configs saved before them.
+        JsonObject general = childObject(root, "general");
+        int defaults = general.has("defaultsVersion") ? general.get("defaultsVersion").getAsInt() : 0;
+        if (defaults < 1) {
+            // Experimental Table > Prevent Misclicks is on by default.
+            childObject(misc, "experimentalTable").addProperty("preventMisclicks", true);
+            general.addProperty("defaultsVersion", 1);
+            changed = true;
         }
 
         if (changed) Files.writeString(path, LEGACY_GSON.toJson(root), StandardCharsets.UTF_8);

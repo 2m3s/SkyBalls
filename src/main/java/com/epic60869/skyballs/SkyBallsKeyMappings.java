@@ -20,6 +20,8 @@ public final class SkyBallsKeyMappings {
     public static KeyMapping DIANA_RARE_MOB_WARP;
     /** Diana: answer the Sphinx (Sphinx Solver). Use at your own risk. */
     public static KeyMapping DIANA_SPHINX_SOLVER;
+    /** Slayer: cycle the player whose boss is shown in the phase HUD. */
+    public static KeyMapping SLAYER_BOSS_SELECT;
 
     private static boolean initialized;
 
@@ -62,6 +64,8 @@ public final class SkyBallsKeyMappings {
             new KeyMapping("key.skyballs.diana_rare_mob_warp", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
         DIANA_SPHINX_SOLVER = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.skyballs.diana_sphinx_solver", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
+        SLAYER_BOSS_SELECT = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.skyballs.slayer_boss_select", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
 
         initialized = true;
     }
