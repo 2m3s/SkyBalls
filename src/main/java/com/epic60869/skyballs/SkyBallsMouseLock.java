@@ -51,7 +51,7 @@ public final class SkyBallsMouseLock {
         return locked;
     }
 
-    static boolean isFarmingTool(ItemStack stack) {
+    public static boolean isFarmingTool(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         return data != null && FARMING_TOOLS.contains(data.copyTag().getStringOr("id", ""));

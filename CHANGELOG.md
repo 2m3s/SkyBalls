@@ -2,6 +2,15 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.4.2 — 2026-10-04
+
+### Added
+- Pest Spawn Timer (Farming > Garden > Pest Spawn Timer, on by default, while holding a farming tool), from SkyHanni: time since the last pest spawned, the pest cooldown and the average time pests take to spawn (leaving out spawns where you were AFK). The cooldown counts down the Pest Cooldown Time you set from each pest spawn; it doesn't read the tab list. Optional warnings a few seconds before the cooldown ends and when it's over (title, chat and a sound you choose), repeating until you open your wardrobe or loadouts, and a chat message with how long each spawn took. Show it only while holding a farming tool, vacuum or lasso.
+- Pest Spawn alert (Farming > Garden > Pest Spawn), from SkyHanni: a title naming how many pests spawned and in which plot, Hypixel's spawn message kept, replaced by a compact one you can click to /plottp there, or hidden, and the spawn sound kept, muted, replaced by your own sound or by the Plumber tune.
+
+### Removed
+- The old Pest Cooldown HUD and "Pests Spawned!" alert; the Pest Spawn Timer and Pest Spawn alert replace them, and keep your Pest Cooldown Time.
+
 ## 1.4.1 — 2026-10-04
 
 ### Fixed

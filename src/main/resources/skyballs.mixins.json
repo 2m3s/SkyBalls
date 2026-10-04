@@ -9,6 +9,7 @@
     "SkyBallsDyedItemColorMixin",
     "SkyBallsDataComponentHolderMixin",
     "SkyBallsChatHudMixin",
+    "SkyBallsPestSoundMixin",
     "SkyBallsQuickNavMixin",
     "SkyBallsChatScreenMixin",
     "SkyBallsEmojiSuggestionsMixin",

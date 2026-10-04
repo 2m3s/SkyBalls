@@ -675,14 +675,19 @@ public final class FeatureConfigs {
         public boolean yawPitch = false;
 
         @Expose
-        @ConfigOption(name = "Pest Cooldown", desc = "HUD counting down from the last pest spawn.")
-        @ConfigEditorBoolean
-        public boolean pestCooldown = false;
-
-        @Expose
-        @ConfigOption(name = "Pest Cooldown (seconds)", desc = "Your pest spawn cooldown in seconds.")
+        @ConfigOption(name = "Pest Cooldown Time (seconds)", desc = "Your pest spawn cooldown. The Pest Spawn Timer counts down this long from each pest spawn (the tab list isn't used).")
         @ConfigEditorSlider(minValue = 60, maxValue = 900, minStep = 5)
         public float pestCooldownSeconds = 300;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Pest Spawn Timer", desc = "SkyHanni's Pest Spawn Timer: time since the last pest, the pest cooldown and cooldown warnings.")
+        public PestTimer pestTimer = new PestTimer();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Pest Spawn", desc = "SkyHanni's pest spawn title, chat format and spawn sound.")
+        public PestSpawn pestSpawn = new PestSpawn();
 
         @Expose
         @ConfigOption(name = "Blocks Per Second", desc = "HUD showing how many blocks per second you are breaking.")
@@ -693,6 +698,201 @@ public final class FeatureConfigs {
         @ConfigOption(name = "Special Drop Animation", desc = "Play an animation when you drop a farming dye or a Ray of Helios.")
         @ConfigEditorBoolean
         public boolean specialDropAnimation = false;
+    }
+
+    /** SkyHanni's PestTimerConfig (LGPL-2.1). */
+    public static final class PestTimer {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show the time since the last pest spawned in your garden.")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Only When Holding", desc = "Only show the time display when holding the specified items.\nLeave empty to always show.")
+        @ConfigEditorDraggableList
+        public List<HeldItem> onlyWhenHolding = new ArrayList<>(List.of(HeldItem.FARMING_TOOL));
+
+        public enum HeldItem {
+            FARMING_TOOL("Farming Tool"),
+            VACUUM("Vacuum"),
+            LASSO("Lasso");
+
+            private final String displayName;
+
+            HeldItem(String displayName) {
+                this.displayName = displayName;
+            }
+
+            @Override
+            public String toString() {
+                return displayName;
+            }
+        }
+
+        @Expose
+        @ConfigOption(name = "Pest Timer Text", desc = "Drag text to change the appearance of the overlay.")
+        @ConfigEditorDraggableList
+        public List<TextEntry> pestDisplay = new ArrayList<>(List.of(TextEntry.PEST_TIMER, TextEntry.PEST_COOLDOWN));
+
+        public enum TextEntry {
+            PEST_TIMER("§eLast pest spawned: §b8s ago"),
+            PEST_COOLDOWN("§ePest Cooldown: §b1m 8s"),
+            AVERAGE_PEST_SPAWN("§eAverage time to spawn: §b4m 32s");
+
+            private final String displayName;
+
+            TextEntry(String displayName) {
+                this.displayName = displayName;
+            }
+
+            @Override
+            public String toString() {
+                return displayName;
+            }
+        }
+
+        @Expose
+        @ConfigOption(name = "Pest Cooldown Warning", desc = "Warn when pests are eligible to spawn.")
+        @ConfigEditorBoolean
+        public boolean cooldownOverWarning = false;
+
+        @Expose
+        @ConfigOption(name = "Repeat Warning", desc = "Repeats the warning sound and title until the loadouts or wardrobe menu is opened, or the pest cooldown expires.")
+        @ConfigEditorBoolean
+        public boolean repeatWarning = false;
+
+        @Expose
+        @ConfigOption(name = "Warn Before Cooldown End", desc = "Warn this many seconds before the cooldown is over.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 30, minStep = 1)
+        public int cooldownWarningTime = 5;
+
+        @Expose
+        @ConfigOption(name = "AFK Timeout", desc = "Don't include spawn time in average spawn time display when the player goes AFK for at least this many seconds.")
+        @ConfigEditorSlider(minValue = 5, maxValue = 300, minStep = 1)
+        public int averagePestSpawnTimeout = 30;
+
+        @Expose
+        @ConfigOption(name = "Pest Spawn Time Chat Message", desc = "When a pest spawns, send the time it took to spawn it in chat.")
+        @ConfigEditorBoolean
+        public boolean pestSpawnChatMessage = false;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Sound Settings", desc = "")
+        public PestTimerSound sound = new PestTimerSound();
+    }
+
+    public static final class PestTimerSound {
+        @Expose
+        @ConfigOption(name = "Notification Sound", desc = "The sound played for the notification.")
+        @ConfigEditorText
+        public String name = "block.note_block.pling";
+
+        @Expose
+        @ConfigOption(name = "Pitch", desc = "The pitch of the notification sound.")
+        @ConfigEditorSlider(minValue = 0.5f, maxValue = 2f, minStep = 0.1f)
+        public float pitch = 0.5f;
+
+        @ConfigOption(name = "Test Sound", desc = "Test current sound settings.")
+        @ConfigEditorButton(buttonText = "Test")
+        public Runnable testSound = com.epic60869.skyballs.features.garden.PestTimer::playUserSound;
+
+        @Expose
+        @ConfigOption(name = "Repeat Duration", desc = "Change how often the sound should be repeated in ticks. Change to 20 for only once per second.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 20, minStep = 1)
+        public int repeatDuration = 20;
+
+        @ConfigOption(name = "List of Sounds", desc = "A list of available sounds.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable listOfSounds = com.epic60869.skyballs.features.garden.PestTimer::openSoundsList;
+    }
+
+    /** SkyHanni's PestSpawnConfig (LGPL-2.1). */
+    public static final class PestSpawn {
+        @Expose
+        @ConfigOption(name = "Chat Message Format", desc = "Change how the pest spawn chat message should be formatted.")
+        @ConfigEditorDropdown
+        public ChatMessageFormat chatMessageFormat = ChatMessageFormat.HYPIXEL;
+
+        public enum ChatMessageFormat {
+            HYPIXEL("Hypixel Style"),
+            COMPACT("Compact"),
+            DISABLED("Disabled");
+
+            private final String displayName;
+
+            ChatMessageFormat(String displayName) {
+                this.displayName = displayName;
+            }
+
+            @Override
+            public String toString() {
+                return displayName;
+            }
+        }
+
+        @Expose
+        @ConfigOption(name = "Show Title", desc = "Show a Title when a pest spawns.")
+        @ConfigEditorBoolean
+        public boolean showTitle = true;
+
+        public enum SoundMode {
+            DEFAULT("Default"),
+            MUTED("Muted"),
+            CUSTOM("Custom"),
+            PLUMBER("Plumber");
+
+            private final String displayName;
+
+            SoundMode(String displayName) {
+                this.displayName = displayName;
+            }
+
+            @Override
+            public String toString() {
+                return displayName;
+            }
+        }
+
+        @Expose
+        @ConfigOption(name = "Spawn Sound", desc = "Mute or replace the default spawn sound with a custom one.")
+        @ConfigEditorDropdown
+        public SoundMode soundMode = SoundMode.DEFAULT;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Sound Settings", desc = "")
+        public PestSpawnSound sound = new PestSpawnSound();
+    }
+
+    public static final class PestSpawnSound {
+        @Expose
+        @ConfigOption(name = "Notification Sound", desc = "The sound played for the notification.")
+        @ConfigEditorText
+        public String name = "block.note_block.bass";
+
+        @Expose
+        @ConfigOption(name = "Pitch", desc = "The pitch of the notification sound.")
+        @ConfigEditorSlider(minValue = 0.5f, maxValue = 2f, minStep = 0.1f)
+        public float pitch = 1.4920635f;
+
+        @Expose
+        @ConfigOption(name = "Repeat Frequency", desc = "Change how often the sound should be repeated in milliseconds.")
+        @ConfigEditorSlider(minValue = 50, maxValue = 1000, minStep = 50)
+        public int repeatFrequency = 150;
+
+        @Expose
+        @ConfigOption(name = "Repeat Amount", desc = "Change the amount of times the sound should be repeated.")
+        @ConfigEditorSlider(minValue = 1, maxValue = 20, minStep = 1)
+        public int repeatAmount = 3;
+
+        @ConfigOption(name = "Test Sound", desc = "Test current sound settings.")
+        @ConfigEditorButton(buttonText = "Test")
+        public Runnable testSound = com.epic60869.skyballs.features.garden.PestTimer::repeatSpawnSound;
+
+        @ConfigOption(name = "List of Sounds", desc = "A list of available sounds.")
+        @ConfigEditorButton(buttonText = "Open")
+        public Runnable listOfSounds = com.epic60869.skyballs.features.garden.PestTimer::openSoundsList;
     }
 
     /** Fishing, ported from Feesh (https://github.com/Sleepy-Panda/Feesh, Apache-2.0): see features/fishing. */

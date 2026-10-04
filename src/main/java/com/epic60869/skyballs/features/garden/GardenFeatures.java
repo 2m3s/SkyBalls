@@ -1,7 +1,6 @@
 package com.epic60869.skyballs.features.garden;
 
 import com.epic60869.skyballs.SkyBallsConfig;
-import com.epic60869.skyballs.SkyBallsTabWidgetManager;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsAlerts;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
@@ -10,7 +9,6 @@ import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import net.fabricmc.fabric.api.event.client.player.ClientPlayerBlockBreakEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
@@ -21,17 +19,12 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Yaw/pitch, pest cooldown, blocks per second and the dye / Ray of Helios animation. */
+/** Yaw/pitch, blocks per second and the dye / Ray of Helios animation. The pest timer and alerts are in {@link PestTimer}. */
 public final class GardenFeatures {
-    // Pest patterns from SkyHanni's repo (MIT): cooldown from the tab list and the in-game spawn alert.
-    private static final Pattern PEST_SPAWN = Pattern.compile("^\\w+! (?:A|\\d) .*Pests? (?:has|have) (?:appeared|spawned) in ");
-    private static final Pattern TAB_COOLDOWN = Pattern.compile("^\\s*Cooldown: (?<time>\\d{1,2}[ms](?: \\d{1,2}s?)?)?(?<ready>READY)?(?<max>MAX PESTS)?");
-    private static final Pattern PEST_SPAWN_ALERT = Pattern.compile(".*Pests? (?:has|have) (?:appeared|spawned) in .*Garden.*");
     private static final Pattern SPECIAL_DROP = Pattern.compile("(?<item>[A-Z][\\w' ]* Dye|Ray of Helios)");
     private static final String[] FACINGS = {"South", "South West", "West", "North West", "North", "North East", "East", "South East"};
 
     private static final Deque<Long> BREAKS = new ArrayDeque<>();
-    private static long lastPestSpawn;
 
     private GardenFeatures() {}
 
@@ -47,6 +40,7 @@ public final class GardenFeatures {
             }
         });
         SkyBallsChat.onChat(GardenFeatures::onChat);
+        PestTimer.init();
 
         com.epic60869.skyballs.features.core.SkyBallsHuds.setting("yaw_pitch", () -> config() != null && config().yawPitch);
         SkyBallsHuds.register("yaw_pitch", "Yaw and Pitch",
@@ -54,12 +48,6 @@ public final class GardenFeatures {
             GardenFeatures::yawPitchLines,
             List.of(kv("Yaw: ", "123.96"), kv("Pitch: ", "0.00"), kv("Facing: ", "West")),
             8, 300);
-        com.epic60869.skyballs.features.core.SkyBallsHuds.setting("pest_cooldown", () -> config() != null && config().pestCooldown);
-        SkyBallsHuds.register("pest_cooldown", "Pest Cooldown",
-            () -> config() != null && config().pestCooldown && SkyBallsLocation.inGarden(),
-            GardenFeatures::pestLines,
-            List.of(kv("Pest cooldown: ", "3:21")),
-            8, 340);
         com.epic60869.skyballs.features.core.SkyBallsHuds.setting("bps", () -> config() != null && config().blocksPerSecond);
         SkyBallsHuds.register("bps", "Blocks Per Second",
             () -> config() != null && config().blocksPerSecond && SkyBallsLocation.inGarden(),
@@ -84,27 +72,6 @@ public final class GardenFeatures {
             kv("Facing: ", FACINGS[index]));
     }
 
-    private static List<Component> pestLines() {
-        // Prefer Hypixel's own cooldown from the tab list Pests widget when it is shown.
-        for (PlayerInfo info : SkyBallsTabWidgetManager.players()) {
-            if (com.epic60869.skyballs.custom.util.Compat.rawTabName(info) == null) continue;
-            Matcher m = TAB_COOLDOWN.matcher(SkyBallsLocation.strip(com.epic60869.skyballs.custom.util.Compat.rawTabName(info).getString()));
-            if (m.find() && (m.group("time") != null || m.group("ready") != null || m.group("max") != null)) {
-                String value = m.group("ready") != null ? "READY" : m.group("max") != null ? "MAX PESTS" : m.group("time");
-                return List.of(Component.literal("Pest cooldown: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(value).withStyle(m.group("time") == null ? ChatFormatting.GREEN : ChatFormatting.YELLOW)));
-            }
-        }
-        if (lastPestSpawn == 0) return List.of(kv("Pest cooldown: ", "unknown"));
-        long remaining = (long) (config().pestCooldownSeconds * 1000) - (System.currentTimeMillis() - lastPestSpawn);
-        if (remaining <= 0) {
-            return List.of(Component.literal("Pest cooldown: ").withStyle(ChatFormatting.GRAY).append(Component.literal("READY").withStyle(ChatFormatting.GREEN)));
-        }
-        long seconds = remaining / 1000;
-        return List.of(Component.literal("Pest cooldown: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format(Locale.US, "%d:%02d", seconds / 60, seconds % 60)).withStyle(ChatFormatting.YELLOW)));
-    }
-
     private static List<Component> bpsLines() {
         long now = System.currentTimeMillis();
         int count;
@@ -117,14 +84,6 @@ public final class GardenFeatures {
 
     private static void onChat(SkyBallsChat.Message message) {
         String text = message.text();
-        if (PEST_SPAWN.matcher(text).find()) {
-            lastPestSpawn = System.currentTimeMillis();
-            if (PEST_SPAWN_ALERT.matcher(text).matches() || PEST_SPAWN_ALERT.matcher(text).find()) {
-                SkyBallsAlerts.title(Component.literal("Pests Spawned!").withStyle(ChatFormatting.RED), Component.literal("Garden").withStyle(ChatFormatting.GOLD));
-                SkyBallsAlerts.chat(Component.literal("Pests have spawned in the Garden!").withStyle(ChatFormatting.RED));
-            }
-            return;
-        }
         FeatureConfigs.Garden config = config();
         if (config == null || !config.specialDropAnimation || !SkyBallsLocation.inGarden()) return;
         boolean dropMessage = text.contains("DROP!") || text.contains("CROP!") || text.startsWith("WOW!") || text.contains(" found ");
