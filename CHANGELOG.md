@@ -2,7 +2,7 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
-## 1.4.2 — 2026-10-04
+## 1.4.5 — 2026-10-04
 
 ### Added
 - Pest Spawn Timer (Farming > Garden > Pest Spawn Timer, on by default, while holding a farming tool), from SkyHanni: time since the last pest spawned, the pest cooldown and the average time pests take to spawn (leaving out spawns where you were AFK). The cooldown counts down the Pest Cooldown Time you set from each pest spawn; it doesn't read the tab list. Optional warnings a few seconds before the cooldown ends and when it's over (title, chat and a sound you choose), repeating until you open your wardrobe or loadouts, and a chat message with how long each spawn took. Show it only while holding a farming tool, vacuum or lasso.
