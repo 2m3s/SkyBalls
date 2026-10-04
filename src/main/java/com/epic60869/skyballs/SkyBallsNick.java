@@ -22,7 +22,10 @@ public final class SkyBallsNick {
         Map.entry("gold", 0xFFAA00), Map.entry("gray", 0xAAAAAA), Map.entry("dark_gray", 0x555555),
         Map.entry("blue", 0x5555FF), Map.entry("green", 0x55FF55), Map.entry("aqua", 0x55FFFF),
         Map.entry("red", 0xFF5555), Map.entry("light_purple", 0xFF55FF), Map.entry("yellow", 0xFFFF55),
-        Map.entry("white", 0xFFFFFF)
+        Map.entry("white", 0xFFFFFF),
+        // Spellings the website or older servers may send.
+        Map.entry("grey", 0xAAAAAA), Map.entry("dark_grey", 0x555555), Map.entry("purple", 0xAA00AA),
+        Map.entry("pink", 0xFF55FF), Map.entry("magenta", 0xFF55FF), Map.entry("cyan", 0x55FFFF)
     );
 
     private static final Map<UUID, RemoteNick> REMOTE_NICKS = new ConcurrentHashMap<>();
@@ -292,7 +295,9 @@ public final class SkyBallsNick {
             }
             hover = new HoverEvent.ShowText(hoverText);
         }
-        Style style = Style.EMPTY.withHoverEvent(hover).withClickEvent(original.getClickEvent());
+        // Keep the name's own look (Hypixel's rank colour, bold...) underneath: a nick with a colour of its own
+        // overrides it, and one without ("Plain" with no custom colour) shows in the colour the name had.
+        Style style = original.withHoverEvent(hover).withClickEvent(original.getClickEvent()).withInsertion(null);
         return Component.empty().setStyle(style).append(replacement.copy());
     }
 
@@ -462,12 +467,15 @@ public final class SkyBallsNick {
         if (safeUsername.isBlank() && previous != null) safeUsername = previous.username;
         String safeFont = font != null ? SkyBallsNickFonts.parse(font).label : previous != null ? previous.font : "Default";
         String safeGradient = gradientHex != null ? cleanHex(gradientHex) : previous != null ? previous.gradientHex : "";
+        // A null style or colour (a chat message that doesn't carry it) keeps the one nicknameUpdate gave.
+        String safeMode = mode != null ? cleanMode(mode) : previous != null ? previous.mode : "Plain";
+        String safeHex = customHex != null ? cleanHex(customHex) : previous != null ? previous.customHex : "";
         RemoteNick updated = new RemoteNick(
             uuid,
             safeUsername,
             clean(name),
-            cleanMode(mode),
-            cleanHex(customHex),
+            safeMode,
+            safeHex,
             safeGradient,
             safeFont,
             true
@@ -516,8 +524,9 @@ public final class SkyBallsNick {
         String shown = SkyBallsNickFonts.letters(text, font);
 
         if ("Gradient".equalsIgnoreCase(safeStyle)) {
-            int from = customHex != null && customHex.matches("#[0-9a-fA-F]{6}") ? Integer.parseInt(customHex.substring(1), 16) : 0xFFFFFF;
-            int to = gradientHex != null && gradientHex.matches("#[0-9a-fA-F]{6}") ? Integer.parseInt(gradientHex.substring(1), 16) : from;
+            String fromHex = cleanHex(customHex), toHex = cleanHex(gradientHex);
+            int from = !fromHex.isEmpty() ? Integer.parseInt(fromHex.substring(1), 16) : 0xFFFFFF;
+            int to = !toHex.isEmpty() ? Integer.parseInt(toHex.substring(1), 16) : from;
             MutableComponent out = Component.empty();
             int[] codePoints = shown.codePoints().toArray();
             int n = codePoints.length;
@@ -554,11 +563,14 @@ public final class SkyBallsNick {
             return out;
         }
 
-        String key = safeStyle.toLowerCase(Locale.ROOT).replace(' ', '_');
+        String key = colourKey(safeStyle);
         Integer rgb = COLORS.get(key);
 
-        if ("plain".equals(key) && customHex != null && customHex.matches("#[0-9a-fA-F]{6}")) {
-            rgb = Integer.parseInt(customHex.substring(1), 16);
+        // A custom colour is "Plain" + customHex; any other mode the mod doesn't know ("Custom", "Hex", ...) with a
+        // customHex uses it too, rather than dropping the colour.
+        String hex = cleanHex(customHex);
+        if (!hex.isEmpty() && (rgb == null || "plain".equals(key))) {
+            rgb = Integer.parseInt(hex.substring(1), 16);
         }
 
         Style base = rgb == null ? Style.EMPTY : Style.EMPTY.withColor(rgb);
@@ -581,12 +593,23 @@ public final class SkyBallsNick {
 
     private static String cleanMode(String value) {
         if (value == null || value.isBlank()) return "Plain";
-        String cleaned = value.replaceAll("[^A-Za-z ]", "").trim();
+        // "Dark Blue", "dark_blue", "DARK-BLUE" and "DarkBlue" are all the same colour.
+        String cleaned = value.replaceAll("[^A-Za-z _-]", "").trim();
         return cleaned.isBlank() ? "Plain" : cleaned.substring(0, Math.min(20, cleaned.length()));
     }
 
+    /** "Dark Blue" / "dark_blue" / "DarkBlue" -> "dark_blue", the key in {@link #COLORS}. */
+    private static String colourKey(String mode) {
+        return mode.trim().replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase(Locale.ROOT).replaceAll("[\\s_-]+", "_");
+    }
+
+    /** "#RRGGBB" (upper case) from "#rrggbb", "rrggbb" or "0xRRGGBB", or "" when it isn't a colour. */
     private static String cleanHex(String value) {
-        return value != null && value.matches("#[0-9a-fA-F]{6}") ? value.toUpperCase(Locale.ROOT) : "";
+        if (value == null) return "";
+        String v = value.trim();
+        if (v.startsWith("0x") || v.startsWith("0X")) v = v.substring(2);
+        if (v.startsWith("#")) v = v.substring(1);
+        return v.matches("[0-9a-fA-F]{6}") ? "#" + v.toUpperCase(Locale.ROOT) : "";
     }
 
     private static boolean isLocalUuid(UUID uuid) {

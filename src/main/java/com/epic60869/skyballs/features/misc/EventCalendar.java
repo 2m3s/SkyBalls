@@ -38,7 +38,7 @@ import java.util.Set;
 public final class EventCalendar {
     public record Event(String id, String name, long start, long end, boolean active, List<String> crops) {}
 
-    private static final String URL = "https://tastyfish.org/mod-api/api/v1/calendar?hours=72";
+    private static final String URL = "https://shadowisabot.com/mod-api/api/v1/calendar?hours=72";
     private static final long REFRESH_MS = 10 * 60_000L;
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 

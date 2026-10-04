@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * not names, so a nickname can never pick one up; {@link SkyBallsNickFilter} also blocks nicknames that look like
  * a ranked account or a rank.
  *
- * Ranks are managed on tastyfish.org and downloaded from {@value #RANKS_URL} every few minutes:
+ * Ranks are managed on shadowisabot.com and downloaded from {@value #RANKS_URL} every few minutes:
  * <pre>
  * {"ranks": [
  *   {"uuid": "9761ccfb-2ccb-45cf-b6b4-fac991b7a019", "name": "2m3s", "prefix": "OWNER", "color": "#FF5555", "bold": true},
@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * The built-in ranks below apply until the site answers, and for accounts the site doesn't list.
  */
 public final class SkyBallsStaff {
-    public static final String RANKS_URL = "https://tastyfish.org/mod-api/ranks";
+    public static final String RANKS_URL = "https://shadowisabot.com/mod-api/ranks";
     private static final long REFRESH_MINUTES = 5;
     private static final int MAX_PREFIX_LENGTH = 16;
 
@@ -96,7 +96,7 @@ public final class SkyBallsStaff {
             }
             remote = Map.copyOf(parsed);
         } catch (Exception e) {
-            System.err.println("[SkyBalls] Could not load ranks from tastyfish.org: " + e.getMessage());
+            System.err.println("[SkyBalls] Could not load ranks from shadowisabot.com: " + e.getMessage());
         }
     }
 

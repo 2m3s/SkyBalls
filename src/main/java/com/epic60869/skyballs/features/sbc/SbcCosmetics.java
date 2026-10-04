@@ -161,7 +161,7 @@ public final class SbcCosmetics {
                 if (Files.exists(file)) {
                     bytes = Files.readAllBytes(file);
                 } else {
-                    URI uri = URI.create(url.startsWith("/") ? "https://tastyfish.org" + url : url);
+                    URI uri = URI.create(url.startsWith("/") ? "https://shadowisabot.com" + url : url);
                     HttpRequest request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(20))
                         .header("User-Agent", "SkyBalls/" + SbcInfo.modVersion()).GET().build();
                     HttpResponse<byte[]> response = HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());

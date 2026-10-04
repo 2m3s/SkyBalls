@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * Bug reports, suggestions and feedback.
  *
  * Anyone can send one with /sb bugreport, /sb suggest or /sb feedback (a window with a title and a description).
- * They are stored on tastyfish.org. Only the owner account (2m3s, by UUID) can read and delete them, with
+ * They are stored on shadowisabot.com. Only the owner account (2m3s, by UUID) can read and delete them, with
  * /sb viewboth, /sb viewreport and /sb viewsuggest, and gets a message in chat when some are waiting.
  *
  * Reading them proves who you are the way Minecraft servers do: the site hands out a random server id, the mod
@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Reports {
     public static final UUID OWNER = UUID.fromString("9761ccfb-2ccb-45cf-b6b4-fac991b7a019"); // 2m3s
-    static final String API = "https://tastyfish.org/mod-api";
+    static final String API = "https://shadowisabot.com/mod-api";
 
     public enum Type {
         BUG("bug", "Bug Report"), SUGGESTION("suggestion", "Suggestion"), FEEDBACK("feedback", "Feedback");

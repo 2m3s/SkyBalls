@@ -19,7 +19,7 @@ import java.util.List;
  * server (/sb nick, friends, leaderboards). A login lasts for one connection; a reconnect logs in again.
  */
 public final class SkyBallsLogin {
-    private static final String CHALLENGE_URL = "https://tastyfish.org/mod-api/auth/challenge";
+    private static final String CHALLENGE_URL = "https://shadowisabot.com/mod-api/auth/challenge";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
 
     /** How long to wait for the server to confirm a login it doesn't acknowledge (its Mojang check is done by then). */

@@ -153,7 +153,7 @@ public final class ScreenshotShare {
         String fileField;
         switch (host) {
             case SKYBALLS -> {
-                url = "https://tastyfish.org/mod-api/screenshots";
+                url = "https://shadowisabot.com/mod-api/screenshots";
                 fileField = "image";
             }
             case UGUU -> {

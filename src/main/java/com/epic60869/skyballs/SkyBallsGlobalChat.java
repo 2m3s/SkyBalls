@@ -25,7 +25,7 @@ public final class SkyBallsGlobalChat {
     private static final String CONFIGURED_RELAY_URL =
         System.getProperty("skyballs.chat.url", "").trim();
     private static final String[] RELAY_URLS = CONFIGURED_RELAY_URL.isBlank()
-        ? new String[] {"wss://tastyfish.org/mod-api/tf-chat"}
+        ? new String[] {"wss://shadowisabot.com/mod-api/tf-chat"}
         : new String[] {CONFIGURED_RELAY_URL};
 
     private static final Gson GSON = new Gson();
@@ -493,14 +493,16 @@ public final class SkyBallsGlobalChat {
 
                 if ("nicknameUpdate".equals(type)) {
                     try {
-                        UUID uuid = UUID.fromString(packet.get("minecraftUuid").getAsString());
-                        boolean enabled = packet.has("enabled") && packet.get("enabled").getAsBoolean();
-                        String username = packet.has("username") ? packet.get("username").getAsString() : "";
-                        String name = packet.has("name") ? packet.get("name").getAsString() : "";
-                        String mode = packet.has("mode") ? packet.get("mode").getAsString() : "Plain";
-                        String hex = packet.has("customHex") ? packet.get("customHex").getAsString() : "";
-                        String font = packet.has("font") ? packet.get("font").getAsString() : "Default";
-                        String gradient = packet.has("gradientHex") && !packet.get("gradientHex").isJsonNull() ? packet.get("gradientHex").getAsString() : "";
+                        UUID uuid = UUID.fromString(packetString(packet, "minecraftUuid"));
+                        // Fields the server leaves null (customHex for a named colour, font, ...) must not throw:
+                        // that dropped the whole update, so the nickname showed without its colour.
+                        boolean enabled = com.epic60869.skyballs.features.sbc.Sbc.bool(packet, "enabled");
+                        String username = packetString(packet, "username");
+                        String name = packetString(packet, "name");
+                        String mode = packetString(packet, "mode");
+                        String hex = packetString(packet, "customHex");
+                        String font = packetString(packet, "font");
+                        String gradient = packetString(packet, "gradientHex");
                         SkyBallsNick.rememberUsername(uuid, username);
                         SkyBallsNick.updateRemote(uuid, username, enabled, name, mode, hex, gradient, font);
                     } catch (Exception ignored) {}
@@ -512,12 +514,11 @@ public final class SkyBallsGlobalChat {
                 // The authoritative nicknameUpdate packet handles enable/disable.
 
                 if ("discordResult".equals(type)) {
-                    String requestId = packet.has("requestId")
-                        ? packet.get("requestId").getAsString() : "";
-                    boolean ok = packet.has("ok") && packet.get("ok").getAsBoolean();
+                    String requestId = packetString(packet, "requestId");
+                    boolean ok = com.epic60869.skyballs.features.sbc.Sbc.bool(packet, "ok");
                     JsonObject result = packet.has("result") && packet.get("result").isJsonObject()
                         ? packet.getAsJsonObject("result") : new JsonObject();
-                    String detail = packet.has("message") ? packet.get("message").getAsString() : "";
+                    String detail = packetString(packet, "message");
 
                     Minecraft.getInstance().execute(() ->
                         SkyBallsDiscordScreen.handleResult(requestId, ok, result, detail));
@@ -525,16 +526,20 @@ public final class SkyBallsGlobalChat {
                 }
 
                 if ("dmResult".equals(type)) {
-                    boolean ok = packet.has("ok") && packet.get("ok").getAsBoolean();
-                    String target = packet.has("target") ? packet.get("target").getAsString() : "Discord user";
-                    String detail = packet.has("message") ? packet.get("message").getAsString() : "";
+                    boolean ok = com.epic60869.skyballs.features.sbc.Sbc.bool(packet, "ok");
+                    String target = packetString(packet, "target");
+                    if (target.isBlank()) target = "Discord user";
+                    String detail = packetString(packet, "message").trim();
 
                     if (ok) {
                         mcMessage(Component.literal("[SB] Discord DM sent to " + target + ".")
                             .withStyle(Style.EMPTY.withColor(0x55FF55)));
                     } else {
-                        mcMessage(Component.literal("[SB] Discord DM failed: " + detail)
-                            .withStyle(Style.EMPTY.withColor(0xFF5555)));
+                        // The server may answer {ok:false} with no reason (Discord DMs turned off there).
+                        mcMessage(Component.literal("[SB] Couldn't send the Discord DM: ")
+                            .withStyle(Style.EMPTY.withColor(0xFF5555))
+                            .append(Component.literal(detail.isBlank() ? "Discord DMs aren't available right now." : detail)
+                                .withStyle(Style.EMPTY.withColor(0xAAAAAA))));
                     }
                     return;
                 }
@@ -552,9 +557,11 @@ public final class SkyBallsGlobalChat {
                     return;
                 }
 
-                String name = packet.has("username") ? packet.get("username").getAsString() : "Unknown";
-                String displayName = packet.has("nickname") ? packet.get("nickname").getAsString() : name;
-                String message = packet.has("message") ? packet.get("message").getAsString() : "";
+                String name = packetString(packet, "username");
+                if (name.isBlank()) name = "Unknown";
+                String displayName = packetString(packet, "nickname");
+                if (displayName.isBlank()) displayName = name;
+                String message = packetString(packet, "message");
                 // The chat server's bot still calls itself SkyJew and writes [SJ]; show the new name.
                 if (name.equalsIgnoreCase("SkyJew") || displayName.equalsIgnoreCase("SkyJew")) {
                     name = "SkyBalls";
@@ -567,23 +574,24 @@ public final class SkyBallsGlobalChat {
                 UUID messageUuid = null;
                 try {
                     if (packet.has("minecraftUuid")) {
-                        messageUuid = UUID.fromString(packet.get("minecraftUuid").getAsString());
-                        String messageUsername = packet.has("username") ? packet.get("username").getAsString() : "";
-                        boolean nickEnabled = packet.has("nicknameEnabled")
-                            && packet.get("nicknameEnabled").getAsBoolean();
-                        String nickMode = packet.has("nicknameMode")
-                            ? packet.get("nicknameMode").getAsString() : "Plain";
-                        String nickHex = packet.has("nicknameHex")
-                            ? packet.get("nicknameHex").getAsString() : "";
+                        messageUuid = UUID.fromString(packetString(packet, "minecraftUuid"));
+                        String messageUsername = packetString(packet, "username");
+                        boolean nickEnabled = com.epic60869.skyballs.features.sbc.Sbc.bool(packet, "nicknameEnabled");
+                        // Null when the message doesn't say: the style nicknameUpdate gave is kept.
+                        String nickMode = packet.has("nicknameMode") && !packet.get("nicknameMode").isJsonNull()
+                            ? packetString(packet, "nicknameMode") : null;
+                        String nickHex = packet.has("nicknameHex") && !packet.get("nicknameHex").isJsonNull()
+                            ? packetString(packet, "nicknameHex") : null;
 
                         // nicknameUpdate is the authoritative state packet.
                         // A chat message from an older/stale connection may not
                         // contain nickname styling, so it must never erase a
                         // nickname that was already synced from the relay.
                         if (nickEnabled) {
-                            String nickFont = packet.has("nicknameFont") ? packet.get("nicknameFont").getAsString() : null;
+                            String nickFont = packet.has("nicknameFont") && !packet.get("nicknameFont").isJsonNull()
+                                ? packetString(packet, "nicknameFont") : null;
                             String nickHex2 = packet.has("nicknameHex2") && !packet.get("nicknameHex2").isJsonNull()
-                                ? packet.get("nicknameHex2").getAsString() : null;
+                                ? packetString(packet, "nicknameHex2") : null;
                             SkyBallsNick.updateRemote(messageUuid, messageUsername, true, displayName, nickMode, nickHex, nickHex2, nickFont);
                         }
                     }

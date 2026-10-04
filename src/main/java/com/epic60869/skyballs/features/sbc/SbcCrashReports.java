@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * OS, Java, your name and UUID are sent.
  */
 public final class SbcCrashReports {
-    private static final String URL = "https://tastyfish.org/mod-api/crash-reports";
+    private static final String URL = "https://shadowisabot.com/mod-api/crash-reports";
     private static final int MAX_TRACE = 32_000;
     private static final int PER_HOUR = 10;
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();

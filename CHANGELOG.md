@@ -2,6 +2,13 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.4.1 — 2026-10-04
+
+### Fixed
+- SkyBalls chat, ranks, login, bug reports, crash reports, screenshots, the event calendar, capes and Discord linking use the new server, shadowisabot.com (tastyfish.org no longer runs it, which caused "Couldn't check for bug reports: ... malformed JSON").
+- Nickname colours now show for you and other players in SkyBalls chat, Hypixel chat, tab and nametags: a nickname update with an empty (null) custom colour or font used to be dropped entirely, so the nickname appeared without its colour. Colour names are also read in any spelling ("Dark Blue", "dark_blue", "DarkBlue"), custom colours with or without "#", and a "Plain" nickname with no colour keeps the colour the name had.
+- When the server turns Discord down, the Discord screen says so with the server's reason instead of staying on "Checking Discord connection...", and a failed Discord DM gives a clear message.
+
 ## 1.4 — 2026-10-03
 
 ### Added

@@ -35,6 +35,8 @@ public final class SkyBallsDiscordScreen extends Screen {
     private boolean loading;
     private boolean linked = false;
     private boolean linkKnown = false;
+    /** The server turned the first request down (Discord isn't available there); its message is shown instead. */
+    private boolean unavailable = false;
 
     private static final int BG = 0xFF1E1F22;
     private static final int SERVER_BAR = 0xFF111214;
@@ -57,9 +59,12 @@ public final class SkyBallsDiscordScreen extends Screen {
         if (screen == null || screen.minecraft == null) return;
         screen.loading = false;
         if (!ok) {
-            screen.error = detail.isBlank() ? "Discord request failed." : detail;
+            screen.error = detail == null || detail.isBlank() ? "Discord request failed." : detail.trim();
+            // Nothing loaded yet: the whole screen depends on it, so say so there rather than "Checking..." forever.
+            if (!screen.linkKnown) screen.unavailable = true;
             return;
         }
+        screen.unavailable = false;
         screen.error = "";
         screen.applyResult(result);
     }
@@ -88,6 +93,13 @@ public final class SkyBallsDiscordScreen extends Screen {
 
     private void requestHome() {
         view = "home";
+        if (!SkyBallsGlobalChat.isOnline()) {
+            loading = false;
+            unavailable = !linkKnown;
+            error = "SkyBalls chat isn't connected yet. Try again in a moment.";
+            SkyBallsGlobalChat.ensureConnected();
+            return;
+        }
         loading = true;
         SkyBallsGlobalChat.requestDiscord("home", new JsonObject());
     }
@@ -242,13 +254,21 @@ public final class SkyBallsDiscordScreen extends Screen {
         drawHeader(graphics);
         drawContent(graphics, mouseX, mouseY);
 
+        if (messageBox != null) messageBox.visible = linkKnown && linked && !unavailable
+            && (view.equals("messages") || view.equals("dm"));
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         if (loading) {
             graphics.text(font, Component.literal("Loading..."), contentX + 18, panelY + 58, MUTED, false);
         }
-        if (!error.isBlank()) {
-            graphics.text(font, Component.literal(error), contentX + 18, panelY + panelH - 24, 0xFFFF6B6B, false);
+        // Errors go above the message box (wrapped), unless the content area already shows it.
+        if (!error.isBlank() && !unavailable) {
+            List<String> lines = wrap(error, Math.max(24, (panelW - 370) / 6));
+            int y = panelY + panelH - 76 - (lines.size() - 1) * 11;
+            for (String line : lines) {
+                graphics.text(font, Component.literal(line), contentX + 18, y, 0xFFFF6B6B, false);
+                y += 11;
+            }
         }
     }
 
@@ -330,6 +350,10 @@ public final class SkyBallsDiscordScreen extends Screen {
     private void drawContent(GuiGraphicsExtractor g, int mx, int my) {
         int x = panelX + 327;
 
+        if (unavailable) {
+            drawUnavailable(g, x);
+            return;
+        }
         if (!linkKnown || !linked) {
             drawLinkScreen(g, x, my);
             return;
@@ -361,6 +385,21 @@ public final class SkyBallsDiscordScreen extends Screen {
             g.text(font, Component.literal("Your Discord password is entered only on Discord."),
                 centerX - 155, y + 111, MUTED, false);
         }
+    }
+
+    /** The server can't do Discord right now: its reason, centred, and how to try again. */
+    private void drawUnavailable(GuiGraphicsExtractor g, int x) {
+        int centerX = x + (panelW - 327) / 2;
+        int y = panelY + 155;
+        String title = "Discord isn't available";
+        g.text(font, Component.literal(title), centerX - font.width(title) / 2, y, TEXT, true);
+        y += 25;
+        for (String line : wrap(error.isBlank() ? "The SkyBalls server turned the request down." : error, Math.max(24, (panelW - 400) / 6))) {
+            g.text(font, Component.literal(line), centerX - font.width(line) / 2, y, MUTED, false);
+            y += 12;
+        }
+        String retry = "Reopen this screen to try again.";
+        g.text(font, Component.literal(retry), centerX - font.width(retry) / 2, y + 12, MUTED, false);
     }
 
     private void drawMessages(GuiGraphicsExtractor g, int x) {
@@ -434,6 +473,7 @@ public final class SkyBallsDiscordScreen extends Screen {
 
         int contentX = panelX + 327;
 
+        if (unavailable) return super.mouseClicked(event, doubleClick);
         if (!linkKnown || !linked) {
             int centerX = contentX + (panelW - 327) / 2;
             int y = panelY + 215;
@@ -502,11 +542,11 @@ public final class SkyBallsDiscordScreen extends Screen {
     private void openDiscordLink() {
         try {
             String uuid = Minecraft.getInstance().getUser().getProfileId().toString();
-            String url = "https://tastyfish.org/mod-api/discord/link?minecraft=" + uuid;
+            String url = "https://shadowisabot.com/mod-api/discord/link?minecraft=" + uuid;
             if (Desktop.isDesktopSupported()) {
                 Desktop.getDesktop().browse(URI.create(url));
             } else {
-                error = "Open https://tastyfish.org/mod-api/discord/link in your browser.";
+                error = "Open https://shadowisabot.com/mod-api/discord/link in your browser.";
             }
         } catch (Exception e) {
             error = "Could not open your browser.";

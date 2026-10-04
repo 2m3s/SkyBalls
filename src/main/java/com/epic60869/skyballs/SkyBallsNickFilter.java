@@ -33,7 +33,7 @@ public final class SkyBallsNickFilter {
 
     /**
      * Whether a nickname would pass for SJ staff: brackets (fake prefixes like "[OWNER]"), the words owner or
-     * tester (or any rank from tastyfish.org), or a ranked account's name (also with look-alike characters, e.g. "2M3S" or "Sv1nkus").
+     * tester (or any rank from shadowisabot.com), or a ranked account's name (also with look-alike characters, e.g. "2M3S" or "Sv1nkus").
      */
     public static boolean impersonatesStaff(String name) {
         return impersonatesStaff(name, null);
