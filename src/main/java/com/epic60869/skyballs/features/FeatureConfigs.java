@@ -1903,7 +1903,7 @@ public final class FeatureConfigs {
         public boolean routes = false;
 
         @Expose
-        @ConfigOption(name = "Door Highlight", desc = "Outline wither and blood doors, through walls: green when your team has the key, red when locked.")
+        @ConfigOption(name = "Door Highlight", desc = "Highlight wither and blood doors through walls once they show on your dungeon map (a room next to them is opened): green when your team has the key, red when locked.")
         @ConfigEditorBoolean
         public boolean doorHighlight = false;
 

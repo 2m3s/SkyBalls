@@ -45,7 +45,7 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 
 ### Changed
 - Show Pet Level has its own Show Overflow Pet Level toggle (Misc > Pets), instead of following the Pet Display's Overflow Pet Levels setting.
-- Door Highlight now shows wither and blood doors through walls.
+- Door Highlight shows wither and blood doors through walls (filled and outlined), and only once they show on your dungeon map, like Odin: a door appears when a room next to it is opened.
 - Spirit Bear, the Livid Solver, the Terracotta Timer and the Blessing Display are on the Dungeons page itself, so you don't have to look through the sub-categories for them.
 - M7 dragon priority follows NoammAddons for the Minister update, where dragons spawn one after another: your priority is the dragon that spawns first, and the new Solo Priority (Healer or Tank) takes the second one, on the first two dragons only unless First Dragon Only is off. The Split Power and Easy Power settings are gone.
 - Dungeon chest profit is now NoFrills' Dungeon Chest Value and Croesus Solver: the reward chest's value over the chest, Croesus's runs coloured unopened, rerolled (Kismet Feather), opened or opened with a key, with their floor on them, and in a run's chests the most profitable one highlighted (pink for very valuable chests or a dye) and the second best too (aqua when it's still worth a Dungeon Chest Key), with each chest's value in its tooltip. Its colours and the high-profit threshold can be changed.
