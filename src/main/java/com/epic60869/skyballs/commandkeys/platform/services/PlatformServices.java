@@ -22,7 +22,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 
-@SuppressWarnings("unused")
 public interface PlatformServices {
 
     PlatformServices INSTANCE = new com.epic60869.skyballs.commandkeys.platform.FabricServices();

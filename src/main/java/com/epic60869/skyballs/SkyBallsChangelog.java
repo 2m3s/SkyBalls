@@ -39,7 +39,7 @@ public final class SkyBallsChangelog {
         });
     }
 
-    private static List<Version> versions() {
+    static List<Version> versions() {
         if (versions != null && !versions.isEmpty()) return versions;
         List<Version> parsed = new ArrayList<>();
         String text = readChangelog();
@@ -100,7 +100,7 @@ public final class SkyBallsChangelog {
     }
 
     /** The installed SkyBalls version, e.g. "1.2.3". */
-    private static String installedVersion() {
+    static String installedVersion() {
         return net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("skyballs")
             .map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse("");
     }

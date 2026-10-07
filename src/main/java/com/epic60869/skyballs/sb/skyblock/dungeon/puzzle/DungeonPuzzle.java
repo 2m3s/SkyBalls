@@ -7,7 +7,6 @@ import com.mojang.brigadier.Command;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
-import com.epic60869.skyballs.sb.SkyblockerMod;
 import com.epic60869.skyballs.sb.events.DungeonEvents;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.Room;

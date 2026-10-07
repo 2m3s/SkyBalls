@@ -29,8 +29,8 @@ public final class SlayerPbHud {
     /** When the HUD shows (the "PB Leaderboard: Show" dropdown). */
     public enum Show {
         ALWAYS("Always"),
-        QUEST("Only during a slayer quest"),
-        ISLANDS("Only on slayer islands");
+        QUEST("In Quest"),
+        ISLANDS("On Islands");
 
         private final String displayName;
 

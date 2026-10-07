@@ -3,7 +3,6 @@ package com.epic60869.skyballs.features.misc;
 import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsHuds;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
@@ -23,7 +22,8 @@ import java.util.Locale;
 /**
  * FPS, TPS, ping and time HUD, ported from Skysoft's ServerInfoDisplay, ServerPingTracker, ServerTpsEstimator
  * and RealTimeDisplay (https://github.com/Akinsoft/Skysoft, LGPL-3.0), with the time as a fourth value. Ping is the round trip of a ping packet sent
- * once a second; TPS is how fast the server's clock moves between its time packets, averaged over the last 5. Both
+ * once a second; TPS is how fast the server's clock moves between its time packets (or, where the clock stands still
+ * as on Hypixel, how often the once-every-20-ticks time packets arrive), averaged over the last 5. Both
  * are also used by the !ping and !tps party commands.
  */
 public final class ServerInfo {
@@ -75,7 +75,7 @@ public final class ServerInfo {
     }
 
     public enum LabelStyle {
-        TEXT("Text"), SYMBOLS("Symbols"), VALUES_ONLY("Values Only");
+        TEXT("Text"), SYMBOLS("Symbols"), VALUES_ONLY("Values");
 
         private final String label;
 
@@ -98,10 +98,10 @@ public final class ServerInfo {
     }
 
     public enum TimeFormat {
-        TWENTY_FOUR_HOUR("24-hour (HH:mm)", "HH:mm"),
-        TWENTY_FOUR_HOUR_SECONDS("24-hour with seconds", "HH:mm:ss"),
-        TWELVE_HOUR("12-hour (h:mm a)", "h:mm a"),
-        TWELVE_HOUR_SECONDS("12-hour with seconds", "h:mm:ss a");
+        TWENTY_FOUR_HOUR("24h", "HH:mm"),
+        TWENTY_FOUR_HOUR_SECONDS("24h + sec", "HH:mm:ss"),
+        TWELVE_HOUR("12h", "h:mm a"),
+        TWELVE_HOUR_SECONDS("12h + sec", "h:mm:ss a");
 
         private final String label;
         private final DateTimeFormatter formatter;
@@ -252,7 +252,10 @@ public final class ServerInfo {
         long elapsed = at - lastTimeAt;
         lastGameTime = gameTime;
         lastTimeAt = at;
-        if (ticks <= 0 || elapsed <= 0) {
+        // Hypixel's game time doesn't move between time packets. Servers send one every 20 ticks, so count those
+        // instead (Odin's ServerUtils).
+        if (ticks <= 0) ticks = 20;
+        if (elapsed <= 0) {
             tpsSamples.clear();
             return;
         }
@@ -353,7 +356,7 @@ public final class ServerInfo {
     private static int colour(String value) {
         if (value == null || value.isEmpty()) return 0xFFFFFF;
         try {
-            return ChromaColour.Companion.specialToChromaRGB(value) & 0xFFFFFF;
+            return com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB() & 0xFFFFFF;
         } catch (Exception e) {
             return 0xFFFFFF;
         }

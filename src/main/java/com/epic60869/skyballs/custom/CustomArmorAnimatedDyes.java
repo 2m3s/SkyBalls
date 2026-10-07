@@ -21,7 +21,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
 
-import com.epic60869.skyballs.custom.CustomConfigManager;
 import com.epic60869.skyballs.custom.util.OkLabColor;
 import com.epic60869.skyballs.custom.util.ColorArgumentType;
 

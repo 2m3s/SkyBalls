@@ -151,7 +151,8 @@ public final class OdinPuzzleSolvers {
         ".+ is telling the truth and the reward is in his chest.", "My chest doesn't have the reward. At least one of the others is telling the truth!",
         "One of the others is lying.", "They are both telling the truth, the reward is in .+'s chest.", "They are both lying, the reward is in my chest!",
         "The reward is in my chest.", "The reward is not in my chest. They are both lying.", ".+ is telling the truth.", "My chest has the reward.");
-    private static final Pattern BLAZE_HP = Pattern.compile("^\\[Lv\\d+] {1,2}Blaze [\\d,]+/([\\d,]+)❤$");
+    /** "[Lv15] ♨ Blaze 20,000/20,000❤": the mob-type symbol varies, so only the "Blaze hp/max❤" part is matched. */
+    private static final Pattern BLAZE_HP = Pattern.compile("\\bBlaze [\\d,]+/([\\d,]+)❤");
     private static final int[][] TP_PADS = {
         {4, 69, 12}, {4, 69, 6}, {10, 69, 12}, {10, 69, 6}, {4, 69, 20}, {4, 69, 14}, {10, 69, 20}, {10, 69, 14},
         {4, 69, 28}, {4, 69, 22}, {10, 69, 28}, {10, 69, 22}, {12, 69, 28}, {12, 69, 22}, {18, 69, 28}, {18, 69, 22},
@@ -364,12 +365,18 @@ public final class OdinPuzzleSolvers {
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof ArmorStand stand) || !stand.hasCustomName()) continue;
             Matcher m = BLAZE_HP.matcher(ChatFormatting.stripFormatting(stand.getCustomName().getString()));
-            if (m.matches()) hp.put(stand, Integer.parseInt(m.group(1).replace(",", "")));
+            if (!m.find()) continue;
+            try {
+                hp.put(stand, Integer.parseInt(m.group(1).replace(",", "")));
+            } catch (NumberFormatException ignored) {}
         }
         blazes.clear();
         blazes.addAll(hp.keySet());
         Comparator<ArmorStand> byHp = Comparator.comparingInt(hp::get);
-        blazes.sort(BLAZE_LOW.equals(room.getName()) ? byHp.reversed() : byHp);
+        // Blazes down in the room (below y 69) are shot highest first, ones up high lowest first (like Skyblocker),
+        // so the order doesn't hang on which of the two room names is which.
+        double y = blazes.stream().mapToDouble(Entity::getY).average().orElse(70);
+        blazes.sort(y < 69 ? byHp.reversed() : byHp);
     }
 
     // ----- Water Board -----

@@ -60,6 +60,11 @@ public final class Sbc {
         try {
             switch (type) {
                 case "flags" -> Flags.update(packet);
+                // Errors nothing else asked for (a message the server refused...) were dropped silently; say them.
+                case "error" -> {
+                    String message = str(packet, "message");
+                    error(message.isBlank() ? "The SkyBalls server refused that (" + str(packet, "code") + ")." : message);
+                }
                 case "museumResult" -> com.epic60869.skyballs.features.misc.MuseumTooltip.handle(packet);
                 case "updateAvailable", "announcement", "motd" -> SbcServer.handle(type, packet);
                 case "reactions", "reactionError", "chatBlocked", "muted", "unmuted" -> SbcChat.handle(type, packet);

@@ -15,7 +15,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
@@ -36,7 +35,7 @@ public class ClientBlockPosArgumentType implements ArgumentType<ClientPosArgumen
 	@SuppressWarnings("deprecation")
 	public static BlockPos getLoadedBlockPos(CommandContext<FabricClientCommandSource> context, ClientLevel world, String name) throws CommandSyntaxException {
 		BlockPos blockPos = getBlockPos(context, name);
-		//FIXME Vanilla still uses this deprecated method, watch out in future updates in case this changes
+		//Note: vanilla still uses this deprecated method, watch out in future updates in case this changes
 		if (!world.hasChunkAt(blockPos)) throw ERROR_NOT_LOADED.create();
 		if (!world.isInWorldBounds(blockPos)) throw ERROR_OUT_OF_WORLD.create();
 

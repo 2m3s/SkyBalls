@@ -101,7 +101,6 @@ public final class SkyBallsDungeons {
         sb.dungeons.puzzleSolvers.solveTicTacToe = d.puzzles.ticTacToe;
         sb.dungeons.puzzleSolvers.solveThreeWeirdos = false; // Odin solver in OdinPuzzleSolvers
         sb.dungeons.puzzleSolvers.creeperSolver = false; // Odin solver in OdinPuzzleSolvers
-        sb.dungeons.puzzleSolvers.solveWaterboard = false; // Odin solver in OdinPuzzleSolvers
         // Only Odin's Water Board solver draws the lever line; Skyblocker's one-flow solver drew a second one.
         sb.dungeons.puzzleSolvers.waterboardOneFlow = false;
         // Skyblocker's previews still run next to Odin's solver.
@@ -116,8 +115,9 @@ public final class SkyBallsDungeons {
 
         sb.dungeons.secretWaypoints.enableSecretWaypoints = d.secrets.secretWaypoints;
         sb.dungeons.secretWaypoints.waypointType = d.secrets.waypointType;
-        // SkyBalls's own door highlight replaces Skyblocker's blood-rush door box.
-        sb.dungeons.doorHighlight.enableDoorHighlight = !d.secrets.doorHighlight;
+        // SkyBalls's own door highlight replaces Skyblocker's blood-rush door box (it used to come on whenever
+        // SkyBalls's was off, so turning everything off still left a door highlight).
+        sb.dungeons.doorHighlight.enableDoorHighlight = false;
 
         // Terminals are always solved by OdinTerminals (Odin or NoammAddons style); Skyblocker's highlights stay off.
         sb.dungeons.terminals.solveColor = false;

@@ -35,7 +35,6 @@ import java.util.regex.Pattern;
 public final class BazaarNotifications {
     private static final Pattern FILLED = Pattern.compile("^(?:\\[Bazaar] )?Your (?<side>Buy Order|Sell Offer) for [\\d,]+x (?<item>.+) was filled!$");
     private static final Pattern CANCELLED = Pattern.compile("^(?:\\[Bazaar] )?Your (?<side>Buy Order|Sell Offer) for (?:[\\d,]+x )?(?<item>.+) was cancelled!$");
-    private static final Pattern NUMBER = Pattern.compile("[\\d,]+(?:\\.\\d+)?");
     private static final long ORDER_CHECK_MS = 1_000L;
     private static final long SOUND_GAP_MS = 180L;
 
@@ -83,14 +82,75 @@ public final class BazaarNotifications {
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
             if (!(screen instanceof ContainerScreen container)) return;
             ScreenEvents.afterTick(screen).register(s -> {
-                if (++screenTicks % 20 == 0 && enabled() && isOrdersScreen(container)) rememberOrders(container);
+                if (++screenTicks % 20 != 0 || !Compat.isOnSkyblock() || !isOrdersScreen(container)) return;
+                if (enabled()) rememberOrders(container);
+                if (coloursEnabled()) Portfolio.refreshPrices(false);
             });
+            ScreenEvents.remove(screen).register(s -> PARSED.clear());
         });
     }
 
     private static boolean enabled() {
         SkyBallsConfig.BazaarNotificationsSettings c = config();
         return c != null && c.enabled && Compat.isOnSkyblock();
+    }
+
+    private static boolean coloursEnabled() {
+        SkyBallsConfig.BazaarNotificationsSettings c = config();
+        return c != null && c.orderColours && Compat.isOnSkyblock();
+    }
+
+    // ------------------------------------------------------------ order colours (Bazaar Utils)
+
+    private enum Position { BEST, MATCHED, OUTBID }
+
+    /** An order item in the orders menu; {@code order} is null for items that aren't open orders. */
+    private record ParsedSlot(WatchedOrder order, boolean full) {}
+
+    /** Parsed order items, so lore isn't read every frame; cleared when the menu closes. */
+    private static final Map<ItemStack, ParsedSlot> PARSED = new java.util.WeakHashMap<>();
+
+    /**
+     * Colours your orders' slots in the Bazaar orders menu by where they stand (Bazaar Utils' order highlight): green
+     * when yours is the best price, yellow when another order matches it, red when outbid. Drawn behind the item.
+     */
+    public static void renderSlot(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.world.inventory.Slot slot) {
+        if (!slot.hasItem() || slot.container instanceof Inventory || !coloursEnabled()) return;
+        if (!(Minecraft.getInstance().gui.screen() instanceof ContainerScreen screen) || !isOrdersScreen(screen)) return;
+        ItemStack stack = slot.getItem();
+        ParsedSlot parsed = PARSED.computeIfAbsent(stack, s -> new ParsedSlot(parseOrderStack(s), isFull(s)));
+        if (parsed.order == null || parsed.full) return;
+        Position position = position(parsed.order);
+        if (position == null) return;
+        int colour = switch (position) {
+            case BEST -> 0x9055DD55;
+            case MATCHED -> 0x90FFDD33;
+            case OUTBID -> 0x90FF4444;
+        };
+        g.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, colour);
+    }
+
+    private static Position position(WatchedOrder order) {
+        double best = Portfolio.bazaarOrderBookPrice(order.productId, order.buyOrder);
+        if (best <= 0) return null;
+        // Prices are shown to 0.1 coins.
+        if (Math.abs(order.unitPrice - best) < 0.05) {
+            return Portfolio.bazaarOrderBookCount(order.productId, order.buyOrder) > 1 ? Position.MATCHED : Position.BEST;
+        }
+        boolean outbid = order.buyOrder ? order.unitPrice < best : order.unitPrice > best;
+        // Better than the API's best: yours is newer than the last price update.
+        return outbid ? Position.OUTBID : Position.BEST;
+    }
+
+    /** A fully filled order is only waiting to be claimed, so it can't be outbid. */
+    private static boolean isFull(ItemStack stack) {
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) return false;
+        for (Component line : lore.lines()) {
+            String text = clean(line.getString());
+            if (text.startsWith("Filled:") && text.contains("100%")) return true;
+        }
+        return false;
     }
 
     private static boolean isOrdersScreen(ContainerScreen screen) {

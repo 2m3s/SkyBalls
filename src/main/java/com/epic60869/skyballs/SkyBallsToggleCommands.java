@@ -62,12 +62,12 @@ public final class SkyBallsToggleCommands {
     private static Map<String, Toggle> toggles() {
         Map<String, Toggle> out = new LinkedHashMap<>();
         SkyBallsConfig config = SkyBallsConfig.current();
-        if (config != null) collect(config, "", out, 0);
+        if (config != null) collect(config, "", out, 0, java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
         return out;
     }
 
-    private static void collect(Object obj, String prefix, Map<String, Toggle> out, int depth) {
-        if (obj == null || depth > 4) return;
+    private static void collect(Object obj, String prefix, Map<String, Toggle> out, int depth, java.util.Set<Object> seen) {
+        if (obj == null || depth > 12 || !seen.add(obj)) return;
         for (Field field : obj.getClass().getFields()) {
             if (Modifier.isStatic(field.getModifiers())) continue;
             try {
@@ -78,7 +78,7 @@ public final class SkyBallsToggleCommands {
                     out.put(path, new Toggle(obj, field, option == null ? field.getName() : option.name()));
                 } else if (value != null && value.getClass().getName().startsWith("com.epic60869.skyballs")
                     && !value.getClass().isEnum() && !(value instanceof Runnable)) {
-                    collect(value, path, out, depth + 1);
+                    collect(value, path, out, depth + 1, seen);
                 }
             } catch (IllegalAccessException ignored) {}
         }
@@ -131,8 +131,44 @@ public final class SkyBallsToggleCommands {
                 }
             } catch (IllegalAccessException ignored) {}
         }
+        count += disableOthers(SkyBallsConfig.current());
         SkyBallsConfig.saveCurrent(SkyBallsConfig.current());
+        com.epic60869.skyballs.features.dungeons.SkyBallsDungeons.syncConfig();
         return say(Component.literal("Turned off " + count + " settings. Turn features back on in /sb.").withStyle(ChatFormatting.YELLOW));
+    }
+
+    /**
+     * Features that aren't an on/off switch in the SkyBalls config: dropdowns whose "off" is a choice, and the
+     * Skyblocker waypoints, whose options are saved in their own file.
+     */
+    private static int disableOthers(SkyBallsConfig config) {
+        int count = 0;
+        if (config != null) {
+            var pestSpawn = config.farming.garden.pestSpawn;
+            if (pestSpawn.chatMessageFormat != com.epic60869.skyballs.features.FeatureConfigs.PestSpawn.ChatMessageFormat.HYPIXEL) {
+                pestSpawn.chatMessageFormat = com.epic60869.skyballs.features.FeatureConfigs.PestSpawn.ChatMessageFormat.HYPIXEL;
+                count++;
+            }
+            var dragons = config.dungeons.f7.witherDragons;
+            if (dragons.soloPriority != com.epic60869.skyballs.features.FeatureConfigs.DragonSoloPriority.OFF) {
+                dragons.soloPriority = com.epic60869.skyballs.features.FeatureConfigs.DragonSoloPriority.OFF;
+                count++;
+            }
+            if (dragons.waypoints != com.epic60869.skyballs.features.FeatureConfigs.DragonWaypoints.OFF) {
+                dragons.waypoints = com.epic60869.skyballs.features.FeatureConfigs.DragonWaypoints.OFF;
+                count++;
+            }
+        }
+        var waypoints = com.epic60869.skyballs.sb.config.SkyblockerConfigManager.get().uiAndVisuals.waypoints;
+        if (waypoints.enableWaypoints || waypoints.enableChatWaypoints) {
+            if (waypoints.enableWaypoints) count++;
+            if (waypoints.enableChatWaypoints) count++;
+            com.epic60869.skyballs.sb.config.SkyblockerConfigManager.updateOnly(c -> {
+                c.uiAndVisuals.waypoints.enableWaypoints = false;
+                c.uiAndVisuals.waypoints.enableChatWaypoints = false;
+            });
+        }
+        return count;
     }
 
     private static int say(Component message) {

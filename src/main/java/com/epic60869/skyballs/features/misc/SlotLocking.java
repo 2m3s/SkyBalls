@@ -41,7 +41,18 @@ public final class SlotLocking {
     public static void init() {
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (!(screen instanceof AbstractContainerScreen<?> container)) return;
-            ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> !keyPressed(container, event.key()));
+            ScreenKeyboardEvents.allowKeyPress(screen).register((s, event) -> {
+                // The Protect Item key protects the hovered item.
+                if (com.epic60869.skyballs.SkyBallsKeyMappings.PROTECT_ITEM != null
+                    && com.epic60869.skyballs.SkyBallsKeyMappings.PROTECT_ITEM.matches(event)) {
+                    Slot hovered = ((SkyBallsContainerScreenAccessor) container).skyballs$getHoveredSlot();
+                    if (hovered != null && hovered.hasItem()) {
+                        toggleProtection(hovered.getItem());
+                        return false;
+                    }
+                }
+                return !keyPressed(container, event.key());
+            });
             ScreenEvents.afterExtract(screen).register((s, g, mouseX, mouseY, delta) -> render(container, g, mouseX, mouseY));
             ScreenEvents.remove(screen).register(s -> pendingBind = null);
         });
@@ -50,6 +61,11 @@ public final class SlotLocking {
                 dispatcher.register(ClientCommands.literal(root)
                     .then(ClientCommands.literal("protect").executes(context -> toggleProtection())));
             }
+        });
+        // The Protect Item key in the world: the held item.
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            while (com.epic60869.skyballs.SkyBallsKeyMappings.PROTECT_ITEM != null
+                && com.epic60869.skyballs.SkyBallsKeyMappings.PROTECT_ITEM.consumeClick()) toggleProtection();
         });
     }
 
@@ -73,7 +89,10 @@ public final class SlotLocking {
     private static int toggleProtection() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return 0;
-        ItemStack stack = mc.player.getMainHandItem();
+        return toggleProtection(mc.player.getMainHandItem());
+    }
+
+    private static int toggleProtection(ItemStack stack) {
         String key = protectionKey(stack);
         if (key.isEmpty()) {
             say(Component.literal("Hold an item to protect or unprotect it.").withStyle(ChatFormatting.RED));
@@ -202,13 +221,6 @@ public final class SlotLocking {
         SkyBallsContainerScreenAccessor access = (SkyBallsContainerScreenAccessor) screen;
         int left = access.skyballs$getLeftPos();
         int top = access.skyballs$getTopPos();
-        for (Slot slot : screen.getMenu().slots) {
-            if (!isProtected(slot.getItem())) continue;
-            int x = left + slot.x;
-            int y = top + slot.y;
-            g.outline(x, y, 16, 16, 0xFF55DD99);
-            g.text(Minecraft.getInstance().font, "★", x + 8, y - 1, 0xFFFFD54F, true);
-        }
 
         if (!c.enabled || !(screen instanceof InventoryScreen)) return;
         Slot hovered = access.skyballs$getHoveredSlot();
@@ -230,6 +242,19 @@ public final class SlotLocking {
             ey = top + end.y + 8;
         }
         line(g, sx, sy, ex, ey, 0xFF55FF55);
+    }
+
+    /**
+     * The star on a protected item, drawn with the slot (coordinates relative to the menu) so tooltips and the item on
+     * your cursor go over it. Drawn at 3/4 size in the slot's top-right corner.
+     */
+    public static void renderSlot(GuiGraphicsExtractor g, Slot slot) {
+        if (!isProtected(slot.getItem())) return;
+        g.pose().pushMatrix();
+        g.pose().translate(slot.x + 10.5f, slot.y - 0.5f);
+        g.pose().scale(0.75f, 0.75f);
+        g.text(Minecraft.getInstance().font, "★", 0, 0, 0xFFFFD54F, true);
+        g.pose().popMatrix();
     }
 
     /** A straight line made of small squares. */

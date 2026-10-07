@@ -155,10 +155,10 @@ public final class DianaTracker {
     private static final Pattern RARE_DROP = Pattern.compile("^RARE DROP! (?<drop>.+)$");
     private static final Pattern DUG_TREASURE = Pattern.compile("^RARE DROP! You dug out an? (?<drop>.+?)!$");
     private static final Pattern MAGIC_FIND = Pattern.compile("\\(\\+(?<mf>\\d+) ✯ Magic Find\\)");
-    private static final Pattern DYE = Pattern.compile("^WOW! (?:\\[[^]]+] )?(?<name>\\w+) found an? Mythological Dye");
+    private static final Pattern DYE = Pattern.compile("^WOW! (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found an? Mythological Dye");
     private static final Pattern CHARM = Pattern.compile("^CHARM! You charmed the (?<mob>.+?) and received (?<n>\\d+) (?<shard>.+?) Shards?!$");
     private static final Pattern LS_SHARDS = Pattern.compile("^LOOT SHARE You received (?<n>\\d+) (?<shard>.+?) Shards? for assisting .+!$");
-    private static final Pattern PHOENIX = Pattern.compile("^(?:\\[[^]]+] )?(?<name>\\w+) found a Phoenix pet!");
+    private static final Pattern PHOENIX = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+) found a Phoenix pet!");
     private static final Pattern COCOON = Pattern.compile("^CAUGHT! You cocooned an? (?<mob>[^!]+)!$");
     private static final List<String> PREFIXES = List.of("Empyrean", "Exalted", "Runic", "Venerable", "Stalwart", "Blessed");
 

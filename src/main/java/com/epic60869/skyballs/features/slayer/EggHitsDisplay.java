@@ -4,7 +4,6 @@ import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -77,7 +76,7 @@ public final class EggHitsDisplay {
 
     private static int colour(String value) {
         try {
-            return ChromaColour.Companion.specialToChromaRGB(value) & 0xFFFFFF;
+            return com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB() & 0xFFFFFF;
         } catch (Exception e) {
             return 0xFFFFFF;
         }

@@ -17,7 +17,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.CommonColors;
 
-import com.epic60869.skyballs.custom.util.GuiHelper;
 
 /**
  * @implNote Does not render a background.

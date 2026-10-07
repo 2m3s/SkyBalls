@@ -43,6 +43,7 @@ public final class SbcItemIcons {
     private static final Map<String, Icon> ICONS = new ConcurrentHashMap<>();
     private static final Set<String> REQUESTED = ConcurrentHashMap.newKeySet();
     private static final Map<JsonObject, ItemStack> STACKS = new IdentityHashMap<>();
+    private static final Map<String, ItemStack> ID_STACKS = new ConcurrentHashMap<>();
 
     private SbcItemIcons() {}
 
@@ -64,11 +65,27 @@ public final class SbcItemIcons {
 
     /** Draws the item at x, y (16x16) with its count. */
     public static void draw(GuiGraphicsExtractor g, JsonObject item, int x, int y) {
-        ItemStack stack = stack(item);
-        String id = Sbc.str(item, "id");
-        // Heads and items with a real model look right as they are.
-        boolean looksRight = stack.is(Items.PLAYER_HEAD) || stack.has(DataComponents.ITEM_MODEL) && hasModel(stack.get(DataComponents.ITEM_MODEL))
-            || !isPlaceholder(stack);
+        draw(g, stack(item), Sbc.str(item, "id"), x, y);
+    }
+
+    /** Draws a SkyBlock item by id (a pet's held item, a shared inventory's slot), however Hypixel draws it. */
+    public static void drawId(GuiGraphicsExtractor g, String id, int x, int y) {
+        ItemStack stack = ID_STACKS.get(id);
+        if (stack == null) {
+            stack = RepoItems.itemStack(id);
+            // Not kept until the item list is in, or it would stay a barrier.
+            if (RepoItems.itemsLoaded()) ID_STACKS.put(id, stack);
+        }
+        draw(g, stack, id, x, y);
+    }
+
+    /** Draws {@code stack} at x, y, or the downloaded picture of item {@code id} when the stack would be a stand-in. */
+    public static void draw(GuiGraphicsExtractor g, ItemStack stack, String id, int x, int y) {
+        // Heads and items given a real model look right as they are. Every stack has its base item's model
+        // (paper's, for paper), so only a model that differs from the base item's counts.
+        Identifier model = stack.get(DataComponents.ITEM_MODEL);
+        boolean ownModel = model != null && !model.equals(stack.getPrototype().get(DataComponents.ITEM_MODEL)) && hasModel(model);
+        boolean looksRight = stack.is(Items.PLAYER_HEAD) || ownModel || !isPlaceholder(stack);
         if (!looksRight && !id.isEmpty()) {
             Icon icon = icon(id);
             if (icon != null) {
@@ -88,12 +105,7 @@ public final class SbcItemIcons {
     }
 
     private static boolean hasModel(Identifier modelId) {
-        try {
-            var models = Minecraft.getInstance().getModelManager();
-            return models.getItemModel(modelId) != models.getItemModel(Identifier.fromNamespaceAndPath("skyballs", "no_such_item_model"));
-        } catch (Exception e) {
-            return false;
-        }
+        return RepoItems.hasItemModel(modelId);
     }
 
     /** The downloaded icon, or null while it downloads (or if there is none). */

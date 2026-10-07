@@ -22,7 +22,6 @@ import com.epic60869.skyballs.commandkeys.CommandKeys;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
-@SuppressWarnings("unused")
 public class Localization {
 
     private Localization() {

@@ -1,6 +1,5 @@
 package com.epic60869.skyballs;
 
-import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -20,6 +19,8 @@ public final class SkyBallsChatCompactor {
     private static final int WINDOW_TICKS = 100; // 5 seconds at Minecraft's 20 TPS
     private static final Pattern COUNT_SUFFIX =
         Pattern.compile("\\s*\\u00a7?7?\\s*\\(x(\\d+)\\)$");
+    /** Hypixel's decorative lines (▬▬▬, ----, blank padding): never compacted, they belong to the message around them. */
+    private static final Pattern SEPARATOR = Pattern.compile("^[\\s▬\\-=_~*⏤━─]*$");
 
     private static String lastKey;
     private static long lastAt;
@@ -73,15 +74,17 @@ public final class SkyBallsChatCompactor {
 
         GuiMessage newest = messages.get(0);
         String key = key(newest.content());
-        if (key.isBlank()) return false;
+        if (key.isBlank() || SEPARATOR.matcher(key).matches()) return false;
 
         long now = newest.addedTime();
         for (int i = 1; i < messages.size(); i++) {
             GuiMessage old = messages.get(i);
-            if (!same(newest.content(), old.content())) continue;
-
+            // Newest first: everything from here on is older than the window. Without this, every new line was
+            // compared with the whole chat history (huge with More Chat History), which lagged on bursts of
+            // messages such as the bestiary's.
             long age = Math.max(0L, now - old.addedTime());
-            if (age > WINDOW_TICKS) continue;
+            if (age > WINDOW_TICKS) break;
+            if (!key.equals(key(old.content()))) continue;
 
             int oldCount = count(old.content());
             int newCount = oldCount + 1;

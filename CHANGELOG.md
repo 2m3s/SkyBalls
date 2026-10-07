@@ -2,6 +2,82 @@
 
 All notable changes to SkyBalls are listed here, newest first.
 
+## 1.5 — 2026-10-06
+
+Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), so both builds have the same features, plus the new features below.
+
+### Added
+- Livid Solver (Dungeons, F5/M5), from Odin: once the wool above the arena shows which Livid is real, a chat line names her and she's boxed in a colour you choose (not while you're blind), plus a HUD counting down her invulnerability.
+- Terracotta Timer (Dungeons, F6/M6), from Odin: seconds until each terracotta respawns, over its flower pot.
+- Blessing Display (Dungeons), from Odin: a HUD with the dungeon's blessings and their levels from the tab list, each with its own toggle and colour. Move it in /sb gui.
+- Relic Place Timer (Dungeons > F7/M7 > Dragons and Relics), from NoammAddons: once all five relics are placed, who placed each one and how long after the Wither King appeared, with your PB for your relic.
+- Spawn Timer also shows your priority dragon's timer big in the middle of the screen, like NoammAddons.
+- Garden Visitors (Farming > Visitors), from SkyHanni: the Visitor Shopping List (what your visitors need, with prices, how many you have in your sacks, "Craftable!" and the items new visitors usually want; also in the visitor's menu, the Bazaar, your inventory and number signs, and optionally in the Bazaar Alley and farming areas), the Visitor Timer (visitors waiting and time until the next one, with the sixth visitor estimate, a warning and an optional ping), prices in the offer's tooltip (each item, coins per copper and per Garden Experience, and the base crops needed), the Reward Warning (a chat message and a warning over the visitor for rare rewards, and blocking refusing or accepting by reward, copper price, coin loss or never-accepted visitors; hold the bypass key to click anyway), status highlights on the visitors (new, items ready, accepted, refused), arrival title and chat message, hidden visitor chat and Hypixel's arrival message, compact reward messages, an accept hotkey, a Supercraft button, Drops Statistics, Charmed Visitors, the Jacob/Anita NPC fix, and highlighting or blocking visitors outside the Garden. Visitor names, rarities and wanted items come from SkyHanni's repo.
+- Enchant Parsing (Misc > Enchant Parsing), from SkyHanni: enchants in tooltips coloured by level (perfect enchants in moving chroma by default, then great, good and poor), ultimate enchants bold, sorted, laid out Normal, Compressed or Stacked, with stacking enchants' progress and an option to hide enchant descriptions. Enchant levels come from SkyHanni's repo.
+- Stash Messages (Chat > Stash Messages), from SkyHanni: Hypixel's stash reminder becomes one line you can click to pick up (or view) your stash, repeats of the same counts are hidden, and so is "One or more items didn't fit in your inventory...".
+- Hook & Bobber (Fishing), from SkyHanni: the Fishing Bobber Timer (how long your bobber has been out, from the cast or from when it lands) and the Fishing Hook Display (Hypixel's reel-in countdown and "!!!" bigger on your screen, with the original hidden). Move and resize them in /sb gui.
+- Bestiary Overlay (Combat > Bestiary Overlay), from SkyHanni: in the Bestiary menu, each family's kills and progress to max or to the next tier (hover for the details), sorted by global progress, total kills or kills needed, and each category's families found and completed, with clickable Number Format, Display Type, Number Type (Roman or normal) and Hide Maxed buttons. Maxed families and categories are highlighted green, and if Overall Progress is hidden the overlay asks you to turn it on and highlights its Eye of Ender red. Move and resize it in /sb gui.
+- Highlight Withers (Dungeons > Mobs), like NoammAddons' Wither ESP but not ESP: a box around the F7/M7 boss withers you can see, hidden behind walls, in a colour you choose.
+- Highlight Teammates (Dungeons > Mobs): your dungeon teammates glow in their class colour, the same colours as the Leap Menu.
+- Highlight Active Pet (Misc > Pets): your summoned pet is highlighted in the Pets menu. Its colour can be changed.
+- Sack amounts are remembered (from the sack menus and the "[Sacks]" messages) for the visitor shopping list.
+- Warp to infested plots (Farming > Garden > Pest Finder), from SkyHanni: a Teleport Hotkey and /shtpinfested (/sbtpinfested if SkyHanni is installed) warp you to the nearest plot with pests with /plottp. Optionally even when you're already in one, or back to the Garden when there are no pests. Which plots have pests is tracked from the sidebar, the tab list's Pests widget, the Configure Plots menu and the pest spawn, kill and "no pests" messages; open Configure Plots once so renamed plots and the Barn are known.
+- Mute Overflow Drop Sound (Farming > Garden, on by default): no nether portal sound with "OVERFLOW! Your ... has just dropped a Tool Exp Capsule!".
+- Loadout Highlight (Misc, on by default), from SkyHanni: the loadout you have equipped is highlighted in the Loadouts menu, in a colour you choose.
+- Party commands: !pt, !promote and !demote take the start of a name (!pt nix transfers to NixJussid), and there's a new !kick (!kick nix kicks NixJussid, never you), from the party members SkyBalls has seen in party messages and /p list. If several members start with it, it says so in party chat instead.
+- Skill Progress is now SkyHanni's full version (Skill Progress settings, off by default): the progress display with level, skill icon, XP gained and progress or percentage and actions left, aligned over a progress bar (plain colour, chroma, or textured like the XP bar with five extra textures); the Skill ETA display with XP/hour, time to the next level or your goal, and the session timer (click to reset); the All Skills display (hover for XP, click to open /skills); overflow levels past the cap, with the overflow level-up message; custom goal levels with /shskills goal <skill> <level> (also /shskills levelwithxp and xpforlevel; /sbskills if SkyHanni is installed); overflow and goal progress in the Your Skills menu's tooltips; XP from Jerry Boxes, gifts and Lily-splosions; and hiding the skill XP in the action bar.
+- Skill Progress (Skills), from SkyHanni: the skill you're getting XP in with its level, a progress bar, percent and XP to the next level, XP per hour and the time until you level up.
+- Party Coord Waypoints (Mayors > Diana, on by default), like SkyHanni: coordinates a party member sends ("x: -30, y: 87, z: 126") get a beacon waypoint with their name and distance, until you reach it or for a minute.
+- Dungeon Chest Profit (Dungeons > Chest Profit): a reward chest's value minus its cost above the chest; at Croesus, each chest's profit with the best one highlighted, and the list of runs tinted green (unopened), yellow (one chest opened) or red (all claimed).
+- Highlight Bats (Dungeons > Mobs), and /sb debug starred to see what the starred mob highlight finds.
+- Blood Camp Beam Time: the mob kill countdown (and its box) turns red at the time to shoot your Mage beam, 0.2s by default, like Odin and NoammAddons.
+- /pt Name runs /p transfer Name. Minecraft's advancement and recipe popups are always hidden.
+- Hide Block Break Particles (Misc > Random), like SkyHanni's: no particles when a block breaks, yours or anyone's, and none flying off the block you're mining.
+- Protect Item key (Options > Controls > SkyBalls, unbound by default): runs /sb protect on the item you're holding, or on the item under your mouse in any menu.
+- Estimated Item Value (Misc > Item Price Tooltip, on by default), like SkyHanni's: below the lowest BIN and 3 day average, the item's price plus what's applied to it: recombobulator, hot and fuming potato books, enchantments, master stars, gemstones, Art of War and Art of Peace, scrolls, dyes, skins, rune, drill parts, Wood Singularity, Farming for Dummies, Polarvoid, Transmission Tuners, Mana Disintegrators, Jalapeño, Etherwarp, Book of Stats, Divan's Powder Coating and talisman enrichment, each at its bazaar insta-buy price or lowest BIN.
+- Bazaar Order Colours (Misc > Bazaar, on by default), like Bazaar Utils: in your Bazaar orders menu each order's slot is green when it's the best price, yellow when another order matches its price, and red when it's been outbid. Fully filled orders aren't coloured.
+- Highlight Infested Plots (Farming > Garden > Pest Finder, on by default): plots with pests are red in Configure Plots (/desk).
+- Plot Teleport Panel (Farming > Garden > Pest Finder, on by default), like Skyblocker's Garden Plots widget: in the Garden, a map of your plots to the right of your inventory. Click a plot to /plottp there; plots with pests are red with their pest count, locked plots grey and the plot you're in outlined, and "TP to Pests" warps to the nearest plot with pests.
+- Shard Level Up Highlight (Misc, on by default): attribute shards you own enough of to level up or unlock are highlighted green in the Hunting Box and the Attribute Menu (open the Hunting Box first so the menu knows how many you have).
+- Show Pet Level (Misc > Pets, on by default): each pet's level on its slot in the Pets menu, in gold when it's maxed.
+- Spirit Bear (Dungeons > Timers and Alerts, on by default), from Odin: in the F4 and M4 boss, a HUD with the spirits killed (25 on F4, 30 on M4), then the countdown until the Spirit Bear spawns once the last one dies, then "Alive!". Move it in /sb gui.
+- What's New (General > What's New After Updates, on by default), like SkyHanni: after SkyBalls updates, a chat message with a [What's New] button opens a list of the new features, each with an ON/OFF toggle and a button to its settings, plus All On / All Off. /sb whatsnew opens it any time.
+
+### Changed
+- Show Pet Level has its own Show Overflow Pet Level toggle (Misc > Pets), instead of following the Pet Display's Overflow Pet Levels setting.
+- Door Highlight now shows wither and blood doors through walls.
+- Spirit Bear, the Livid Solver, the Terracotta Timer and the Blessing Display are on the Dungeons page itself, so you don't have to look through the sub-categories for them.
+- M7 dragon priority follows NoammAddons for the Minister update, where dragons spawn one after another: your priority is the dragon that spawns first, and the new Solo Priority (Healer or Tank) takes the second one, on the first two dragons only unless First Dragon Only is off. The Split Power and Easy Power settings are gone.
+- Dungeon chest profit is now NoFrills' Dungeon Chest Value and Croesus Solver: the reward chest's value over the chest, Croesus's runs coloured unopened, rerolled (Kismet Feather), opened or opened with a key, with their floor on them, and in a run's chests the most profitable one highlighted (pink for very valuable chests or a dye) and the second best too (aqua when it's still worth a Dungeon Chest Key), with each chest's value in its tooltip. Its colours and the high-profit threshold can be changed.
+- Goldor's death tick timer counts every 60 ticks (it was 50, which drifted), starts from Storm's death too and stops when the core opens, like Odin. The Goldor Tick Period setting is gone.
+- Diana Profit Tracker is laid out like SBO's Diana loot tracker: every rare drop always listed with its count, lootshares, rate per mob it drops from and value, then your other drops, coins, burrows, mobs, profit (and per hour) and playtime.
+- Arrow Counter only shows while you hold a bow or crossbow (Arrow Counter Only With Bow, on by default).
+- Shorter dropdown labels in the settings, so they're no longer shrunk to fit (e.g. "Own + Party", "Insta-Sell", "24h + sec", "In Quest"). What each choice means is in the option's description.
+- [item] in plain chat now reads "[Heroic Hyperion](sb:HYPERION)" instead of a coded blob, so players without SkyBalls can read it; SkyBalls players still see the hoverable item. Old [item] links still work.
+- /sb protect marks protected items with a smaller star only; the green box around them is gone.
+- The Deployable Timers HUD works without Item Cooldowns turned on, and also times Warning and Alert Flares.
+
+### Fixed
+- Server Info Display: TPS showed "--" on Hypixel.
+- Tooltip Scroll: the mouse wheel didn't move tooltips that fit on screen, like normal item tooltips. Those now move when the screen isn't using the wheel.
+- Storage overlay: the mouse wheel didn't scroll it while another mod's item list (SkyBlock Item List) was under the mouse.
+- The game lagged when a bestiary message (or any burst of chat) came in: compact chat compared every new line with your whole chat history (huge with More Chat History) and rebuilt the chat when the bestiary's two separator lines matched. It now only looks at the last 5 seconds and never compacts separator lines, and nickname replacement skips names that aren't in the message.
+- Terminals: the vanilla terminal menu no longer shows for a split second when a terminal opens or Hypixel reopens it.
+- Starred mob boxes no longer go on teammates standing next to a starred mob (often the Mage and Tank).
+- /sb protect's box and star no longer draw over tooltips and the item on your cursor.
+- Pet Display: a pet favourited in the Pets menu (⭐) never showed its held item on the icon, as its name didn't match the tab list's.
+- !pt Name transfers the party to Name; leader commands work when the game started while you were already in a party (it checks /p list).
+- Starred mob boxes no longer need a clear line of sight to the mob's head (they're hidden behind walls anyway).
+- Party Commands (!warp, !pt, !f7, !fps, !ping, the Diana ones...) didn't answer anyone with a Hypixel emblem (☘, ☣...) before their name, so they never worked for you. Your own !warp, !allinvite and !f7 / !m7 work too now while you're leader.
+- Blaze puzzle solver: blazes' names now have a symbol before "Blaze", which it didn't expect, so it found none. The kill order now follows where the blazes are (low in the room: highest HP first), like Skyblocker.
+- Pet Display and other item icons: items Hypixel lists with old 1.8 names (Raw Fish, Ink Sack dyes, Lily Pad, Dandelion, wool, glass...) showed as barriers or the wrong item; newer paper-based items (Winding Ivy, Sloth Claws...) use Hypixel's model or a downloaded icon instead of paper. A held "Saddle" is the pet item, not the plain saddle.
+- Shared items (SkyBalls chat, [item], [inv]) were drawn as paper even when their icon was available.
+- [inv]: clicking an item in a shared inventory shows it big with its tooltip (Esc goes back to the inventory).
+- [item] with a pet, enchanted book or rune (ids with ";") showed as raw text instead of the item.
+- /sb who: a presence update from the server no longer empties the online list, and the screen says so when the server doesn't answer instead of loading forever. Errors from the SkyBalls server are now shown instead of being dropped silently.
+- Deployable Timers HUD never showed power orbs (Overflux, Plasmaflux, Mana Flux, Radiant) or flares: they have no cooldown in their lore, so the timer was never started. Flares now last their real 3 minutes (the SOS Flare showed 30s), and power orbs' timers follow the time left on the orb's name tag.
+- Bazaar order notifications compared buy orders with the lowest sell offer (and sell offers with the top buy order), so buy orders were nearly always called outbid. Hypixel's API lists buy orders under "sell_summary"; they're now read the right way round.
+
 ## 1.4.5 — 2026-10-04
 
 ### Added

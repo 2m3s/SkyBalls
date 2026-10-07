@@ -22,6 +22,8 @@ public final class SkyBallsKeyMappings {
     public static KeyMapping DIANA_SPHINX_SOLVER;
     /** Slayer: cycle the player whose boss is shown in the phase HUD. */
     public static KeyMapping SLAYER_BOSS_SELECT;
+    /** /sb protect: the held item, or the hovered item in a menu. Unbound until you pick a key. */
+    public static KeyMapping PROTECT_ITEM;
 
     private static boolean initialized;
 
@@ -66,6 +68,8 @@ public final class SkyBallsKeyMappings {
             new KeyMapping("key.skyballs.diana_sphinx_solver", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
         SLAYER_BOSS_SELECT = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.skyballs.slayer_boss_select", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
+        PROTECT_ITEM = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.skyballs.protect_item", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), CATEGORY));
 
         initialized = true;
     }

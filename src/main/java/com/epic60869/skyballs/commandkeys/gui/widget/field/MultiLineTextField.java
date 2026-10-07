@@ -167,7 +167,6 @@ public class MultiLineTextField extends MultiLineEditBox {
         return currentTextColor;
     }
 
-    @SuppressWarnings("unused")
     public void setTextColor(int color) {
         normalTextColor = color;
         if (errorTooltip == null) {

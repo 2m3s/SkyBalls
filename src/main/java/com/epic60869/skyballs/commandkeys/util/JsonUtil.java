@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("unused")
 public class JsonUtil {
 
     public static final String LOG_STR =

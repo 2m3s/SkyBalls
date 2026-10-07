@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
-import com.epic60869.skyballs.custom.CustomConfigManager;
 
 public class SkyblockItemModels {
 	private static final Logger LOGGER = LogUtils.getLogger();

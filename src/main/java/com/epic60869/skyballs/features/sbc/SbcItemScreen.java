@@ -5,7 +5,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,11 +13,24 @@ import java.util.List;
 public final class SbcItemScreen extends Screen {
     private final JsonObject item;
     private final List<Component> tooltip;
+    /** The shared inventory it was opened from, to go back to; null from chat. */
+    private final Screen parent;
 
     public SbcItemScreen(JsonObject item) {
+        this(item, null);
+    }
+
+    public SbcItemScreen(JsonObject item, Screen parent) {
         super(Component.literal("Shared Item"));
         this.item = item;
         this.tooltip = SbcItems.tooltip(item);
+        this.parent = parent;
+    }
+
+    @Override
+    public void onClose() {
+        if (parent != null) minecraft.gui.setScreen(parent);
+        else super.onClose();
     }
 
     @Override

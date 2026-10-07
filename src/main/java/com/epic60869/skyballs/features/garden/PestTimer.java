@@ -151,6 +151,7 @@ public final class PestTimer {
     }
 
     private static void spawn(Integer amount, List<String> plotNames) {
+        PestFinder.onPestSpawn(amount, plotNames);
         onPestSpawn();
         if (amount == null) return;
         FeatureConfigs.PestSpawn c = spawnConfig();

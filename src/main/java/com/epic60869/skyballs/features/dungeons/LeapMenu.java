@@ -7,7 +7,6 @@ import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonPlayerManager;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -115,6 +114,12 @@ public final class LeapMenu {
         };
     }
 
+    /** The class's Leap Menu colour (opaque ARGB), also used by the teammate highlight. */
+    public static int classColour(DungeonClass dungeonClass) {
+        FeatureConfigs.LeapMenu config = config();
+        return config == null ? 0xFFFFFFFF : color(config, dungeonClass);
+    }
+
     private static int color(FeatureConfigs.LeapMenu config, DungeonClass dungeonClass) {
         String value = switch (dungeonClass) {
             case ARCHER -> config.archerColor;
@@ -125,7 +130,7 @@ public final class LeapMenu {
             default -> "0:255:255:255:255";
         };
         try {
-            return ARGB.opaque(ChromaColour.Companion.specialToChromaRGB(value));
+            return ARGB.opaque(com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB());
         } catch (Exception e) {
             return 0xFFFFFFFF;
         }

@@ -227,7 +227,7 @@ public final class SbcConfig {
         public boolean hud = false;
 
         @Expose
-        @ConfigOption(name = "Deployable Timers HUD", desc = "Show active timers for deployed power orbs and SOS Flare. Move it with /sb gui.")
+        @ConfigOption(name = "Deployable Timers HUD", desc = "Show how long your deployed power orbs and flares (Warning, Alert and SOS Flare) have left. Works without Item Cooldowns on. Move it with /sb gui.")
         @ConfigEditorBoolean
         public boolean deployableHud = false;
 

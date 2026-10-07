@@ -67,7 +67,13 @@ public final class ItemCooldowns {
         "MANA_FLUX_POWER_ORB", new Cooldown("MANA_FLUX_POWER_ORB", "Mana Flux", 0, 30_000L),
         "OVERFLUX_POWER_ORB", new Cooldown("OVERFLUX_POWER_ORB", "Overflux", 0, 60_000L),
         "PLASMAFLUX_POWER_ORB", new Cooldown("PLASMAFLUX_POWER_ORB", "Plasmaflux", 0, 60_000L),
-        "SOS_FLARE", new Cooldown("SOS_FLARE", "SOS Flare", 0, 30_000L));
+        "WARNING_FLARE", new Cooldown("WARNING_FLARE", "Warning Flare", 0, 180_000L),
+        "ALERT_FLARE", new Cooldown("ALERT_FLARE", "Alert Flare", 0, 180_000L),
+        "SOS_FLARE", new Cooldown("SOS_FLARE", "SOS Flare", 0, 180_000L));
+    /** A power orb's name tag, "Overflux 57s": the time it has left. */
+    private static final Pattern ORB_TIME = Pattern.compile("^(Radiant|Mana Flux|Overflux|Plasmaflux) (\\d+)s$");
+    /** Where you were when you deployed each one, to find its name tag. */
+    private static final Map<String, net.minecraft.world.phys.Vec3> DEPLOYED_AT = new ConcurrentHashMap<>();
     /** A mana ability that was clicked, waiting for the action bar to confirm it was used. */
     private static String pendingId;
     private static Ability pendingAbility;
@@ -138,18 +144,26 @@ public final class ItemCooldowns {
                 });
             }
             DEPLOYED.values().removeIf(c -> now - c.start() >= c.duration());
+            if (!DEPLOYED.isEmpty() && mc.level != null && mc.player != null && mc.player.tickCount % 10 == 0) syncOrbTimes(mc, now);
         });
         SkyBallsHuds.register("itemCooldowns", "Item Cooldowns", () -> config().enabled && config().hud, ItemCooldowns::hudLines,
             List.of(Component.literal("Instant Transmission: ").withStyle(ChatFormatting.GOLD).append(Component.literal("1.4s").withStyle(ChatFormatting.WHITE))), 8, 200);
-        SkyBallsHuds.register("deployable_timers", "Deployable Timers", () -> config().enabled && config().deployableHud,
+        SkyBallsHuds.register("deployable_timers", "Deployable Timers", () -> config().deployableHud,
             ItemCooldowns::deployableLines,
             List.of(Component.literal("Overflux: ").withStyle(ChatFormatting.GOLD).append(Component.literal("42.0s").withStyle(ChatFormatting.WHITE))), 8, 120);
     }
 
     private static void onUse(ItemStack stack, boolean hookOut) {
         try {
-            if (!enabled() || stack.isEmpty()) return;
+            if (stack.isEmpty() || !Compat.isOnSkyblock()) return;
             String id = Compat.neuName(stack);
+            // Power orbs and flares have no cooldown in their lore: they only start the deployable timer, which works
+            // with or without item cooldowns on.
+            if (DEPLOYABLES.containsKey(id)) {
+                if (config().deployableHud) startDeployable(id);
+                return;
+            }
+            if (!enabled()) return;
             if (id.isEmpty() || ACTIVE.containsKey(id)) return;
             // The grappling hook cools down after it pulls you (the second click).
             if (id.equals("GRAPPLING_HOOK")) {
@@ -190,6 +204,25 @@ public final class ItemCooldowns {
         Cooldown template = DEPLOYABLES.get(id);
         if (template == null) return;
         DEPLOYED.put(id, new Cooldown(id, template.name(), System.currentTimeMillis(), template.duration()));
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) DEPLOYED_AT.put(id, mc.player.position());
+    }
+
+    /** Power orbs show their time left on their name tag; use it, so the timer is right even if the orb was cut short. */
+    private static void syncOrbTimes(Minecraft mc, long now) {
+        for (var stand : mc.level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class,
+                mc.player.getBoundingBox().inflate(40), e -> e.hasCustomName())) {
+            Matcher m = ORB_TIME.matcher(ChatFormatting.stripFormatting(stand.getCustomName().getString()).trim());
+            if (!m.matches()) continue;
+            for (Cooldown c : DEPLOYED.values()) {
+                if (!c.name().equals(m.group(1).equals("Radiant") ? "Radiant Orb" : m.group(1))) continue;
+                net.minecraft.world.phys.Vec3 at = DEPLOYED_AT.get(c.id());
+                // The orb floats above where you stood when you placed it.
+                if (at == null || Math.abs(stand.getX() - at.x) > 3 || Math.abs(stand.getZ() - at.z) > 3) continue;
+                long left = Long.parseLong(m.group(2)) * 1000;
+                DEPLOYED.put(c.id(), new Cooldown(c.id(), c.name(), now + left - c.duration(), c.duration()));
+            }
+        }
     }
 
     /** Right-click abilities with their cooldown and mana cost, from the lore. */

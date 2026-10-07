@@ -8,13 +8,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -22,25 +20,20 @@ import net.minecraft.network.chat.contents.ObjectContents;
 import net.minecraft.network.chat.contents.objects.AtlasSprite;
 import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.Style;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class SkyBallsNopoFeatures {
     private static final Gson GSON = new Gson();
-    private static final String CHAT_FILE = "skyballs-nopo-chat-emojis.json";
     private static final String SLAYER_FILE = "skyballs-slayer-drops.json";
     private static final String CROP_FILE = "skyballs-rare-crops.json";
     private static final Identifier PET_HUD_ID = Identifier.fromNamespaceAndPath("skyballs", "pet_display");
@@ -575,6 +568,11 @@ public final class SkyBallsNopoFeatures {
         };
     }
 
+    /** A pet's level from its petInfo exp and tier, past the normal maximum (overflow). */
+    public static int petLevel(float xp, String tier) {
+        return calcLevel(xp, rarityOffset(tier));
+    }
+
     private static int getXpForLevel(int level, int offset) {
         int index = offset + Math.max(0, level);
         return index < PET_XP.length ? PET_XP[index] : 1886700;
@@ -885,24 +883,6 @@ public final class SkyBallsNopoFeatures {
         if (clean.startsWith(":")) clean = clean.substring(1);
         if (clean.endsWith(":")) clean = clean.substring(0, clean.length() - 1);
         return chatEmojisEnabled() && EMOJIS.contains(clean);
-    }
-
-    private static double parseDouble(String value) {
-        try {
-            return Double.parseDouble(value.replace(",", ""));
-        } catch (Exception ignored) {
-            return 0;
-        }
-    }
-
-    private static String formatNumber(double value) {
-        return String.format(Locale.US, "%,.1f", value);
-    }
-
-    private static String formatCompact(int value) {
-        if (value >= 1_000_000) return String.format(Locale.US, "%.1fM", value / 1_000_000.0);
-        if (value >= 1_000) return String.format(Locale.US, "%.1fk", value / 1_000.0);
-        return Integer.toString(value);
     }
 
     private static String formatDuration(long millis) {

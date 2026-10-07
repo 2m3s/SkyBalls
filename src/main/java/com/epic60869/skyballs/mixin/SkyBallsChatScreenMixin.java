@@ -3,7 +3,6 @@ package com.epic60869.skyballs.mixin;
 import com.epic60869.skyballs.SkyBallsGlobalChat;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;

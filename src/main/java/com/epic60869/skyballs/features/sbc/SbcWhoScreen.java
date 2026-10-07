@@ -77,7 +77,9 @@ public final class SbcWhoScreen extends Screen {
             return;
         }
         if (SbcSocial.onlineAt == 0) {
-            g.centeredText(font, "Loading...", width / 2, top + 20, 0xFFAAAAAA);
+            boolean noAnswer = SbcSocial.whoUnanswered();
+            g.centeredText(font, noAnswer ? "The SkyBalls server didn't answer. Press Refresh to try again." : "Loading...",
+                width / 2, top + 20, noAnswer ? 0xFFFF5555 : 0xFFAAAAAA);
             return;
         }
         int visible = (bottom - top - 4) / ROW;

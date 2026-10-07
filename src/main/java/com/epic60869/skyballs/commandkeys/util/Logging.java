@@ -26,7 +26,6 @@ import org.apache.logging.log4j.message.FormattedMessage;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.SimpleMessage;
 
-@SuppressWarnings("unused")
 public class Logging {
 
     private Logging() {

@@ -1,7 +1,6 @@
 package com.epic60869.skyballs.features.misc;
 
 import com.epic60869.skyballs.SkyBallsConfig;
-import com.epic60869.skyballs.SkyBallsPriceTooltip;
 import com.epic60869.skyballs.custom.RepoItems;
 import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
@@ -147,10 +146,6 @@ public final class CollectionTracker {
         if (m.matches()) fromSacksUntil.put(m.group(2).trim().toLowerCase(Locale.ROOT), System.currentTimeMillis() + 3_000L);
     }
 
-    private static boolean takenFromSacks(String name) {
-        Long until = fromSacksUntil.get(ChatFormatting.stripFormatting(name == null ? "" : name).trim().toLowerCase(Locale.ROOT));
-        return until != null && System.currentTimeMillis() < until;
-    }
     /** Collection id -> until when inventory gains of it are ignored (taken out of your sacks). */
     private static final Map<String, Long> collectionFromSacksUntil = new HashMap<>();
 

@@ -12,7 +12,6 @@ public final class SkyBallsRngHud {
     private static final Identifier ID = Identifier.fromNamespaceAndPath("skyballs-mod", "farming_rng");
     private static final int PADDING = 4;
     private static final int LINE_HEIGHT = 14;
-    private static final int BASE_HEIGHT = 18;
     private static SkyBallsConfig config;
 
     private SkyBallsRngHud() {}
@@ -102,7 +101,7 @@ public final class SkyBallsRngHud {
     private static int colour(String special, int fallback) {
         if (special == null || special.isEmpty()) return fallback;
         try {
-            return 0xFF000000 | io.github.notenoughupdates.moulconfig.ChromaColour.Companion.specialToChromaRGB(special);
+            return 0xFF000000 | com.epic60869.skyballs.custom.util.ChromaColours.parse(special).getEffectiveColourRGB();
         } catch (Exception e) {
             return fallback;
         }

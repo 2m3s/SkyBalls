@@ -12,8 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelTerrainRenderContext;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.MapRenderer;
@@ -59,7 +58,9 @@ public class DungeonMapTexture {
 		});
 		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> clearMapImage());
 		DungeonEvents.ROOM_MATCHED.register(_ -> onMapItemDataUpdate(DungeonMap.getMapIdComponent(null), true));
-		LevelRenderEvents.START_MAIN.register(DungeonMapTexture::uploadMapTexture);
+		// After the tick, not in a level render event: on 26.3 those run inside the terrain render pass, and writing
+		// to a texture while a pass is open crashes the game.
+		ClientTickEvents.END_CLIENT_TICK.register(_ -> uploadMapTexture());
 	}
 
 	public static void onMapItemDataUpdate(MapId mapId, boolean updateMapTexture) {
@@ -181,11 +182,8 @@ public class DungeonMapTexture {
 		requiresUpload = true;
 	}
 
-	/**
-	 * Upload the map texture to the GPU at the start of the game, this is to ensure this runs on the GPU
-	 * for the thread split.
-	 */
-	private static void uploadMapTexture(LevelTerrainRenderContext context) {
+	/** Uploads the map texture to the GPU when it changed, on the render thread and outside any render pass. */
+	private static void uploadMapTexture() {
 		if (dungeonMapTexture != null && requiresUpload) {
 			dungeonMapTexture.upload();
 			requiresUpload = false;

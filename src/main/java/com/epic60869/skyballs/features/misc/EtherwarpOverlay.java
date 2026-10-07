@@ -4,7 +4,6 @@ import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -30,7 +29,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  */
 public final class EtherwarpOverlay {
     public enum Style {
-        FILLED_OUTLINE("Filled and Outline"), OUTLINE("Outline"), FILLED("Filled");
+        FILLED_OUTLINE("Both"), OUTLINE("Outline"), FILLED("Filled");
 
         private final String label;
 
@@ -183,7 +182,7 @@ public final class EtherwarpOverlay {
 
     private static int colour(String value, int fallback) {
         try {
-            return ChromaColour.Companion.specialToChromaRGB(value);
+            return com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB();
         } catch (Exception e) {
             return fallback;
         }

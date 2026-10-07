@@ -216,9 +216,6 @@ public class MainOptionList extends OptionList {
 
         private static class ProfileOptions extends Entry {
 
-            MainOptionList list;
-            Profile profile;
-
             ProfileOptions(
                     int x,
                     int width,
@@ -229,8 +226,6 @@ public class MainOptionList extends OptionList {
                     boolean inGame
             ) {
                 super();
-                this.list = list;
-                this.profile = profile;
 
                 boolean spDefault = index == Config.get().getSpDefault();
                 boolean mpDefault = index == Config.get().getMpDefault();

@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -36,7 +35,7 @@ public class Trivia extends DungeonPuzzle {
 	@SuppressWarnings("unused")
 	private static final Trivia INSTANCE = new Trivia();
 
-	//FIXME I think its worth replacing this with something less fragile and is capable of handing multiple lines
+	//Note: I think its worth replacing this with something less fragile and is capable of handing multiple lines
 	//perhaps manual incremental reading based off the start of a question
 	@VisibleForTesting
 	public static final Pattern PATTERN = Pattern.compile("^ +(?:([A-Za-z,' ]*\\?)| ([ⓐⓑⓒ]) ([a-zA-Z0-9 ]+))|(\\[STATUE] Oruo the Omniscient: (\\w+ answered Question #\\d correctly!|I bestow upon you all the power of a hundred years!|Yikes))$");

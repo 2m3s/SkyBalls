@@ -61,7 +61,9 @@ public final class SbcItems {
         }
     };
     private static int nextShared = 1;
-    private static final Pattern PUBLIC_ITEM = Pattern.compile("\\[\\[SBITEM\\|([A-Za-z0-9_:.\\-]+)\\|(\\d{1,2})(?:\\|([A-Za-z0-9_-]+))?]]");
+    /** Ids may hold ';' (pets "GOLDEN_DRAGON;4", books "ENCHANTMENT_ULTIMATE_WISE;5", runes). */
+    private static final Pattern PUBLIC_ITEM = Pattern.compile("\\[\\[SBITEM\\|([A-Za-z0-9_:;.\\-]+)\\|(\\d{1,2})(?:\\|([A-Za-z0-9_-]+))?]]"
+        + "|\\[([^\\[\\]()]{1,60})]\\(sb:([A-Za-z0-9_:;.\\-]+)(?:\\*(\\d{1,2}))?\\)");
     private static final Pattern ITEM_TOKEN = Pattern.compile("(?i)\\[item]");
     /** [inv] shares your whole inventory; [brag] still works the same way. */
     private static final Pattern INV_TOKEN = Pattern.compile("(?i)\\[(?:inv|brag)]");
@@ -214,20 +216,19 @@ public final class SbcItems {
         }
         while (!entries.isEmpty() && entries.getLast().isEmpty()) entries.removeLast();
         byte[] raw = String.join(",", entries).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        java.util.zip.Deflater deflater = new java.util.zip.Deflater(java.util.zip.Deflater.BEST_COMPRESSION, true);
-        deflater.setInput(raw);
-        deflater.finish();
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        while (!deflater.finished()) out.write(buffer, 0, deflater.deflate(buffer));
-        deflater.end();
+        try (java.util.zip.Deflater deflater = new java.util.zip.Deflater(java.util.zip.Deflater.BEST_COMPRESSION, true)) {
+            deflater.setInput(raw);
+            deflater.finish();
+            byte[] buffer = new byte[1024];
+            while (!deflater.finished()) out.write(buffer, 0, deflater.deflate(buffer));
+        }
         return Base64.getUrlEncoder().withoutPadding().encodeToString(out.toByteArray());
     }
 
     /** The 40 slots of a shared inventory (empty strings for empty slots), or null if it can't be read. */
     private static List<String> decodeInventory(String data) {
-        try {
-            java.util.zip.Inflater inflater = new java.util.zip.Inflater(true);
+        try (java.util.zip.Inflater inflater = new java.util.zip.Inflater(true)) {
             inflater.setInput(Base64.getUrlDecoder().decode(data));
             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
@@ -236,7 +237,6 @@ public final class SbcItems {
                 if (n == 0 && (inflater.needsInput() || inflater.needsDictionary())) break;
                 out.write(buffer, 0, n);
             }
-            inflater.end();
             List<String> slots = new ArrayList<>(List.of(out.toString(java.nio.charset.StandardCharsets.UTF_8).split(",", -1)));
             while (slots.size() < 40) slots.add("");
             return slots.subList(0, 40);
@@ -314,10 +314,10 @@ public final class SbcItems {
             Sbc.error("Couldn't read that inventory.");
             return;
         }
-        List<ItemStack> stacks = new ArrayList<>();
+        List<JsonObject> items = new ArrayList<>();
         for (String slot : slots) {
             if (slot.isBlank()) {
-                stacks.add(ItemStack.EMPTY);
+                items.add(null);
                 continue;
             }
             int star = slot.lastIndexOf('*');
@@ -328,25 +328,23 @@ public final class SbcItems {
                     count = Integer.parseInt(slot.substring(star + 1));
                 } catch (NumberFormatException ignored) {}
             }
-            ItemStack stack = stack(publicItem(id, count, null));
-            stack.setCount(Math.clamp(count, 1, 64));
-            stacks.add(stack);
+            items.add(publicItem(id, count, null));
         }
-        Compat.queueOpenScreen(new SbcInventoryScreen(inventory.owner, stacks));
+        Compat.queueOpenScreen(new SbcInventoryScreen(inventory.owner, items));
     }
 
+    /**
+     * "[Heroic Hyperion](sb:HYPERION)" ("(sb:ENCHANTED_DIAMOND*12)" for a stack): readable for players without
+     * SkyBalls, and a hoverable item for players with it.
+     */
     private static String publicMarker(ItemStack stack, boolean includeName) {
         if (stack == null || stack.isEmpty()) return null;
         String id = Compat.neuName(stack);
         if (id.isBlank()) id = stack.getItem().toString().toUpperCase(Locale.ROOT).replace("MINECRAFT:", "");
-        String marker = "[[SBITEM|" + id + "|" + Math.clamp(stack.getCount(), 1, 99);
-        if (includeName) {
-            String name = Compat.realName(stack).getString();
-            if (!name.isEmpty()) {
-                marker += "|" + Base64.getUrlEncoder().withoutPadding().encodeToString(name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            }
-        }
-        return marker + "]]";
+        String name = includeName ? Compat.realName(stack).getString().replaceAll("[\\[\\]()]", "").trim() : "";
+        if (name.isEmpty() || name.length() > 60) name = id.replace('_', ' ');
+        int count = Math.clamp(stack.getCount(), 1, 99);
+        return "[" + name + "](sb:" + id + (count > 1 ? "*" + count : "") + ")";
     }
 
     /** Replaces compact public-chat item references with the same clickable preview used by SkyBalls chat. */
@@ -357,7 +355,8 @@ public final class SbcItems {
             if (recordInventoryParts(message)) return message;
             message = replaceInventoryMarkers(message);
         }
-        if (!message.getString().contains("[[SBITEM|")) return message;
+        String plain = message.getString();
+        if (!plain.contains("[[SBITEM|") && !plain.contains("](sb:")) return message;
         MutableComponent result = Component.empty();
         boolean[] replaced = {false};
         message.visit((style, value) -> {
@@ -365,7 +364,9 @@ public final class SbcItems {
             int cursor = 0;
             while (matcher.find()) {
                 if (matcher.start() > cursor) result.append(Component.literal(value.substring(cursor, matcher.start())).withStyle(style));
-                JsonObject item = publicItem(matcher.group(1), Integer.parseInt(matcher.group(2)), matcher.group(3));
+                JsonObject item = matcher.group(4) != null
+                    ? publicItem(matcher.group(5), matcher.group(6) == null ? 1 : Integer.parseInt(matcher.group(6)), null, matcher.group(4))
+                    : publicItem(matcher.group(1), Integer.parseInt(matcher.group(2)), matcher.group(3));
                 result.append(chatComponent(item));
                 cursor = matcher.end();
                 replaced[0] = true;
@@ -394,16 +395,25 @@ public final class SbcItems {
     }
 
     private static JsonObject publicItem(String id, int count, String encodedName) {
+        return publicItem(id, count, encodedName, null);
+    }
+
+    /** {@code encodedName}: the old markers' base64 name; {@code plainName}: the new ones' readable name. */
+    private static JsonObject publicItem(String id, int count, String encodedName, String plainName) {
         JsonObject item = new JsonObject();
         item.addProperty("id", id);
         item.addProperty("count", Math.clamp(count, 1, 99));
-        String name = null;
+        String name = plainName;
         if (encodedName != null) {
             try {
                 name = new String(Base64.getUrlDecoder().decode(encodedName), java.nio.charset.StandardCharsets.UTF_8);
             } catch (IllegalArgumentException ignored) {}
         }
         ItemStack template = RepoItems.itemStack(id);
+        // A plain name is shown in the item's rarity colour.
+        if (name != null && !name.isBlank() && !name.contains("§") && RepoItems.tier(id) != null) {
+            name = RepoItems.tierColour(RepoItems.tier(id)) + name;
+        }
         if (name == null || name.isBlank()) {
             String repoName = RepoItems.displayName(id);
             if (repoName != null) name = ChatFormatting.stripFormatting(repoName);

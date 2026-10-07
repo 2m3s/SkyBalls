@@ -6,14 +6,12 @@ import com.epic60869.skyballs.custom.RepoItems;
 import com.epic60869.skyballs.custom.util.Compat;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
-import com.epic60869.skyballs.features.core.SkyBallsHuds;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -41,8 +39,6 @@ public final class ItemNotification {
     /** Recent inventory counts per item id (time, count), to tell items put back into your sacks from new drops. */
     private static final Map<String, java.util.ArrayDeque<long[]>> history = new HashMap<>();
     private static final long HISTORY_MS = 60_000L;
-    private static final int PADDING = 4;
-    private static final int LINE_HEIGHT = 14;
 
     /** One item on the HUD: how many, its name (with colour codes), its id for the price, and when it goes away. */
     private static final class Shown {

@@ -4,12 +4,16 @@ import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
+import com.epic60869.skyballs.sb.utils.render.primitive.PrimitiveCollector;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ambient.Bat;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -17,12 +21,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Boxes starred dungeon mobs. Hypixel marks them with a "✯" in the nametag armor stand above
- * the mob, so the mob is the closest living entity just below a starred stand. The mobs are
- * found once per tick; the boxes are drawn every frame at the mob's interpolated position.
+ * Boxes starred dungeon mobs, bats and the F7/M7 boss withers. Hypixel marks starred mobs with a "✯" in the nametag armor stand above the
+ * mob, so the mob is the closest living entity just below a starred stand. The mobs are found every few ticks; the
+ * boxes are drawn every frame at the mob's interpolated position, depth-tested so nothing shows through walls.
  */
 public final class StarredMobs {
-    private static List<LivingEntity> visible = List.of();
+    private static final String STAR = "✯";
+    private static List<LivingEntity> starred = List.of();
+    private static List<LivingEntity> bats = List.of();
+    private static List<LivingEntity> withers = List.of();
 
     private StarredMobs() {}
 
@@ -35,59 +42,115 @@ public final class StarredMobs {
 
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            // Every 4 ticks: it reads every nametag and raycasts to each starred mob.
+            // Every 4 ticks: it reads every nametag.
             if (++ticks % 4 != 0) return;
             FeatureConfigs.DungeonMobs config = config();
-            if (config == null || !config.starredMobs || !SkyBallsLocation.inDungeon() || mc.level == null || mc.player == null) {
-                visible = List.of();
+            if (config == null || (!config.starredMobs && !config.bats && !config.withers) || !SkyBallsLocation.inDungeon() || mc.level == null || mc.player == null) {
+                starred = List.of();
+                bats = List.of();
+                withers = List.of();
                 return;
             }
-            List<LivingEntity> found = new ArrayList<>();
+            boolean findWithers = config.withers && PositionalMessages.onFloor7();
+            List<LivingEntity> foundStarred = new ArrayList<>();
+            List<LivingEntity> foundBats = new ArrayList<>();
+            List<LivingEntity> foundWithers = new ArrayList<>();
             for (Entity entity : mc.level.entitiesForRendering()) {
-                if (!(entity instanceof ArmorStand stand) || !stand.hasCustomName()
-                    || !stand.getCustomName().getString().contains("✯")) continue;
-                LivingEntity mob = mobBelow(mc, stand);
-                // Depth-tested and only for mobs you can see, so nothing shows through walls.
-                if (mob != null && mc.player.hasLineOfSight(mob)) found.add(mob);
+                if (config.bats && entity instanceof Bat bat && bat.isAlive()) foundBats.add(bat);
+                // Hypixel parks invisible withers around the boss room between phases; only the visible ones are fighting.
+                if (findWithers && entity instanceof WitherBoss wither && wither.isAlive() && !wither.isInvisible()) foundWithers.add(wither);
+                if (!config.starredMobs || !isStarredTag(entity)) continue;
+                LivingEntity mob = mobBelow(mc, entity);
+                if (mob != null && !foundStarred.contains(mob)) foundStarred.add(mob);
             }
-            visible = found;
+            starred = foundStarred;
+            bats = foundBats;
+            withers = foundWithers;
         });
         SkyBallsWorldRender.register(collector -> {
             FeatureConfigs.DungeonMobs config = config();
-            if (config == null || !config.starredMobs || visible.isEmpty()) return;
-            float[] colour = colour(config.starredColor);
+            if (config == null) return;
             float partial = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
-            for (LivingEntity mob : visible) {
-                if (!mob.isAlive()) continue;
-                Vec3 offset = mob.getPosition(partial).subtract(mob.position());
-                AABB box = mob.getBoundingBox().move(offset);
-                if (config.starredFill > 0f) collector.submitFilledBox(box, colour, config.starredFill * colour[3], false);
-                collector.submitOutlinedBox(box, colour, colour[3], config.starredLineWidth, false);
+            if (config.starredMobs && !starred.isEmpty()) {
+                float[] colour = colour(config.starredColor, new float[]{1f, 0.85f, 0.2f, 1f});
+                for (LivingEntity mob : starred) drawBox(collector, mob, partial, colour, config.starredFill, config.starredLineWidth);
+            }
+            if (config.bats && !bats.isEmpty()) {
+                float[] colour = colour(config.batColor, new float[]{0.33f, 1f, 1f, 1f});
+                for (LivingEntity bat : bats) drawBox(collector, bat, partial, colour, config.starredFill, config.starredLineWidth);
+            }
+            if (config.withers && !withers.isEmpty()) {
+                float[] colour = colour(config.witherColor, new float[]{1f, 0.67f, 0f, 1f});
+                for (LivingEntity wither : withers) drawBox(collector, wither, partial, colour, config.starredFill, config.starredLineWidth);
             }
         });
     }
 
-    private static float[] colour(String value) {
+    private static void drawBox(PrimitiveCollector collector, LivingEntity mob, float partial, float[] colour, float fill, float lineWidth) {
+        if (!mob.isAlive()) return;
+        Vec3 offset = mob.getPosition(partial).subtract(mob.position());
+        AABB box = mob.getBoundingBox().move(offset);
+        if (fill > 0f) collector.submitFilledBox(box, colour, fill * colour[3], false);
+        collector.submitOutlinedBox(box, colour, colour[3], lineWidth, false);
+    }
+
+    /** A nametag (an armor stand, or a non-living entity such as a text display) whose name has the star. */
+    private static boolean isStarredTag(Entity entity) {
+        if (!(entity instanceof ArmorStand) && entity instanceof LivingEntity) return false;
+        Component name = entity.getCustomName();
+        return name != null && name.getString().contains(STAR);
+    }
+
+    private static float[] colour(String value, float[] fallback) {
         try {
-            int argb = ChromaColour.Companion.specialToChromaRGB(value);
+            int argb = com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB();
             return new float[]{((argb >> 16) & 0xFF) / 255f, ((argb >> 8) & 0xFF) / 255f, (argb & 0xFF) / 255f, ((argb >>> 24) & 0xFF) / 255f};
         } catch (Exception e) {
-            return new float[]{1f, 0.85f, 0.2f, 1f};
+            return fallback;
         }
     }
 
-    private static LivingEntity mobBelow(Minecraft mc, ArmorStand stand) {
-        AABB search = new AABB(stand.getX() - 1, stand.getY() - 4, stand.getZ() - 1, stand.getX() + 1, stand.getY() + 0.5, stand.getZ() + 1);
+    private static LivingEntity mobBelow(Minecraft mc, Entity tag) {
+        AABB search = new AABB(tag.getX() - 1.5, tag.getY() - 4, tag.getZ() - 1.5, tag.getX() + 1.5, tag.getY() + 0.5, tag.getZ() + 1.5);
         LivingEntity best = null;
         double bestDistance = Double.MAX_VALUE;
         for (LivingEntity mob : mc.level.getEntitiesOfClass(LivingEntity.class, search,
-                e -> !(e instanceof ArmorStand) && e != mc.player && e.isAlive())) {
-            double distance = mob.distanceToSqr(stand.getX(), stand.getY(), stand.getZ());
+                // Not teammates standing next to the mob: real players have version 4 UUIDs, Hypixel's player-skinned mobs
+                // (Lost Adventurers, Shadow Assassins...) version 2.
+                e -> !(e instanceof ArmorStand) && !(e instanceof Player p && p.getUUID().version() == 4) && e.isAlive())) {
+            double distance = mob.distanceToSqr(tag.getX(), tag.getY(), tag.getZ());
             if (distance < bestDistance) {
                 bestDistance = distance;
                 best = mob;
             }
         }
         return best;
+    }
+
+    /** /sb debug starred: what the highlight sees, to find out why a mob isn't boxed. */
+    public static Component debug() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return Component.literal("Not in a world.");
+        int named = 0, tags = 0, matched = 0, batCount = 0;
+        StringBuilder sample = new StringBuilder();
+        for (Entity entity : mc.level.entitiesForRendering()) {
+            if (entity instanceof Bat) batCount++;
+            Component name = entity.getCustomName();
+            if (name == null) continue;
+            named++;
+            if (!isStarredTag(entity)) continue;
+            tags++;
+            LivingEntity mob = mobBelow(mc, entity);
+            if (mob != null) matched++;
+            if (sample.length() < 300) {
+                sample.append("\n ").append(entity.getType().toShortString()).append(" \"").append(name.getString())
+                    .append("\" -> ").append(mob == null ? "no mob below" : mob.getType().toShortString());
+            }
+        }
+        FeatureConfigs.DungeonMobs config = config();
+        return Component.literal("In dungeon: " + SkyBallsLocation.inDungeon() + " (area \"" + SkyBallsLocation.area() + "\")"
+            + "\nStarred on: " + (config != null && config.starredMobs) + ", bats on: " + (config != null && config.bats)
+            + "\nNamed entities: " + named + ", with " + STAR + ": " + tags + ", matched to a mob: " + matched
+            + "\nBats: " + batCount + ", boxed now: " + starred.size() + " starred, " + bats.size() + " bats" + sample);
     }
 }

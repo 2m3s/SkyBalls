@@ -16,7 +16,6 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 
-import com.epic60869.skyballs.sb.SkyblockerMod;
 import com.epic60869.skyballs.sb.annotations.Init;
 import com.epic60869.skyballs.sb.config.SkyblockerConfigManager;
 import com.epic60869.skyballs.sb.skyblock.dungeon.DungeonBoss;

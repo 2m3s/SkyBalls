@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Ported from NoFrills (https://github.com/WhatYouThing/NoFrills, GPL-3.0): features/dungeons/WitherDragons.java and
-// RelicHighlight.java. Dragon boxes and priorities there are taken from Odin's WitherDragonEnum.
+// RelicHighlight.java. Dragon boxes there are taken from Odin's WitherDragonEnum. Dragon priority (the dragon that
+// spawns first, Solo Priority) and the relic place timer follow NoammAddons (https://github.com/Noamm9/NoammAddons,
+// CC0 1.0): features/impl/floor7/dragons/DragonCheck.kt and M7Relics.kt.
 package com.epic60869.skyballs.features.dungeons;
 
 import com.epic60869.skyballs.SkyBallsConfig;
@@ -9,19 +11,25 @@ import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsAlerts;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
-import com.epic60869.skyballs.mixin.SkyBallsPlayerTabOverlayAccessor;
 import com.epic60869.skyballs.sb.events.ServerTickCallback;
 import com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass;
 import com.epic60869.skyballs.sb.utils.render.primitive.PrimitiveCollector;
+import com.epic60869.skyballs.features.core.SkyBallsChat;
+import com.epic60869.skyballs.mixin.SkyBallsBossOverlayAccessor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -35,16 +43,21 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Dungeons > M7 Dragons and Relics: the Master Mode floor 7 dragon phase.
  * <ul>
- *     <li>Relic Highlight: the cauldron for the relic you're holding.</li>
- *     <li>Spawn alerts (with split priority on the first double spawn), spawn timers, kill areas, hitboxes, a tracer,
- *     stack waypoints, dragon health and an Ice Spray tracker.</li>
+ *     <li>Relic Highlight: the cauldron for the relic you're holding; Relic Place Timer: when each relic was placed.</li>
+ *     <li>Spawn alerts naming your priority dragon, spawn timers, kill areas, hitboxes, a tracer, stack waypoints,
+ *     dragon health and an Ice Spray tracker.</li>
  * </ul>
+ * Since the Minister update the dragons spawn one after another rather than in pairs, so (as in NoammAddons) your
+ * priority dragon is the spawning one with the least time left, or the next one for the Solo Priority class.
  * A dragon starts spawning when the server sends its flame particles (20 flames at y 19 in its kill area); the entity
  * is matched to a dragon by the relic "collar" armour stand next to it.
  */
@@ -57,7 +70,7 @@ public final class WitherDragons {
         new Relic("Corrupted Blue Relic", new BlockPos(59, 7, 44), 0x55FFFF),
     };
 
-    private static final Dragon RED = new Dragon("Red", 3, 3, "RED_KING_RELIC", 0xFF0000,
+    private static final Dragon RED = new Dragon("Red", "RED_KING_RELIC", 0xFF0000,
         AABB.ofSize(new Vec3(27.0, 14.0, 59.0), 1, 1, 1),
         List.of(
             new AABB(25.5, 14.0, 52.0, 28.5, 17.0, 55.0),
@@ -66,7 +79,7 @@ public final class WitherDragons {
             new AABB(29.5, 16.0, 57.0, 33.5, 18.0, 61.0),
             new AABB(20.5, 16.0, 57.0, 24.5, 18.0, 61.0)),
         new AABB(14.5, 5, 45.5, 39.5, 28, 70.5));
-    private static final Dragon ORANGE = new Dragon("Orange", 1, 5, "ORANGE_KING_RELIC", 0xFFAA00,
+    private static final Dragon ORANGE = new Dragon("Orange", "ORANGE_KING_RELIC", 0xFFAA00,
         AABB.ofSize(new Vec3(85.0, 14.0, 56.0), 1, 1, 1),
         List.of(
             new AABB(83.5, 14.0, 49.0, 86.5, 17.0, 52.0),
@@ -75,7 +88,7 @@ public final class WitherDragons {
             new AABB(87.5, 16.0, 54.0, 91.5, 18.0, 58.0),
             new AABB(78.5, 16.0, 54.0, 82.5, 18.0, 58.0)),
         new AABB(72, 5, 47, 102, 28, 77));
-    private static final Dragon BLUE = new Dragon("Blue", 4, 2, "BLUE_KING_RELIC", 0x55FFFF,
+    private static final Dragon BLUE = new Dragon("Blue", "BLUE_KING_RELIC", 0x55FFFF,
         AABB.ofSize(new Vec3(84.0, 14.0, 94.0), 1, 1, 1),
         List.of(
             new AABB(82.5, 14.0, 87.0, 85.5, 17.0, 90.0),
@@ -84,7 +97,7 @@ public final class WitherDragons {
             new AABB(86.5, 16.0, 92.0, 90.5, 18.0, 96.0),
             new AABB(77.5, 16.0, 92.0, 81.5, 18.0, 96.0)),
         new AABB(71.5, 5, 82.5, 96.5, 26, 107.5));
-    private static final Dragon PURPLE = new Dragon("Purple", 5, 1, "PURPLE_KING_RELIC", 0xAA00AA,
+    private static final Dragon PURPLE = new Dragon("Purple", "PURPLE_KING_RELIC", 0xAA00AA,
         AABB.ofSize(new Vec3(56.0, 14.0, 125.0), 1, 1, 1),
         List.of(
             new AABB(54.5, 14.0, 118.0, 57.5, 17.0, 121.0),
@@ -93,7 +106,7 @@ public final class WitherDragons {
             new AABB(58.5, 16.0, 123.0, 62.5, 18.0, 127.0),
             new AABB(49.5, 16.0, 123.0, 53.5, 18.0, 127.0)),
         new AABB(45.5, 6, 113.5, 68.5, 23, 136.5));
-    private static final Dragon GREEN = new Dragon("Green", 2, 4, "GREEN_KING_RELIC", 0x00FF00,
+    private static final Dragon GREEN = new Dragon("Green", "GREEN_KING_RELIC", 0x00FF00,
         AABB.ofSize(new Vec3(27.0, 14.0, 94.0), 1, 1, 1),
         List.of(
             new AABB(25.5, 14.0, 87.0, 28.5, 17.0, 90.0),
@@ -102,12 +115,21 @@ public final class WitherDragons {
             new AABB(29.5, 16.0, 92.0, 33.5, 18.0, 96.0),
             new AABB(20.5, 16.0, 92.0, 24.5, 18.0, 96.0)),
         new AABB(7, 5, 80, 37, 28, 110));
-    private static final List<Dragon> DRAGONS = List.of(RED, ORANGE, BLUE, PURPLE, GREEN);
+    /** NoammAddons' order, which breaks ties between dragons that start spawning on the same tick. */
+    private static final List<Dragon> DRAGONS = List.of(RED, ORANGE, GREEN, BLUE, PURPLE);
     /** The M7 boss room; the dragon phase is the part of it below y 50. */
     private static final AABB BOSS_ROOM = new AABB(-8, 0, -8, 134, 254, 147);
 
-    private static boolean splitDone;
+    private static final Identifier HUD_ID = Identifier.fromNamespaceAndPath("skyballs", "dragon_timer");
+    private static final Pattern RELIC_PICKUP = Pattern.compile("^(\\w{3,16}) picked the Corrupted (\\w{3,6}) Relic!$");
+
+    /** Dragons that have started spawning this run (Solo Priority's First Dragon Only). */
+    private static int spawnStarts;
     private static int tickCounter;
+    private static long serverTicks;
+    /** Server tick the Wither King's boss bar appeared on: the relic place timer counts from it. */
+    private static long witherKingTick = -1;
+    private static final List<RelicPickup> pickups = new ArrayList<>();
 
     private WitherDragons() {}
 
@@ -121,12 +143,16 @@ public final class WitherDragons {
         SkyBallsLocation.onAreaChange(area -> reset());
         ServerTickCallback.EVENT.register(WitherDragons::onServerTick);
         ClientTickEvents.END_CLIENT_TICK.register(WitherDragons::onClientTick);
+        SkyBallsChat.onChat(WitherDragons::onChat);
+        HudElementRegistry.addLast(HUD_ID, (graphics, delta) -> renderHud(graphics));
         SkyBallsWorldRender.register(WitherDragons::render);
     }
 
     private static void reset() {
-        splitDone = false;
+        spawnStarts = 0;
         tickCounter = 0;
+        witherKingTick = -1;
+        pickups.clear();
         for (Dragon d : DRAGONS) d.reset();
     }
 
@@ -135,51 +161,43 @@ public final class WitherDragons {
         return mc.player != null && mc.player.getY() < 50 && PositionalMessages.onFloor7() && BOSS_ROOM.contains(mc.player.position());
     }
 
-    /** Power blessing level from the tab footer, with Time counting half. */
-    private static double power() {
-        Component footer = ((SkyBallsPlayerTabOverlayAccessor) Minecraft.getInstance().gui.hud.getTabList()).skyballs$getFooter();
-        if (footer == null) return 0;
-        double power = 0;
-        for (String line : SkyBallsLocation.strip(footer.getString()).split("\n")) {
-            line = line.trim();
-            if (line.startsWith("Blessing of Power")) power += roman(line.substring("Blessing of Power".length()).trim());
-            else if (line.startsWith("Blessing of Time")) power += 0.5 * roman(line.substring("Blessing of Time".length()).trim());
-        }
-        return power;
+    private static boolean onMasterFloor7() {
+        return PositionalMessages.onFloor7() && SkyBallsLocation.dungeonFloor().startsWith("M");
     }
 
-    private static int roman(String text) {
-        int total = 0, previous = 0;
-        for (int i = text.length() - 1; i >= 0; i--) {
-            int value = switch (text.charAt(i)) {
-                case 'I' -> 1;
-                case 'V' -> 5;
-                case 'X' -> 10;
-                case 'L' -> 50;
-                case 'C' -> 100;
-                default -> 0;
-            };
-            if (value == 0) return 0;
-            total += value < previous ? -value : value;
-            previous = Math.max(previous, value);
-        }
-        return total;
-    }
-
-    private static boolean archerTeam() {
+    /** Whether you're the Solo Priority class, who takes the second of two spawning dragons. */
+    private static boolean soloClass(FeatureConfigs.WitherDragons config) {
         DungeonClass c = SelfClass.get();
-        return c == DungeonClass.ARCHER || c == DungeonClass.TANK;
+        return switch (config.soloPriority) {
+            case HEALER -> c == DungeonClass.HEALER;
+            case TANK -> c == DungeonClass.TANK;
+            case OFF -> false;
+        };
     }
 
-    private static Dragon higherPriority(Dragon first, Dragon second, boolean archerTeam) {
-        if (archerTeam) return first.archPriority > second.archPriority ? first : second;
-        return first.bersPriority > second.bersPriority ? first : second;
+    /** NoammAddons' priority: the spawning dragon with the least time left, or the next one for the solo class. */
+    private static Dragon priority(FeatureConfigs.WitherDragons config) {
+        List<Dragon> spawning = DRAGONS.stream().filter(Dragon::isSpawning).sorted(Comparator.comparingInt(d -> d.spawnTicks)).toList();
+        if (spawning.isEmpty()) return null;
+        if (spawning.size() > 1 && soloClass(config) && (!config.firstDragonOnly || spawnStarts <= 2)) return spawning.get(1);
+        return spawning.getFirst();
     }
 
-    private static void announce(Dragon dragon, boolean priority) {
-        SkyBallsAlerts.title(Component.literal(dragon.name.toUpperCase(Locale.ROOT) + " IS SPAWNING").setStyle(Style.EMPTY.withBold(true).withColor(dragon.colour)), null);
-        SkyBallsAlerts.chat(Component.literal(dragon.name).withColor(dragon.colour)
-            .append(Component.literal(priority ? " is your priority dragon." : " is spawning.").withStyle(ChatFormatting.GRAY)));
+    private static void announce(Dragon dragon, Dragon priority, boolean several) {
+        if (dragon == priority) {
+            SkyBallsAlerts.title(Component.literal(dragon.name.toUpperCase(Locale.ROOT) + " IS SPAWNING").setStyle(Style.EMPTY.withBold(true).withColor(dragon.colour)), null);
+            SkyBallsAlerts.chat(Component.literal(dragon.name).withColor(dragon.colour)
+                .append(Component.literal(several ? " is your priority dragon." : " is spawning.").withStyle(ChatFormatting.GRAY)));
+            return;
+        }
+        MutableComponent line = Component.literal(dragon.name).withColor(dragon.colour)
+            .append(Component.literal(" is spawning.").withStyle(ChatFormatting.GRAY));
+        if (priority != null) {
+            line.append(Component.literal(" Your priority is ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(priority.name).withColor(priority.colour))
+                .append(Component.literal(".").withStyle(ChatFormatting.GRAY));
+        }
+        SkyBallsAlerts.chat(line);
     }
 
     /** Called from SkyBallsWitherDragonsMixin for every particle packet, on the render thread. */
@@ -187,24 +205,15 @@ public final class WitherDragons {
         FeatureConfigs.WitherDragons config = config();
         if (config == null || !isDragonParticle(packet) || !inDragonPhase()) return;
         Vec3 pos = new Vec3(packet.getX(), packet.getY(), packet.getZ());
+        Dragon started = null;
         for (Dragon dragon : DRAGONS) {
             if (dragon.spawnTicks != 0 || !dragon.area.contains(pos)) continue;
             dragon.spawnTicks = 100;
-            List<Dragon> spawning = DRAGONS.stream().filter(Dragon::isSpawning).toList();
-            if (!splitDone && spawning.size() == 2) {
-                if (config.alert) {
-                    Dragon first = spawning.getFirst(), second = spawning.getLast();
-                    double power = power();
-                    boolean purple = first == PURPLE || second == PURPLE;
-                    boolean split = (purple && power >= config.powerEasy) || power >= config.power;
-                    // No split: everyone goes to the Archer team's dragon.
-                    announce(higherPriority(first, second, !split || archerTeam()), true);
-                }
-                splitDone = true;
-            } else if (splitDone && config.alert) {
-                announce(dragon, false);
-            }
+            spawnStarts++;
+            started = dragon;
         }
+        if (started == null || !config.alert) return;
+        announce(started, priority(config), DRAGONS.stream().filter(Dragon::isSpawning).count() > 1);
     }
 
     private static boolean isDragonParticle(ClientboundLevelParticlesPacket p) {
@@ -225,6 +234,7 @@ public final class WitherDragons {
     }
 
     private static void onServerTick() {
+        serverTicks++;
         if (!inDragonPhase()) return;
         for (Dragon dragon : DRAGONS) dragon.tick();
         tickCounter++;
@@ -232,13 +242,16 @@ public final class WitherDragons {
 
     private static void onClientTick(Minecraft mc) {
         FeatureConfigs.WitherDragons config = config();
-        if (config == null || mc.level == null || !inDragonPhase()) return;
+        if (config == null || mc.level == null) return;
+        if (witherKingTick < 0 && config.relicTimer && onMasterFloor7() && witherKingBarShown(mc)) witherKingTick = serverTicks;
+        if (!inDragonPhase()) return;
         List<EnderDragon> dragons = new ArrayList<>();
         List<ArmorStand> stands = new ArrayList<>();
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof EnderDragon d && d.isAlive()) dragons.add(d);
             else if (entity instanceof ArmorStand s) stands.add(s);
         }
+        if (config.relicTimer) trackRelics(mc, stands);
         for (Dragon dragon : DRAGONS) {
             if (dragon.hasEntity()) continue;
             find:
@@ -266,6 +279,60 @@ public final class WitherDragons {
                 }
             }
         }
+    }
+
+    private static boolean witherKingBarShown(Minecraft mc) {
+        for (LerpingBossEvent bar : ((SkyBallsBossOverlayAccessor) mc.gui.hud.getBossOverlay()).skyballs$getEvents().values()) {
+            if (bar.getName().getString().toLowerCase(Locale.ROOT).contains("wither king")) return true;
+        }
+        return false;
+    }
+
+    /** "Name picked the Corrupted Red Relic!" on M7: the relic place timer waits for that relic to be placed. */
+    private static void onChat(SkyBallsChat.Message message) {
+        FeatureConfigs.WitherDragons config = config();
+        if (config == null || !config.relicTimer || !onMasterFloor7()) return;
+        Matcher m = RELIC_PICKUP.matcher(message.text());
+        if (!m.matches()) return;
+        String name = "Corrupted " + m.group(2) + " Relic";
+        for (Relic relic : RELICS) {
+            if (relic.name.equalsIgnoreCase(name)) pickups.add(new RelicPickup(relic, m.group(1)));
+        }
+    }
+
+    /** NoammAddons' Place Timer: a relic is placed when a relic armour stand stands on its cauldron. */
+    private static void trackRelics(Minecraft mc, List<ArmorStand> stands) {
+        if (pickups.isEmpty()) return;
+        for (ArmorStand stand : stands) {
+            if (!stand.getItemBySlot(EquipmentSlot.HEAD).getHoverName().getString().contains("Relic")) continue;
+            for (RelicPickup pickup : pickups) {
+                if (pickup.placed || horizontalDistance(stand.position(), pickup.relic.standPos()) >= 1.5) continue;
+                pickup.placed = true;
+                if (witherKingTick < 0) continue;
+                pickup.seconds = (serverTicks - witherKingTick) / 20f;
+                if (pickup.player.equalsIgnoreCase(mc.getUser().getName())) {
+                    pickup.personalBest = DungeonFeatures.newPersonalBest("M7", relicColour(pickup.relic) + " Relic", pickup.seconds);
+                }
+            }
+        }
+        if (pickups.size() < RELICS.length || !pickups.stream().allMatch(p -> p.placed)) return;
+        pickups.sort(Comparator.comparingDouble(p -> p.seconds < 0 ? Float.MAX_VALUE : p.seconds));
+        for (RelicPickup pickup : pickups) {
+            MutableComponent line = Component.literal(relicColour(pickup.relic) + " Relic").withColor(pickup.relic.colour)
+                .append(Component.literal(" placed by " + pickup.player).withStyle(ChatFormatting.GRAY));
+            if (pickup.seconds >= 0) {
+                line.append(Component.literal(" in ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(String.format(Locale.ROOT, "%.2fs", pickup.seconds)).withStyle(ChatFormatting.YELLOW));
+            }
+            if (pickup.personalBest) line.append(Component.literal(" (PB)").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+            SkyBallsAlerts.chat(line);
+        }
+        pickups.clear();
+    }
+
+    /** "Green" from "Corrupted Green Relic". */
+    private static String relicColour(Relic relic) {
+        return relic.name.substring("Corrupted ".length(), relic.name.length() - " Relic".length());
     }
 
     private static boolean isIceSpray(ArmorStand stand) {
@@ -323,12 +390,24 @@ public final class WitherDragons {
             }
         }
         if (config.tracers) {
-            List<Dragon> spawning = DRAGONS.stream().filter(Dragon::isSpawning).toList();
-            if (!spawning.isEmpty()) {
-                Dragon dragon = spawning.size() == 2 ? higherPriority(spawning.getFirst(), spawning.get(1), archerTeam()) : spawning.getFirst();
-                collector.submitLineFromCursor(dragon.pos.getCenter(), rgb(dragon.colour), 1f, 2f);
-            }
+            Dragon dragon = priority(config);
+            if (dragon != null) collector.submitLineFromCursor(dragon.pos.getCenter(), rgb(dragon.colour), 1f, 2f);
         }
+    }
+
+    /** Spawn Timer: your priority dragon's timer, big in the middle of the screen (as in NoammAddons). */
+    private static void renderHud(GuiGraphicsExtractor graphics) {
+        FeatureConfigs.WitherDragons config = config();
+        if (config == null || !config.timer || !inDragonPhase()) return;
+        Dragon dragon = priority(config);
+        if (dragon == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        String text = String.format(Locale.ROOT, "%.2fs", dragon.spawnTicks / 20f);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(graphics.guiWidth() / 2f, graphics.guiHeight() * 0.4f);
+        graphics.pose().scale(3f, 3f);
+        graphics.text(mc.font, text, -mc.font.width(text) / 2, -mc.font.lineHeight / 2, 0xFF000000 | dragon.colour, true);
+        graphics.pose().popMatrix();
     }
 
     /** Green when full, through yellow, to red when empty. */
@@ -340,12 +419,28 @@ public final class WitherDragons {
         return new float[]{((colour >> 16) & 255) / 255f, ((colour >> 8) & 255) / 255f, (colour & 255) / 255f};
     }
 
-    private record Relic(String name, BlockPos pos, int colour) {}
+    private record Relic(String name, BlockPos pos, int colour) {
+        /** Where the relic's armour stand stands once placed (NoammAddons' cauldron coordinates). */
+        Vec3 standPos() {
+            return new Vec3(pos.getX() + 1, 0, pos.getZ() + 1);
+        }
+    }
+
+    private static final class RelicPickup {
+        final Relic relic;
+        final String player;
+        boolean placed;
+        float seconds = -1;
+        boolean personalBest;
+
+        RelicPickup(Relic relic, String player) {
+            this.relic = relic;
+            this.player = player;
+        }
+    }
 
     private static final class Dragon {
         final String name;
-        final int archPriority;
-        final int bersPriority;
         final String relicId;
         final int colour;
         final AABB pos;
@@ -358,10 +453,8 @@ public final class WitherDragons {
         int spawnedAt;
         boolean iceSprayed;
 
-        Dragon(String name, int archPriority, int bersPriority, String relicId, int colour, AABB pos, List<AABB> parts, AABB area) {
+        Dragon(String name, String relicId, int colour, AABB pos, List<AABB> parts, AABB area) {
             this.name = name;
-            this.archPriority = archPriority;
-            this.bersPriority = bersPriority;
             this.relicId = relicId;
             this.colour = colour;
             this.pos = pos;

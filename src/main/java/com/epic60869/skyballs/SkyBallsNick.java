@@ -195,12 +195,16 @@ public final class SkyBallsNick {
         if (mc.getConnection() == null) return message;
 
         Component result = message;
+        // Each replacement walks the whole message, so only try names that are in it at all (there can be hundreds
+        // of known nicknames, and this runs for every chat line).
+        String plain = message.getString().toLowerCase(java.util.Locale.ROOT);
         // Use the relay's UUID -> username mapping first. This is important for
         // Hypixel /msg and guild messages: those are server/game messages and
         // the target player may not be present in the local tab list.
         for (RemoteNick remote : REMOTE_NICKS.values()) {
             if (!remote.shown() || remote.name.isBlank() || remote.username.isBlank()) continue;
             if (isLocalUuid(remote.uuid)) continue;
+            if (!plain.contains(remote.username.toLowerCase(java.util.Locale.ROOT))) continue;
             result = replaceExactName(result, remote.username, styled(remote));
         }
         result = insertSymbols(result);
@@ -217,6 +221,7 @@ public final class SkyBallsNick {
             if (!remote.username.equals(actualName)) {
                 REMOTE_NICKS.put(uuid, remote.withUsername(actualName));
             }
+            if (!plain.contains(actualName.toLowerCase(java.util.Locale.ROOT))) continue;
             result = replaceExactName(result, actualName, styled(remote));
         }
         return result;

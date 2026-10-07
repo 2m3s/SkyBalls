@@ -39,7 +39,6 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,7 +145,6 @@ public class CommandKeys {
         }
     }
 
-    @SuppressWarnings("unused")
     public static void onConfigSaved(Config config) {
         // Cache update event (not currently used)
     }

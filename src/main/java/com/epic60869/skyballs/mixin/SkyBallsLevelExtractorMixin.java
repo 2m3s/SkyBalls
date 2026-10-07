@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SkyBallsLevelExtractorMixin {
     @Inject(method = "extractGizmos", at = @At("HEAD"))
     private void skyballs$renderFrame(CallbackInfo ci) {
-        try (Gizmos.TemporaryCollection ignored = ((LevelExtractor) (Object) this).collectPerFrameMainThreadGizmos()) {
+        try (Gizmos.TemporaryCollection _ = ((LevelExtractor) (Object) this).collectPerFrameMainThreadGizmos()) {
             SkyBallsWorldRender.renderFrame();
         }
     }

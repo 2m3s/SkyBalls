@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
@@ -50,8 +49,10 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.core.SkyBallsWorldRender.init();
 
         com.epic60869.skyballs.features.combat.CombatFeatures.init();
+        com.epic60869.skyballs.features.combat.BestiaryOverlay.init();
         com.epic60869.skyballs.features.combat.ZealotCounter.init(configDir);
         com.epic60869.skyballs.features.combat.DianaRareMobs.init();
+        com.epic60869.skyballs.features.combat.PartyCoordWaypoints.init();
         com.epic60869.skyballs.features.combat.DianaBurrows.init();
         com.epic60869.skyballs.features.combat.DianaSphinx.init();
         com.epic60869.skyballs.features.combat.DianaProfitTracker.init(configDir);
@@ -71,6 +72,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.slayer.SlayerBossProfit.init(configDir);
         com.epic60869.skyballs.features.garden.GardenFeatures.init();
         com.epic60869.skyballs.features.fishing.FishingFeatures.init();
+        com.epic60869.skyballs.features.fishing.FishingHookTimer.init();
         com.epic60869.skyballs.features.dungeons.SecretChime.init();
         com.epic60869.skyballs.features.mining.MiningFeatures.init();
         com.epic60869.skyballs.features.mining.CrystalHollowsWaypoints.init();
@@ -79,6 +81,7 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.portfolio.Portfolio.init(configDir);
         com.epic60869.skyballs.features.portfolio.BazaarNotifications.init();
         com.epic60869.skyballs.features.skills.SkillFeatures.init();
+        com.epic60869.skyballs.features.skills.SkillProgress.init();
         com.epic60869.skyballs.features.dungeons.SkyBallsDungeons.init();
         com.epic60869.skyballs.features.dungeons.DungeonFeatures.init(configDir);
         com.epic60869.skyballs.features.misc.PartyCommands.init();
@@ -109,8 +112,12 @@ public final class SkyBallsMod implements ClientModInitializer {
         com.epic60869.skyballs.features.misc.ScreenshotShare.init();
         com.epic60869.skyballs.features.misc.JoinCommands.init();
         com.epic60869.skyballs.features.misc.InventoryButtons.init();
+        com.epic60869.skyballs.features.misc.SpeedDisplay.init();
+        com.epic60869.skyballs.features.dungeons.SecretsDisplay.init();
         com.epic60869.skyballs.features.dungeons.CaseOpening.init();
+        com.epic60869.skyballs.features.dungeons.DungeonChestProfit.init();
         SkyBallsChangelog.init();
+        SkyBallsWhatsNew.init();
         SkyBallsNopoFeatures.init(configDir);
         SkyBallsNick.init(config);
         SkyBallsMouseLock.init(config);
@@ -120,6 +127,10 @@ public final class SkyBallsMod implements ClientModInitializer {
         SkyBallsPriceTooltip.init();
         com.epic60869.skyballs.features.misc.MuseumTooltip.init(configDir);
         com.epic60869.skyballs.features.misc.AccessoryTooltip.init(configDir);
+        com.epic60869.skyballs.features.misc.EnchantParser.init();
+        com.epic60869.skyballs.features.misc.SackTracker.init(configDir);
+        com.epic60869.skyballs.features.misc.StashCompact.init();
+        com.epic60869.skyballs.features.garden.visitor.GardenVisitors.init(configDir);
         com.epic60869.skyballs.features.misc.ItemCooldowns.init();
         com.epic60869.skyballs.features.misc.EventCalendar.init();
         com.epic60869.skyballs.features.garden.PestHighlight.init();
@@ -154,7 +165,18 @@ public final class SkyBallsMod implements ClientModInitializer {
                     .then(ClientCommands.argument("message", StringArgumentType.greedyString())
                         .executes(context -> sendGlobalChat(StringArgumentType.getString(context, "message")))));
             }
+            // /pt Name: shortcut for /p transfer Name.
+            dispatcher.register(ClientCommands.literal("pt")
+                .executes(context -> partyTransfer(""))
+                .then(ClientCommands.argument("player", StringArgumentType.word())
+                    .executes(context -> partyTransfer(StringArgumentType.getString(context, "player")))));
         });
+    }
+
+    private int partyTransfer(String player) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getConnection() != null) mc.getConnection().sendCommand(("p transfer " + player).trim());
+        return 1;
     }
 
     private com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> commandTree(String name) {
@@ -174,7 +196,12 @@ public final class SkyBallsMod implements ClientModInitializer {
             .then(SkyBallsNickCommand.node())
             .then(ClientCommands.literal("discord").executes(context -> discord()))
             .then(ClientCommands.literal("gui").executes(context -> openHudEditor()))
-            .then(ClientCommands.literal("debug").executes(context -> SkyBallsDebug.run()));
+            .then(ClientCommands.literal("debug").executes(context -> SkyBallsDebug.run())
+                .then(ClientCommands.literal("starred").executes(context -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.execute(() -> mc.gui.hud.getChat().addClientSystemMessage(com.epic60869.skyballs.features.dungeons.StarredMobs.debug()));
+                    return 1;
+                })));
 
         return root;
     }
@@ -224,20 +251,9 @@ public final class SkyBallsMod implements ClientModInitializer {
         return 1;
     }
 
-    private int openDiscord() {
-        Minecraft mc = Minecraft.getInstance();
-        mc.execute(() -> mc.gui.setScreen(new SkyBallsDiscordScreen(mc.gui.screen())));
-        return 1;
-    }
-
     private int openHudEditor() {
         Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> mc.gui.setScreen(new SkyBallsHudEditorScreen(mc.gui.screen())));
-        return 1;
-    }
-
-    private int sendDiscordDm(String user, String message) {
-        SkyBallsGlobalChat.sendDiscordDm(user, message);
         return 1;
     }
 

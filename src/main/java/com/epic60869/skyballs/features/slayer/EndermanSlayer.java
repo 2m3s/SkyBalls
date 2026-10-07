@@ -6,7 +6,6 @@ import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.EntityGlow;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -31,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -246,7 +244,7 @@ public final class EndermanSlayer {
 
     private static int rgb(String value) {
         try {
-            return ChromaColour.Companion.specialToChromaRGB(value) & 0xFFFFFF;
+            return com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB() & 0xFFFFFF;
         } catch (Exception e) {
             return 0xFF0058;
         }
@@ -254,7 +252,7 @@ public final class EndermanSlayer {
 
     private static float[] colour(String value) {
         try {
-            int argb = ChromaColour.Companion.specialToChromaRGB(value);
+            int argb = com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB();
             return new float[]{((argb >> 16) & 0xFF) / 255f, ((argb >> 8) & 0xFF) / 255f, (argb & 0xFF) / 255f, ((argb >>> 24) & 0xFF) / 255f};
         } catch (Exception e) {
             return new float[]{1f, 0f, 0.35f, 1f};

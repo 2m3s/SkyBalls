@@ -1,10 +1,8 @@
 package com.epic60869.skyballs;
 
 import com.epic60869.skyballs.features.core.SkyBallsChat;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 

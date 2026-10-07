@@ -51,7 +51,6 @@ public class KeybindUtil {
      * @param limitKey the limit key.
      * @return the number of macros activated.
      */
-    @SuppressWarnings("unused")
     public static int handleKeys(InputConstants.Key key, InputConstants.Key limitKey) {
         if (key.equals(InputConstants.UNKNOWN))
             return 0;
@@ -130,6 +129,8 @@ public class KeybindUtil {
                     case SUBMIT -> send = getConflict(key) == null;
                     // VETO requires cancelling everything
                     case VETO -> cancel = 2;
+                    // ASSERT and AVOID send as usual.
+                    default -> {}
                 }
 
                 if (send) {

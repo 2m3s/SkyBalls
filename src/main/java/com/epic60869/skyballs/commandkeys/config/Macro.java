@@ -423,13 +423,10 @@ public class Macro {
             }
             // Tick ongoing actions
             else {
-                //noinspection SwitchStatementWithTooFewBranches
-                switch (sendMode) {
-                    case REPEAT -> {
-                        if (spaceTicks == 0 || activeTicks > 0 && activeTicks % spaceTicks == 0) {
-                            if (maxRepeats == 0 || ++repetitions <= maxRepeats) {
-                                scheduleAll(false);
-                            }
+                if (sendMode == SendMode.REPEAT) {
+                    if (spaceTicks == 0 || activeTicks > 0 && activeTicks % spaceTicks == 0) {
+                        if (maxRepeats == 0 || ++repetitions <= maxRepeats) {
+                            scheduleAll(false);
                         }
                     }
                 }

@@ -11,7 +11,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
@@ -25,11 +27,18 @@ import java.util.regex.Pattern;
  * !profit, ...; see {@link com.epic60869.skyballs.features.combat.DianaPartyCommands}).
  */
 public final class PartyCommands {
-    private static final Pattern PARTY_CHAT = Pattern.compile("^Party > (?:\\[[^]]+] )?(?<name>\\w+)[^:]*: !(?<command>\\w+)(?: +(?<arg>\\S+))?(?<more> +\\S.*?)?\\s*$");
-    private static final Pattern INVITED = Pattern.compile("^(?:\\[[^]]+] )?(?<me>\\w+) invited (?:\\[[^]]+] )?\\w+ to the party!");
-    private static final Pattern TRANSFERRED = Pattern.compile("^The party was transferred to (?:\\[[^]]+] )?(?<name>\\w+)");
-    private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(?<name>\\w+)'s? party!");
-    private static final Pattern LEADER_LIST = Pattern.compile("^Party Leader: (?:\\[[^]]+] )?(?<name>\\w+)");
+    // (?:[^\w\s\[]+ )? skips a Hypixel emblem (☘, ☣, ...) before a name: "Party > [MVP++] ☘ Name: !warp".
+    private static final Pattern PARTY_CHAT = Pattern.compile("^Party > (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)[^:]*: !(?<command>\\w+)(?: +(?:[^\\w\\s\\[]+ )?(?<arg>\\S+))?(?<more> +\\S.*?)?\\s*$");
+    private static final Pattern INVITED = Pattern.compile("^(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<me>\\w+) invited (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?\\w+ to the party!");
+    private static final Pattern TRANSFERRED = Pattern.compile("^The party was transferred to (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)");
+    private static final Pattern JOINED_OTHER = Pattern.compile("^You have joined (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)'s? party!");
+    private static final Pattern LEADER_LIST = Pattern.compile("^Party Leader: (?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)");
+    // Who's in the party, for "!pt nix" -> NixJussid: joins, leaves, kicks, /p list and the list when you join.
+    private static final String PLAYER = "(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w+)";
+    private static final Pattern MEMBER_JOINED = Pattern.compile("^" + PLAYER + " joined the party\\.");
+    private static final Pattern MEMBER_LEFT = Pattern.compile("^" + PLAYER + " (?:has left the party|has been removed from the party|was removed from your party because they disconnected)");
+    private static final Pattern MEMBER_LIST = Pattern.compile("^(?:Party (?:Leader|Moderators|Members): |You'll be partying with: )(?<names>.+)$");
+    private static final Pattern LIST_NAME = Pattern.compile("(?:\\[[^]]+] )?(?:[^\\w\\s\\[]+ )?(?<name>\\w{1,16})");
 
     private static final Pattern INSTANCE = Pattern.compile("([fmt])([1-7])");
     private static final String[] FLOORS = {"ENTRANCE", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"};
@@ -49,6 +58,11 @@ public final class PartyCommands {
     private record Pending(String command, long at) {}
 
     private static String leader;
+    /** Party members seen in party messages (not you), in the case Hypixel shows them. */
+    private static final Set<String> members = new LinkedHashSet<>();
+    /** A leader command that came while the leader was unknown, run if /p list shows you lead. */
+    private static Pending afterLeaderKnown;
+    private static long askedLeaderAt;
     private static long lastCommand;
     private static long lastSent;
     /** Commands waiting to be sent, one at a time so Hypixel doesn't say "Woah slow down". */
@@ -76,13 +90,18 @@ public final class PartyCommands {
     private static void onChat(SkyBallsChat.Message message) {
         String text = message.text();
         Matcher m;
+        trackMembers(text);
         if ((m = INVITED.matcher(text)).find() && m.group("me").equalsIgnoreCase(me())) leader = me();
         else if ((m = TRANSFERRED.matcher(text)).find()) leader = m.group("name");
         else if ((m = JOINED_OTHER.matcher(text)).find()) leader = m.group("name");
-        else if ((m = LEADER_LIST.matcher(text)).find()) leader = m.group("name");
+        else if ((m = LEADER_LIST.matcher(text)).find()) {
+            leader = m.group("name");
+            onLeaderKnown();
+        }
         else if (text.equals("You left the party.") || text.endsWith("has disbanded the party!")
             || text.startsWith("You have been kicked from the party") || text.equals("The party was disbanded because all invites expired and the party was empty.")) {
             leader = null;
+            members.clear();
         }
 
         SkyBallsConfig c = SkyBallsConfig.current();
@@ -94,6 +113,7 @@ public final class PartyCommands {
         String arg = m.group("arg");
         // Like SBO, a command with more words after it than it takes isn't one.
         if (m.group("more") != null) return;
+        if (!sender.equalsIgnoreCase(me())) addMember(sender);
 
         if (config.diana) {
             // A short list: a party message over 256 characters gets you disconnected.
@@ -125,16 +145,91 @@ public final class PartyCommands {
             return;
         }
 
-        if (leader == null || !leader.equalsIgnoreCase(me()) || sender.equalsIgnoreCase(me())) return;
+        if (leader != null && !leader.equalsIgnoreCase(me())) return;
+        // Your own !warp, !allinvite and !f7 work too (like Odin); transferring or promoting yourself doesn't.
+        boolean self = sender.equalsIgnoreCase(me());
         String toRun = switch (command) {
-            case "warp" -> config.warp ? "party warp" : null;
+            case "warp", "w" -> config.warp ? "party warp" : null;
             case "allinvite", "allinv" -> config.allInvite ? "party settings allinvite" : null;
-            case "pt", "transfer", "ptme" -> config.transfer ? "party transfer " + sender : null;
-            case "promote" -> config.promote ? "party promote " + (arg == null ? sender : arg) : null;
-            case "demote" -> config.promote ? "party demote " + (arg == null ? sender : arg) : null;
+            // "!pt Name" transfers to Name (yours too); "!pt" and "!ptme" to whoever asked. A name can be just the
+            // start of one: "!pt nix" transfers to NixJussid.
+            case "pt", "transfer" -> config.transfer && (arg != null || !self) ? playerCommand("party transfer ", arg == null ? sender : arg) : null;
+            case "ptme" -> config.transfer && !self ? "party transfer " + sender : null;
+            case "promote" -> config.promote && (arg != null || !self) ? playerCommand("party promote ", arg == null ? sender : arg) : null;
+            case "demote" -> config.promote && (arg != null || !self) ? playerCommand("party demote ", arg == null ? sender : arg) : null;
+            // "!kick nix" kicks NixJussid; never you.
+            case "kick" -> config.kick && arg != null ? playerCommand("party kick ", arg) : null;
             default -> instance(config, command);
         };
-        if (toRun != null) run(toRun);
+        if (toRun == null) return;
+        if (leader != null) {
+            run(toRun);
+            return;
+        }
+        // Leader unknown (the game started while you were already in a party): ask with /p list, and run it once
+        // the list says you're leader.
+        long now = System.currentTimeMillis();
+        afterLeaderKnown = new Pending(toRun, now);
+        if (now - askedLeaderAt > 10_000L) {
+            askedLeaderAt = now;
+            run("party list");
+        }
+    }
+
+    private static void trackMembers(String text) {
+        Matcher m;
+        if ((m = MEMBER_JOINED.matcher(text)).find()) addMember(m.group("name"));
+        else if ((m = MEMBER_LEFT.matcher(text)).find()) {
+            String name = m.group("name");
+            members.removeIf(n -> n.equalsIgnoreCase(name));
+        } else if ((m = TRANSFERRED.matcher(text)).find()) addMember(m.group("name"));
+        else if ((m = JOINED_OTHER.matcher(text)).find()) {
+            members.clear();
+            addMember(m.group("name"));
+        } else if ((m = MEMBER_LIST.matcher(text)).find()) {
+            // "[MVP+] Nix ● [VIP] Steve ●" or "You'll be partying with: [MVP+] Nix, Steve"
+            for (String part : m.group("names").split("●|, ")) {
+                Matcher n = LIST_NAME.matcher(part.trim());
+                if (n.find()) addMember(n.group("name"));
+            }
+        }
+    }
+
+    private static void addMember(String name) {
+        if (name == null || name.equalsIgnoreCase(me())) return;
+        members.removeIf(n -> n.equalsIgnoreCase(name));
+        members.add(name);
+    }
+
+    /**
+     * The command for the party member a typed name means: the exact name, else the one member whose name starts
+     * with it ("nix" -> NixJussid). Null when it would kick you or several members match (said in party chat); the
+     * name as typed when no member matches (Hypixel then says who it couldn't find).
+     */
+    private static String playerCommand(String command, String typed) {
+        boolean kick = command.equals("party kick ");
+        if (typed.equalsIgnoreCase(me())) return kick ? null : command + me();
+        for (String member : members) if (member.equalsIgnoreCase(typed)) return command + member;
+        String start = typed.toLowerCase(Locale.ROOT);
+        List<String> matches = members.stream().filter(n -> n.toLowerCase(Locale.ROOT).startsWith(start)).toList();
+        if (matches.size() == 1) return command + matches.getFirst();
+        if (matches.size() > 1) {
+            run("pc More than one player starts with " + typed + ": " + String.join(", ", matches));
+            return null;
+        }
+        // Never kick yourself by the start of your name ("!kick 2m" when you're 2m3s).
+        if (kick && me().toLowerCase(Locale.ROOT).startsWith(start)) return null;
+        return command + typed;
+    }
+
+    /** Called when "Party Leader:" says who leads: runs the command that was waiting for it, if you lead. */
+    private static void onLeaderKnown() {
+        Pending waiting = afterLeaderKnown;
+        afterLeaderKnown = null;
+        if (waiting == null || System.currentTimeMillis() - waiting.at() > 8_000L || !me().equalsIgnoreCase(leader)) return;
+        long now = System.currentTimeMillis();
+        lastCommand = now;
+        Minecraft.getInstance().execute(() -> pending.add(new Pending(waiting.command(), now + REPLY_DELAY_MS)));
     }
 
     /** !f1-!f7, !m1-!m7 and !t1-!t5: Hypixel's /joininstance for that floor or tier (Odin's queue commands). */

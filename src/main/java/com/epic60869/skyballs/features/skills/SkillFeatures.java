@@ -105,11 +105,4 @@ public final class SkillFeatures {
         }
     }
 
-    private static double parse(String value) {
-        String v = value.replace(",", "");
-        double mult = 1;
-        if (v.endsWith("k")) { mult = 1_000; v = v.substring(0, v.length() - 1); }
-        else if (v.endsWith("M")) { mult = 1_000_000; v = v.substring(0, v.length() - 1); }
-        return Double.parseDouble(v) * mult;
-    }
 }

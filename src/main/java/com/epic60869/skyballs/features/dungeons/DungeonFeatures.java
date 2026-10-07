@@ -7,8 +7,6 @@ import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsHuds;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.sb.events.ServerTickCallback;
-import com.epic60869.skyballs.sb.skyblock.dungeon.DungeonScore;
-import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -90,6 +88,8 @@ public final class DungeonFeatures {
     private static long pyStartTick = -1;
     private static boolean pyTriggered;
     private static final int PY_TICKS = 95;
+    /** Goldor hits everyone outside his safe spots every 60 server ticks (3 s), as in Odin's TickTimers. */
+    private static final int GOLDOR_TICKS = 60;
 
     // ----- Masks (Odin's InvincibilityTimer), counted in server ticks -----
     private enum Invincibility {
@@ -159,6 +159,10 @@ public final class DungeonFeatures {
 
         SkyBallsChat.onChat(DungeonFeatures::onChat);
         ServerTickCallback.EVENT.register(DungeonFeatures::onServerTick);
+        SpiritBear.init();
+        LividSolver.init();
+        TerracottaTimer.init();
+        BlessingDisplay.init();
         ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> resetRun());
         SkyBallsLocation.onAreaChange(area -> {
             // An empty area is the tab list briefly not being read (world load, lag), not leaving the dungeon.
@@ -177,6 +181,7 @@ public final class DungeonFeatures {
         });
         DungeonRoutes.init(configDir);
         StarredMobs.init();
+        TeammateHighlight.init();
         LeapMenu.init();
         PositionalMessages.init(configDir);
         DoorHighlight.init();
@@ -295,6 +300,15 @@ public final class DungeonFeatures {
     private static boolean splitMessagesEnabled() {
         FeatureConfigs.Dungeons config = config();
         return config != null && config.timers.splits && config.timers.splitMessages;
+    }
+
+    /** Records {@code seconds} as the PB for {@code name} on {@code floor} if it beats the old one; true if it did. */
+    static boolean newPersonalBest(String floor, String name, float seconds) {
+        Map<String, Float> floorPbs = personalBests.computeIfAbsent(floor, k -> new HashMap<>());
+        if (seconds >= floorPbs.getOrDefault(name, 9999f)) return false;
+        floorPbs.put(name, seconds);
+        savePersonalBests();
+        return true;
     }
 
     /** Odin's PersonalBest.time: records a new PB and prints the time with the old PB. */
@@ -417,8 +431,7 @@ public final class DungeonFeatures {
             lines.add(kv("Storm pillars: ", countdown(serverTicks - stormStartTick, 20) + " ticks"));
         }
         if (goldorStartTick >= 0) {
-            int period = Math.max(1, config() == null ? 50 : config().timers.goldorTickPeriod);
-            lines.add(kv("Goldor death tick: ", countdown(serverTicks - goldorStartTick, period) + " ticks"));
+            lines.add(kv("Goldor death tick: ", countdown(serverTicks - goldorStartTick, GOLDOR_TICKS) + " ticks"));
         }
         return lines;
     }
@@ -539,9 +552,18 @@ public final class DungeonFeatures {
             goldorStartTick = serverTicks;
             reachGoldor();
         }
-        // Any Goldor line (or Storm's death line) also means Goldor has been reached, in case the first one was missed.
-        else if (text.startsWith("[BOSS] Goldor:") || text.startsWith("[BOSS] Storm: I should have known that I stood no chance.")) reachGoldor();
-        else if (text.equals("The Core entrance is opening!")) stormStartTick = -1;
+        // Storm's death line starts the death tick too (Odin), in case Goldor's first line is missed; that line resyncs it.
+        else if (text.startsWith("[BOSS] Storm: I should have known that I stood no chance.")) {
+            goldorStartTick = serverTicks;
+            reachGoldor();
+        }
+        // Any Goldor line also means Goldor has been reached, in case the first one was missed.
+        else if (text.startsWith("[BOSS] Goldor:")) reachGoldor();
+        else if (text.equals("The Core entrance is opening!")) {
+            // The death tick stops once the core opens (Odin).
+            stormStartTick = -1;
+            goldorStartTick = -1;
+        }
         else if (text.startsWith("[BOSS] Necron: You went further than any human before, congratulations.")) goldorStartTick = -1;
         else if (text.startsWith("[BOSS] Necron: All this, for nothing...")) dragonPhase = true;
 

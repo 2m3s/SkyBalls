@@ -66,7 +66,7 @@ public final class CombatFeatures {
 
         com.epic60869.skyballs.features.core.SkyBallsHuds.setting("arrows", () -> config() != null && config().arrowCounter);
         SkyBallsHuds.register("arrows", "Arrow Counter",
-            () -> config() != null && config().arrowCounter && SkyBallsLocation.onSkyblock(),
+            () -> config() != null && config().arrowCounter && SkyBallsLocation.onSkyblock() && (!config().arrowCounterBowOnly || holdingBow()),
             CombatFeatures::arrowLines,
             List.of(line("Arrows: ", "Flint Arrow ", ChatFormatting.WHITE).append(Component.literal("x1,234").withStyle(ChatFormatting.GREEN))),
             8, 120);
@@ -84,6 +84,14 @@ public final class CombatFeatures {
 
     private static net.minecraft.network.chat.MutableComponent line(String label, String value, ChatFormatting color) {
         return Component.literal(label).withStyle(ChatFormatting.GRAY).append(Component.literal(value).withStyle(color));
+    }
+
+    /** A bow or crossbow in your main hand (SkyBlock bows, shortbows included, are vanilla bows underneath). */
+    private static boolean holdingBow() {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) return false;
+        ItemStack held = player.getMainHandItem();
+        return held.getItem() instanceof net.minecraft.world.item.BowItem || held.getItem() instanceof net.minecraft.world.item.CrossbowItem;
     }
 
     private static List<Component> arrowLines() {

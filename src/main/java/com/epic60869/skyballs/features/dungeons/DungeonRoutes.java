@@ -10,7 +10,6 @@ import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonManager;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.Room;
 import com.epic60869.skyballs.sb.utils.render.primitive.PrimitiveCollector;
-import com.google.gson.Gson;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -65,7 +64,6 @@ import java.util.concurrent.CompletableFuture;
  * recorded routes for sharing.
  */
 public final class DungeonRoutes {
-    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String STELLA_URL = "https://ether.stellarskys.co/routes/default.json";
     private static final int HALF_ROOM = 15;
     private static final float[] LINE_COLOUR = {0.3f, 1f, 0.3f};

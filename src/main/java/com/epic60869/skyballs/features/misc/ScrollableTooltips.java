@@ -22,7 +22,7 @@ import java.util.Objects;
  * Scrollable tooltips, ported from Skysoft's Tooltip Scroll (LGPL-3.0): the mouse wheel (and optionally WASD /
  * Page Up / Page Down) pans the tooltip you're hovering, with smooth movement, so long tooltips can be read.
  * The pan resets when you hover something else. SkyBallsTooltipMixin wraps the tooltip positioner with
- * {@link #decorate}; SkyBallsTooltipScrollMixin hands mouse wheel input to {@link #didHandleMouseScroll}.
+ * {@link #decorate}; SkyBallsTooltipScrollMixin hands mouse wheel input to {@link #onMouseScroll}.
  * When Skysoft itself is installed this stays off, so the two don't both move the tooltip.
  */
 public final class ScrollableTooltips {
@@ -66,16 +66,24 @@ public final class ScrollableTooltips {
             place(original, identity, anchorX, anchorY, screenWidth, screenHeight, x, y, width, height);
     }
 
-    /** Mouse wheel over a screen: pans the visible tooltip. Returns true if the scroll was used. */
-    public static boolean didHandleMouseScroll(double horizontal, double vertical) {
+    /**
+     * Mouse wheel over a screen; {@code screenScroll} hands it to the screen. A tooltip bigger than the screen pans
+     * before the screen scrolls. One that fits pans only when the screen didn't use the wheel, so lists and settings
+     * still scroll while an inventory item's tooltip moves. Returns true if the scroll was used.
+     */
+    public static boolean onMouseScroll(double horizontal, double vertical, java.util.function.BooleanSupplier screenScroll) {
         SkyBallsConfig.TooltipScroll settings = config();
-        if (!enabled(settings) || !settings.enableScrollWheel || !hasVisibleSession()) return false;
-        // A tooltip that fits on screen has nothing to pan to: leave the wheel to the screen (lists, settings, the
-        // storage overlay), which almost always has something with a tooltip under the mouse.
-        if (!session.frame.overflows()) return false;
-        // The storage overlay scrolls with the wheel, and its item tooltips are often taller than the screen: the
-        // wheel always scrolls the storage there (the tooltip can still be moved with the keys).
-        if (com.epic60869.skyballs.features.misc.storage.StorageOverlay.isOverlayScreen(session.screen)) return false;
+        if (!enabled(settings) || !settings.enableScrollWheel || !hasVisibleSession()
+            // The storage overlay scrolls with the wheel, and its item tooltips are often taller than the screen: the
+            // wheel always scrolls the storage there (the tooltip can still be moved with the keys).
+            || com.epic60869.skyballs.features.misc.storage.StorageOverlay.isOverlayScreen(session.screen)) {
+            return screenScroll.getAsBoolean();
+        }
+        if (session.frame.overflows()) return pan(settings, horizontal, vertical) || screenScroll.getAsBoolean();
+        return screenScroll.getAsBoolean() || pan(settings, horizontal, vertical);
+    }
+
+    private static boolean pan(SkyBallsConfig.TooltipScroll settings, double horizontal, double vertical) {
         boolean sideways = horizontal != 0 || isHorizontalModifierDown(settings);
         double x = horizontal * settings.mouseScrollingSpeed;
         double y = 0;

@@ -913,7 +913,6 @@ public final class FishingFeatures {
             boolean alerted;
             Integer entityId;
             String name;
-            long placedAt;
 
             Tracked(boolean shortLived) {
                 this.shortLived = shortLived;
@@ -962,7 +961,6 @@ public final class FishingFeatures {
                     if (entity.getType() == EntityTypes.FIREWORK_ROCKET && entity.distanceTo(mc.player) <= 10) {
                         Tracked flare = TRACKED.get(FishingData.DeployableType.FLARE);
                         flare.remaining = 180;
-                        flare.placedAt = now;
                         flare.alerted = false;
                         flare.name = flareName;
                         flareUsedAt = 0;

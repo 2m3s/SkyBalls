@@ -149,10 +149,6 @@ public class CustomizeNameWidget extends AbstractContainerWidget {
 				getY(),
 				getWidth(),
 				getHeight());
-		if (false) {
-			graphics.text(textRenderer, Component.literal("Selection Start: " + selectionStart + ", Selection End: " + selectionEnd), getX(), getBottom(), -1);
-			graphics.text(textRenderer, Component.literal("Insert Style: " + (insertAs == null ? "null" : insertAs.toString())), getX(), getBottom() + 10, -1);
-		}
 		for (AbstractWidget widget : widgets) {
 			widget.extractRenderState(graphics, mouseX, mouseY, deltaTicks);
 		}

@@ -107,10 +107,6 @@ public final class PositionalMessages {
         return c == null ? null : c.dungeons.positionalMessages;
     }
 
-    private static boolean isMage() {
-        return isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass.MAGE);
-    }
-
     private static boolean isClass(com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass dungeonClass) {
         return SelfClass.get() == dungeonClass;
     }

@@ -22,6 +22,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -40,7 +42,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Diana profit tracker, like SkyHanni's DianaProfitTracker (https://github.com/hannibal002/SkyHanni, LGPL-2.1): what
+ * Diana profit tracker, laid out like SBO's Diana loot tracker (every rare drop with its lootshares and rate per mob),
+ * counting like SkyHanni's DianaProfitTracker (https://github.com/hannibal002/SkyHanni, LGPL-2.1): what
  * each Diana drop was worth (SkyHanni-REPO's constants/DianaDrops.json list, MIT), the coins you dug out, how many
  * burrows you dug, the total profit and the time you spent, for this session, this mayor term (Diana's season) or all
  * time. Drops are counted when they come into your inventory (not from a chest or menu) or your sacks.
@@ -75,7 +78,7 @@ public final class DianaProfitTracker {
     private static final long ACTIVE_WINDOW_MS = 90_000L;
 
     public enum Period {
-        SESSION("Session"), SEASON("Mayor (Season)"), ALL_TIME("All Time");
+        SESSION("Session"), SEASON("Season"), ALL_TIME("All Time");
 
         private final String label;
 
@@ -168,10 +171,20 @@ public final class DianaProfitTracker {
             () -> enabled() && SkyBallsLocation.onSkyblock() && SkyBallsLocation.areaIs("Hub")
                 && System.currentTimeMillis() - lastActivity < 10 * 60_000L,
             DianaProfitTracker::lines,
-            List.of(Component.literal("Diana Profit Tracker (Session)").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
-                Component.literal("3x Griffin Feather: ").withStyle(ChatFormatting.WHITE).append(Component.literal("1.2M").withStyle(ChatFormatting.GOLD)),
-                Component.literal("Total Profit: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("4.5M").withStyle(ChatFormatting.GOLD)),
-                Component.literal("Time: ").withStyle(ChatFormatting.GRAY).append(Component.literal("32m").withStyle(ChatFormatting.WHITE))),
+            List.of(Component.literal("Diana Loot Tracker").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                    .append(Component.literal(" (Session)").withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withBold(false))),
+                Component.literal("Chimera: ").withStyle(ChatFormatting.LIGHT_PURPLE).append(Component.literal("2").withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal(" (1 LS)").withStyle(ChatFormatting.GRAY)).append(Component.literal(" [8.33%]").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(" 120.00M").withStyle(ChatFormatting.GOLD)),
+                Component.literal("Daedalus Stick: ").withStyle(ChatFormatting.GOLD).append(Component.literal("1").withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal(" [0.31%]").withStyle(ChatFormatting.DARK_GRAY)).append(Component.literal(" 25.0M").withStyle(ChatFormatting.GOLD)),
+                Component.literal("Griffin Feather: ").withStyle(ChatFormatting.GOLD).append(Component.literal("14").withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal(" 1.2M").withStyle(ChatFormatting.GOLD)),
+                Component.literal("Coins: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("3.40M").withStyle(ChatFormatting.GOLD)),
+                Component.literal("Total Burrows: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("512").withStyle(ChatFormatting.AQUA)),
+                Component.literal("Total Profit: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("149.60M").withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" | ").withStyle(ChatFormatting.GRAY)).append(Component.literal("74.80M/h").withStyle(ChatFormatting.GOLD)),
+                Component.literal("Playtime: ").withStyle(ChatFormatting.YELLOW).append(Component.literal("2h 0m").withStyle(ChatFormatting.AQUA))),
             8, 120);
     }
 
@@ -316,36 +329,64 @@ public final class DianaProfitTracker {
             case SEASON -> saved.seasons.computeIfAbsent(String.valueOf(electionYear()), k -> new Data());
             case ALL_TIME -> saved.allTime;
         };
+        // The mob tracker's counts for the same period: lootshares and drop rates per mob.
+        DianaTracker.Data mobs = DianaTracker.data(period);
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("Diana Profit Tracker (" + period + ")").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
-        List<Map.Entry<String, Long>> items = new ArrayList<>(data.items.entrySet());
-        items.sort((a, b) -> Double.compare(ItemPriceResolver.value(b.getKey()) * b.getValue(), ItemPriceResolver.value(a.getKey()) * a.getValue()));
+        lines.add(Component.literal("Diana Loot Tracker").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+            .append(Component.literal(" (" + period + ")").withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withBold(false))));
+
+        // Like SBO: every rare drop always listed, then the rest you've had, each with its count, lootshares,
+        // its rate per mob it drops from and its value.
         double total = data.coins;
-        for (Map.Entry<String, Long> e : items) {
+        Set<String> listed = new HashSet<>();
+        for (DianaTracker.Drop drop : DianaTracker.Drop.values()) {
+            listed.add(drop.itemId);
+            long count = Math.max(data.items.getOrDefault(drop.itemId, 0L), mobs.drop(drop) + mobs.dropLs(drop));
+            if (count == 0 && !drop.big) continue;
+            double value = ItemPriceResolver.value(drop.itemId) * count;
+            total += value;
+            MutableComponent line = Component.literal(drop.label + ": ").withStyle(drop.colour)
+                .append(Component.literal(String.format(Locale.US, "%,d", count)).withStyle(ChatFormatting.AQUA));
+            if (drop.lootshare && mobs.dropLs(drop) > 0) {
+                line.append(Component.literal(" (" + mobs.dropLs(drop) + " LS)").withStyle(ChatFormatting.GRAY));
+            }
+            if (drop.from != null && mobs.mob(drop.from) > 0) {
+                double rate = 100.0 * mobs.drop(drop) / mobs.mob(drop.from);
+                line.append(Component.literal(String.format(Locale.US, " [%.2f%%]", rate)).withStyle(ChatFormatting.DARK_GRAY));
+            }
+            if (value > 0) line.append(Component.literal(" " + CombatFeatures.formatCoins(value)).withStyle(ChatFormatting.GOLD));
+            lines.add(line);
+        }
+        List<Map.Entry<String, Long>> others = new ArrayList<>();
+        for (Map.Entry<String, Long> e : data.items.entrySet()) if (!listed.contains(e.getKey()) && e.getValue() > 0) others.add(e);
+        others.sort((a, b) -> Double.compare(ItemPriceResolver.value(b.getKey()) * b.getValue(), ItemPriceResolver.value(a.getKey()) * a.getValue()));
+        for (Map.Entry<String, Long> e : others) {
             double value = ItemPriceResolver.value(e.getKey()) * e.getValue();
             total += value;
             String name = RepoItems.displayName(e.getKey());
-            lines.add(Component.literal(e.getValue() + "x " + (name == null ? e.getKey() : ChatFormatting.stripFormatting(name)) + ": ").withStyle(ChatFormatting.WHITE)
-                .append(Component.literal(value > 0 ? CombatFeatures.formatCoins(value) : "no price").withStyle(ChatFormatting.GOLD)));
+            MutableComponent line = Component.literal((name == null ? e.getKey() : ChatFormatting.stripFormatting(name)) + ": ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal(String.format(Locale.US, "%,d", e.getValue())).withStyle(ChatFormatting.AQUA));
+            if (value > 0) line.append(Component.literal(" " + CombatFeatures.formatCoins(value)).withStyle(ChatFormatting.GOLD));
+            lines.add(line);
         }
-        if (data.coins > 0) {
-            lines.add(Component.literal("Dug Out Coins: ").withStyle(ChatFormatting.WHITE)
-                .append(Component.literal(CombatFeatures.formatCoins(data.coins)).withStyle(ChatFormatting.GOLD)));
+
+        lines.add(Component.literal("Coins: ").withStyle(ChatFormatting.YELLOW)
+            .append(Component.literal(CombatFeatures.formatCoins(data.coins)).withStyle(ChatFormatting.GOLD)));
+        lines.add(Component.literal("Total Burrows: ").withStyle(ChatFormatting.YELLOW)
+            .append(Component.literal(String.format(Locale.US, "%,d", data.burrowsDug)).withStyle(ChatFormatting.AQUA)));
+        if (mobs.totalMobs() > 0) {
+            lines.add(Component.literal("Total Mobs: ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal(String.format(Locale.US, "%,d", mobs.totalMobs())).withStyle(ChatFormatting.AQUA)));
         }
-        lines.add(Component.literal("Burrows Dug: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(String.format(Locale.US, "%,d", data.burrowsDug)).withStyle(ChatFormatting.YELLOW)));
-        lines.add(Component.literal("Total Profit: ").withStyle(ChatFormatting.YELLOW)
-            .append(Component.literal(CombatFeatures.formatCoins(total)).withStyle(ChatFormatting.GOLD)));
-        if (data.burrowsDug > 0) {
-            lines.add(Component.literal("Per Burrow: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(CombatFeatures.formatCoins(total / data.burrowsDug)).withStyle(ChatFormatting.GOLD)));
-        }
-        lines.add(Component.literal("Time: ").withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(duration(data.activeMs)).withStyle(ChatFormatting.WHITE)));
+        MutableComponent profit = Component.literal("Total Profit: ").withStyle(ChatFormatting.YELLOW)
+            .append(Component.literal(CombatFeatures.formatCoins(total)).withStyle(ChatFormatting.GOLD));
         if (data.activeMs >= 60_000L) {
-            lines.add(Component.literal("Profit/Hour: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(CombatFeatures.formatCoins(total / (data.activeMs / 3_600_000d))).withStyle(ChatFormatting.GOLD)));
+            profit.append(Component.literal(" | ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(CombatFeatures.formatCoins(total / (data.activeMs / 3_600_000d)) + "/h").withStyle(ChatFormatting.GOLD));
         }
+        lines.add(profit);
+        lines.add(Component.literal("Playtime: ").withStyle(ChatFormatting.YELLOW)
+            .append(Component.literal(duration(data.activeMs)).withStyle(ChatFormatting.AQUA)));
         return lines;
     }
 

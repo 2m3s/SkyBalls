@@ -17,7 +17,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
@@ -181,7 +180,14 @@ public final class SbcSocial {
         }
     }
 
+    /** True when the last /sb who has had no answer for 8 seconds. */
+    static boolean whoUnanswered() {
+        return whoAskedAt > onlineAt && System.currentTimeMillis() - whoAskedAt > 8_000L;
+    }
+
     private static void onOnline(JsonObject packet) {
+        // An "online" packet without a player list (a presence update) isn't the list; it mustn't empty it.
+        if (!packet.has("players") || !packet.get("players").isJsonArray()) return;
         List<Player> players = new ArrayList<>();
         for (JsonElement e : Sbc.arr(packet, "players")) {
             if (e.isJsonPrimitive()) {

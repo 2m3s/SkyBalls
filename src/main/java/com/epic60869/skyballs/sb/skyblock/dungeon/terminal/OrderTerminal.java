@@ -18,7 +18,7 @@ import com.epic60869.skyballs.sb.utils.container.SimpleContainerSolver;
 import com.epic60869.skyballs.sb.utils.render.gui.ColorHighlight;
 
 public final class OrderTerminal extends SimpleContainerSolver implements TerminalSolver {
-	// TODO: Change to 10 after the Minister Perk updates is released.
+	// Note: change to 10 after the Minister Perk updates is released.
 	private static final int PANES_NUM = 14;
 	private int @Nullable [] orderedSlots;
 	private int currentNum = Integer.MAX_VALUE;

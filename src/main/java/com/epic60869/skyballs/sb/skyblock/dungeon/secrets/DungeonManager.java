@@ -55,7 +55,6 @@ import org.slf4j.LoggerFactory;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.ChatFormatting;
@@ -927,7 +926,6 @@ public class DungeonManager {
 	 * @see DungeonMapUtils#getPhysicalRoomPos(Vec3)
 	 */
 	private static @Nullable Room getRoomAtPhysical(Vec3 pos) {
-		if (false) return currentRoom;
 		return rooms.get(DungeonMapUtils.getPhysicalRoomPos(pos));
 	}
 
@@ -940,7 +938,6 @@ public class DungeonManager {
 	 * @see DungeonMapUtils#getPhysicalRoomPos(Vec3i)
 	 */
 	private static @Nullable Room getRoomAtPhysical(Vec3i pos) {
-		if (false) return currentRoom;
 		return rooms.get(DungeonMapUtils.getPhysicalRoomPos(pos));
 	}
 

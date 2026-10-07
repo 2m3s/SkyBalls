@@ -89,6 +89,13 @@ public class ARGBTextInput extends AbstractWidget {
 		this(x, y, textRenderer, drawBackground, false);
 	}
 
+	// On 26.3 typed text only arrives while SDL text input is on; vanilla's EditBox turns it on when focused.
+	@Override
+	public void setFocused(boolean focused) {
+		super.setFocused(focused);
+		Minecraft.getInstance().onTextInputFocusChange(this, focused);
+	}
+
 	protected OptionalInt getOptionalARGBColor(String input) {
 		try {
 			int i = Integer.parseUnsignedInt(input, 16);

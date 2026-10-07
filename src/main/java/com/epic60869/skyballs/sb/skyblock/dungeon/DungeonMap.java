@@ -10,8 +10,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -40,7 +38,6 @@ import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonMapUtils;
 import com.epic60869.skyballs.sb.skyblock.dungeon.secrets.DungeonPlayerManager;
 import com.epic60869.skyballs.sb.utils.Utils;
 import com.epic60869.skyballs.sb.utils.render.GuiHelper;
-import com.epic60869.skyballs.sb.utils.scheduler.Scheduler;
 
 public class DungeonMap {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DungeonMap.class);

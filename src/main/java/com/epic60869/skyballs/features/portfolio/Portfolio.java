@@ -156,6 +156,9 @@ public final class Portfolio {
     private static volatile Map<String, Double> bazaarBuy = Map.of();
     private static volatile Map<String, Double> bestSellOffers = Map.of();
     private static volatile Map<String, Double> bestBuyOrders = Map.of();
+    /** How many orders share the top price, for {@link #bazaarOrderBookCount}. */
+    private static volatile Map<String, Integer> bestSellOfferCounts = Map.of();
+    private static volatile Map<String, Integer> bestBuyOrderCounts = Map.of();
     private static volatile Map<String, String> names = Map.of();
     /** Rune price keys (e.g. AXE_SHATTER_RUNE_3) to names ("Barkshatter Rune III") and head textures, from the NEU repo. */
     private static volatile Map<String, String> runeNames = Map.of();
@@ -271,6 +274,12 @@ public final class Portfolio {
         return price == null ? 0 : price;
     }
 
+    /** How many orders are at the best price ({@link #bazaarOrderBookPrice}); 0 when unknown. */
+    public static int bazaarOrderBookCount(String id, boolean buyOrder) {
+        Integer count = (buyOrder ? bestBuyOrderCounts : bestSellOfferCounts).get(id);
+        return count == null ? 0 : count;
+    }
+
     /** What you'd pay right now: the lowest BIN, or the bazaar buy price. 0 when unknown. */
     private static double currentBuyPrice(String id) {
         Double bin = lowestBins.get(id);
@@ -290,6 +299,7 @@ public final class Portfolio {
                 if (bazaar != null && bazaar.has("products")) {
                     Map<String, Double> sell = new HashMap<>(), buy = new HashMap<>();
                     Map<String, Double> bestSells = new HashMap<>(), bestBuys = new HashMap<>();
+                    Map<String, Integer> sellCounts = new HashMap<>(), buyCounts = new HashMap<>();
                     for (var e : bazaar.getAsJsonObject("products").entrySet()) {
                         JsonObject product = e.getValue().getAsJsonObject();
                         JsonObject status = product.getAsJsonObject("quick_status");
@@ -297,17 +307,25 @@ public final class Portfolio {
                             sell.put(e.getKey(), status.get("sellPrice").getAsDouble());
                             buy.put(e.getKey(), status.get("buyPrice").getAsDouble());
                         }
-                        if (product.has("sell_summary") && product.getAsJsonArray("sell_summary").size() > 0) {
-                            bestSells.put(e.getKey(), product.getAsJsonArray("sell_summary").get(0).getAsJsonObject().get("pricePerUnit").getAsDouble());
-                        }
+                        // The API names them by what you'd do: sell_summary is the buy orders you'd sell into (top
+                        // one first), buy_summary the sell offers you'd buy from (lowest first).
                         if (product.has("buy_summary") && product.getAsJsonArray("buy_summary").size() > 0) {
-                            bestBuys.put(e.getKey(), product.getAsJsonArray("buy_summary").get(0).getAsJsonObject().get("pricePerUnit").getAsDouble());
+                            JsonObject top = product.getAsJsonArray("buy_summary").get(0).getAsJsonObject();
+                            bestSells.put(e.getKey(), top.get("pricePerUnit").getAsDouble());
+                            if (top.has("orders")) sellCounts.put(e.getKey(), top.get("orders").getAsInt());
+                        }
+                        if (product.has("sell_summary") && product.getAsJsonArray("sell_summary").size() > 0) {
+                            JsonObject top = product.getAsJsonArray("sell_summary").get(0).getAsJsonObject();
+                            bestBuys.put(e.getKey(), top.get("pricePerUnit").getAsDouble());
+                            if (top.has("orders")) buyCounts.put(e.getKey(), top.get("orders").getAsInt());
                         }
                     }
                     bazaarSell = sell;
                     bazaarBuy = buy;
                     bestSellOffers = bestSells;
                     bestBuyOrders = bestBuys;
+                    bestSellOfferCounts = sellCounts;
+                    bestBuyOrderCounts = buyCounts;
                 }
                 Map<String, Double> bins = numbers(fetch(LOWEST_BINS_URL));
                 if (!bins.isEmpty()) {

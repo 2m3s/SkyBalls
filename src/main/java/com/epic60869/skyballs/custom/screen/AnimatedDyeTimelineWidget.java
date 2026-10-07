@@ -44,7 +44,7 @@ public class AnimatedDyeTimelineWidget extends AbstractContainerWidget implement
 	private String uuid = "";
 
 	private final ArrayList<KeyframeWidget> keyframes = new ArrayList<>();
-	private @Nullable AnimatedDyeTimelineWidget.KeyframeWidget focusedFrame = null;
+	private @Nullable KeyframeWidget focusedFrame = null;
 
 	public AnimatedDyeTimelineWidget(int x, int y, int width, int height, FrameCallback frameCallback) {
 		super(x, y, width, height, Component.literal("Animated Dye Timeline"), AbstractScrollArea.defaultSettings(4));
@@ -208,8 +208,8 @@ public class AnimatedDyeTimelineWidget extends AbstractContainerWidget implement
 
 		@Override
 		public int getX() {
-			AnimatedDyeTimelineWidget parent = AnimatedDyeTimelineWidget.this;
-			return (int) (parent.getX() + HORIZONTAL_MARGIN + time * (parent.getWidth() - HORIZONTAL_MARGIN * 2 - 1)) - 3;
+			return (int) (AnimatedDyeTimelineWidget.this.getX() + HORIZONTAL_MARGIN
+				+ time * (AnimatedDyeTimelineWidget.this.getWidth() - HORIZONTAL_MARGIN * 2 - 1)) - 3;
 		}
 
 		@Override
@@ -224,9 +224,8 @@ public class AnimatedDyeTimelineWidget extends AbstractContainerWidget implement
 			if (!draggable) {
 				return;
 			}
-			AnimatedDyeTimelineWidget parent = AnimatedDyeTimelineWidget.this;
-			double mouseX = click.x() - parent.getX() + HORIZONTAL_MARGIN;
-			float v = (float) (mouseX / (parent.getWidth() - HORIZONTAL_MARGIN * 2 - 1));
+			double mouseX = click.x() - AnimatedDyeTimelineWidget.this.getX() + HORIZONTAL_MARGIN;
+			float v = (float) (mouseX / (AnimatedDyeTimelineWidget.this.getWidth() - HORIZONTAL_MARGIN * 2 - 1));
 			time = Math.clamp(v, 0, 1);
 			dragging = true;
 		}

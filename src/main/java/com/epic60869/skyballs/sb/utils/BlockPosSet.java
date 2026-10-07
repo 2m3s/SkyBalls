@@ -45,7 +45,7 @@ public class BlockPosSet extends AbstractSet<BlockPos> implements Cloneable {
 		int i = (int) hash & mask;
 
 		do {
-			// TODO: Switch to this when Vector API stabilizes
+			// Note: switch to this when Vector API stabilizes
 			/*
 			LongVector n = LongVector.fromArray(LongVector.SPECIES_PREFERRED, this.entries, i);
 			if (n.compare(VectorOperators.EQ, hash).anyTrue()) return true;
@@ -346,7 +346,7 @@ public class BlockPosSet extends AbstractSet<BlockPos> implements Cloneable {
 			removedAny = true;
 		}
 
-		// TODO: profile and consider resizing here
+		// Note: profile and consider resizing here
 		return removedAny;
 	}
 

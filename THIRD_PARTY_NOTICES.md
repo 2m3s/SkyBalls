@@ -148,7 +148,7 @@ Several SkyBalls dungeon features follow Odin's implementations:
 - https://github.com/odtheking/Odin (main branch, Minecraft 26.1.2)
 - Relevant source: `utils/skyblock/SplitsManager.kt`, `features/impl/skyblock/Splits.kt`, `utils/PersonalBest.kt`, `features/impl/dungeon/InvincibilityTimer.kt`, `LeapMenu.kt`, `BloodCamp.kt` (including its Watcher and blood mob head textures, mob skull data by DocilElm), `DoorHighlight.kt`, `PositionalMessages.kt`, the puzzle solvers in `puzzlesolvers/` (Ice Fill, Boulder, Creeper Beams, Three Weirdos, Quiz, Teleport Maze, Water Board and Blaze) with their data files `ice-fill-floors.json`, `boulder-solutions.json`, `creeper-beams-solutions.json`, `quiz-answers.json` and `water-solutions.json` (copied to `assets/skyballs/puzzles/`), and `render/PlayerSize.kt`
 
-Ported to Java in `features/dungeons/DungeonFeatures.java` (splits, split PBs, mask timers), `LeapMenu.java`, `BloodCamp.java`, `BloodCampSkulls.java`, `DoorHighlight.java`, `PositionalMessages.java`, `OdinPuzzleSolvers.java`, `OdinTerminals.java` (terminal solvers from `features/impl/boss/TerminalSolver.kt` and `utils/skyblock/dungeon/terminals/`), `OdinDevices.java` (`SimonSays.kt`, `ArrowAlign.kt`, `ArrowsDevice.kt`), `mixin/SkyBallsPlayerSizeMixin.java` and `mixin/SkyBallsToggleSprintMixin.java` (`AutoSprint.kt` / `LocalPlayerMixin.java`). Each file names Odin in its class comment.
+Ported to Java in `features/dungeons/DungeonFeatures.java` (splits, split PBs, mask timers), `LeapMenu.java`, `BloodCamp.java`, `BloodCampSkulls.java`, `DoorHighlight.java`, `PositionalMessages.java`, `OdinPuzzleSolvers.java`, `OdinTerminals.java` (terminal solvers from `features/impl/boss/TerminalSolver.kt` and `utils/skyblock/dungeon/terminals/`), `OdinDevices.java` (`SimonSays.kt`, `ArrowAlign.kt`, `ArrowsDevice.kt`), `mixin/SkyBallsPlayerSizeMixin.java`, `mixin/SkyBallsToggleSprintMixin.java` (`AutoSprint.kt` / `LocalPlayerMixin.java`), and `features/dungeons/SpiritBear.java` (`features/impl/boss/SpiritBear.kt`). Each file names Odin in its class comment.
 
 Odin is licensed under the BSD 3-Clause License:
 
@@ -190,7 +190,7 @@ SkyBalls's dungeon map ("NoammAddons (Legit)" style) and dungeon score calculato
 - https://github.com/Noamm9/NoammAddons (26.2 branch)
 - Relevant source: `features/impl/dungeon/map/MapRenderer.kt`, `MapConfig.kt`, `utils/dungeons/map/handlers/HotbarMapColorParser.kt`, `MapUpdater.kt`, `ScoreCalculation.kt`, `utils/dungeons/map/utils/MapUtils.kt`, `utils/dungeons/map/core/`, `features/impl/dungeon/ScoreCalculator.kt`, and the checkmark and marker textures in `textures/gui/dungeonmap/` (copied to `assets/skyballs/textures/gui/dungeonmap/`)
 
-Ported to Java in `features/dungeons/NoammMap.java` and `features/dungeons/ScoreCalculator.java`. NoammAddons is dedicated to the public domain under CC0 1.0 Universal.
+Ported to Java in `features/dungeons/NoammMap.java` and `features/dungeons/ScoreCalculator.java`. The M7 dragon priority (the dragon that spawns first, Solo Priority, First Dragon Only) and the relic place timer in `features/dungeons/WitherDragons.java` follow NoammAddons' `floor7/dragons/DragonCheck.kt` and `floor7/M7Relics.kt`. NoammAddons is dedicated to the public domain under CC0 1.0 Universal.
 
 ## Skysoft Held Item
 

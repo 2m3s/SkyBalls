@@ -23,7 +23,6 @@ import net.minecraft.world.phys.Vec3;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
 import com.epic60869.skyballs.sb.utils.render.primitive.PrimitiveCollector;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import java.util.List;
@@ -117,7 +116,7 @@ public final class SecretChime {
     /** RGBA 0-1 from a MoulConfig colour string. */
     private static float[] colour(String value, float[] fallback) {
         try {
-            int argb = ChromaColour.Companion.specialToChromaRGB(value);
+            int argb = com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB();
             return new float[]{((argb >> 16) & 0xFF) / 255f, ((argb >> 8) & 0xFF) / 255f, (argb & 0xFF) / 255f, ((argb >>> 24) & 0xFF) / 255f};
         } catch (Exception e) {
             return fallback;

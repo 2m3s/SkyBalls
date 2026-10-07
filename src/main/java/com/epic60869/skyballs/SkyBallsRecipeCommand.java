@@ -37,7 +37,6 @@ public final class SkyBallsRecipeCommand {
     private static final HttpClient HTTP = HttpClient.newBuilder()
         .connectTimeout(java.time.Duration.ofSeconds(5)).build();
     private static final List<ItemEntry> ITEMS = new ArrayList<>();
-    private static volatile boolean loaded;
 
     private record ItemEntry(String id, String name) {}
 
@@ -75,7 +74,6 @@ public final class SkyBallsRecipeCommand {
                 ITEMS.clear();
                 ITEMS.addAll(next);
             }
-            loaded = true;
             System.out.println("[SkyBalls] Loaded " + next.size() + " Hypixel items for recipe autocomplete.");
         } catch (Exception e) {
             System.err.println("[SkyBalls] Recipe item list load failed: " + e.getMessage());

@@ -1,7 +1,6 @@
 package com.epic60869.skyballs.mixin;
 
 import com.epic60869.skyballs.SkyBallsChatCompactor;
-import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.SkyBallsNopoFeatures;
 import com.epic60869.skyballs.SkyBallsNick;
 import net.minecraft.client.gui.components.ChatComponent;

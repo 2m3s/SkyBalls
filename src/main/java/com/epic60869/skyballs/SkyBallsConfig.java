@@ -33,6 +33,19 @@ import java.nio.file.Path;
 public final class SkyBallsConfig extends Config {
     public static final class General {
         @Expose
+        @ConfigOption(name = "What's New After Updates", desc = "After SkyBalls updates, say so in chat with a [What's New] button: the new features, each with an on/off toggle and a button to its settings. /sb whatsnew opens it any time.")
+        @ConfigEditorBoolean
+        public boolean whatsNewMessage = true;
+
+        /** The SkyBalls version that last ran, to notice updates. */
+        @Expose
+        public String lastSeenVersion = "";
+
+        /** The version before the last update, for /sb whatsnew. */
+        @Expose
+        public String whatsNewSince = "";
+
+        @Expose
         @Accordion
         @ConfigOption(name = "Item Custom", desc = "Item and armor customization settings.")
         public ItemCustom itemCustom = new ItemCustom();
@@ -72,6 +85,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Compact Chat", desc = "Compact repeated chat messages into one message with an occurrence counter.")
         @ConfigEditorBoolean
         public boolean compactChat = false;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Stash Messages", desc = "SkyHanni's compact stash warnings: Hypixel's stash block as one clickable line, without repeats.")
+        public com.epic60869.skyballs.features.misc.StashCompact.Config stashMessages = new com.epic60869.skyballs.features.misc.StashCompact.Config();
 
         @Expose
         @ConfigOption(name = "Chat Emoji", desc = "Replace :emoji: shortcodes with SkyBalls emoji sprites and provide emoji autocomplete while typing chat.")
@@ -114,6 +132,11 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Pest Highlight", desc = "Outline pests in the Garden, with an optional line or beacon to the nearest one and a pests/plots HUD.")
         public com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight pestHighlight = new com.epic60869.skyballs.features.sbc.SbcConfig.PestHighlight();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Visitors", desc = "SkyHanni's garden visitor features: shopping list, visitor timer, offer prices, reward warning, status highlights, chat options, drop statistics and charmed visitors.")
+        public com.epic60869.skyballs.features.garden.visitor.VisitorConfig visitors = new com.epic60869.skyballs.features.garden.visitor.VisitorConfig();
 
     }
 
@@ -261,6 +284,26 @@ public final class SkyBallsConfig extends Config {
         @Accordion
         @ConfigOption(name = "Pets Display", desc = "Pet display, overflow XP and positioning.")
         public PetDisplay display = new PetDisplay();
+
+        @Expose
+        @ConfigOption(name = "Highlight Active Pet", desc = "Highlight your summoned pet in the Pets menu.")
+        @ConfigEditorBoolean
+        public boolean highlightActive = true;
+
+        @Expose
+        @ConfigOption(name = "Active Pet Color", desc = "The color used to highlight your summoned pet in the Pets menu.")
+        @ConfigEditorColour
+        public String activeColor = "0:170:85:255:85";
+
+        @Expose
+        @ConfigOption(name = "Show Pet Level", desc = "Show each pet's level on its slot in the Pets menu, so you don't have to hover over it. Maxed pets show it in gold.")
+        @ConfigEditorBoolean
+        public boolean showLevel = true;
+
+        @Expose
+        @ConfigOption(name = "Show Overflow Pet Level", desc = "With Show Pet Level on, maxed pets show their overflow level past 100 (or 200) instead of just the max.")
+        @ConfigEditorBoolean
+        public boolean showOverflowLevel = true;
     }
 
     public static final class Misc {
@@ -289,8 +332,18 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Loadout Highlight", desc = "SkyHanni's loadout highlighting: the loadout you have equipped is highlighted in the Loadouts menu.")
+        public com.epic60869.skyballs.features.FeatureConfigs.LoadoutHighlight loadoutHighlight = new com.epic60869.skyballs.features.FeatureConfigs.LoadoutHighlight();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Item Notification", desc = "Show items from your list on a HUD when they go into your sacks or inventory (SkyOcean's Sack Notification as a HUD).")
         public com.epic60869.skyballs.features.FeatureConfigs.ItemNotification itemNotification = new com.epic60869.skyballs.features.FeatureConfigs.ItemNotification();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Enchant Parsing", desc = "SkyHanni's enchant parsing: enchants in tooltips coloured by level (perfect enchants in chroma), sorted, and laid out normal, compressed or stacked.")
+        public com.epic60869.skyballs.features.misc.EnchantParsingConfig enchantParsing = new com.epic60869.skyballs.features.misc.EnchantParsingConfig();
 
         @Expose
         @Accordion
@@ -354,6 +407,11 @@ public final class SkyBallsConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Speed Display", desc = "SkyblockAddons' Speed Percentage: your speed as a percentage on a HUD.")
+        public SpeedDisplay speedDisplay = new SpeedDisplay();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Held Item", desc = "Move, rotate and scale the item in your hand, change its swing speed and style, and show vanilla textures, globally or per item, ported from Skysoft. Open the editor with /sb helditem.")
         public com.epic60869.skyballs.features.helditem.HeldItemConfig heldItem = new com.epic60869.skyballs.features.helditem.HeldItemConfig();
 
@@ -380,6 +438,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Warp Shortcuts", desc = "Type /dhub, /crypts, /garden and other warp names without /warp (SkyHanni's and Skysoft's short warp commands). In the Garden, /home warps to the Garden, /barn goes to the barn and /tp <plot> to a plot.")
         @ConfigEditorBoolean
         public boolean warpShortcuts = false;
+
+        @Expose
+        @ConfigOption(name = "Shard Level Up Highlight", desc = "Highlight attribute shards you have enough of to level up or unlock, in the Hunting Box and the Attribute Menu. The Attribute Menu uses the amounts seen in your Hunting Box, so open it first.")
+        @ConfigEditorBoolean
+        public boolean shardLevelUpHighlight = true;
 
         @Expose
         @ConfigOption(name = "Join Commands", desc = "Quick commands to join dungeons and Kuudra: /f0 (Entrance) to /f7, /m1 to /m7, and /t1 to /t5 for Kuudra (Basic to Infernal). Applies next time you join a server.")
@@ -651,6 +714,10 @@ public final class SkyBallsConfig extends Config {
     public Mining mining = new Mining();
 
     @Expose
+    @Category(name = "Skill Progress", desc = "SkyHanni's Skill Progress: the progress display and bar, ETA display, all skills display, overflow levels and custom goals.")
+    public com.epic60869.skyballs.features.FeatureConfigs.SkillProgress skills = new com.epic60869.skyballs.features.FeatureConfigs.SkillProgress();
+
+    @Expose
     @Category(name = "Foraging", desc = "Sweep display.")
     public com.epic60869.skyballs.features.FeatureConfigs.Foraging foraging = new com.epic60869.skyballs.features.FeatureConfigs.Foraging();
 
@@ -804,6 +871,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Sound on Order Filled", desc = "Play a sound when one of your Bazaar orders or offers fills.")
         @ConfigEditorBoolean
         public boolean filledSound = true;
+
+        @Expose
+        @ConfigOption(name = "Order Colours", desc = "In your Bazaar orders menu, colour each order's slot by where it stands, like Bazaar Utils: green when it's the best price, yellow when another order matches its price, red when it's outbid. Uses the bazaar prices from Hypixel's API, which can be up to a minute old.")
+        @ConfigEditorBoolean
+        public boolean orderColours = true;
     }
 
     public static final class CopyChat {
@@ -1028,6 +1100,11 @@ public final class SkyBallsConfig extends Config {
         public boolean threeDayAverage = true;
 
         @Expose
+        @ConfigOption(name = "Estimated Item Value", desc = "Below the lowest BIN and 3 day average: the item's price plus what's applied to it (recombobulator, potato books, enchantments, master stars, gemstones, scrolls, dyes, skins and other upgrades), like SkyHanni's Estimated Item Value.")
+        @ConfigEditorBoolean
+        public boolean estimatedValue = true;
+
+        @Expose
         @ConfigOption(name = "Price Paid", desc = "Remember what you paid for items you buy on the auction house and show it in their tooltip, like NoFrills.")
         @ConfigEditorBoolean
         public boolean pricePaid = false;
@@ -1082,6 +1159,13 @@ public final class SkyBallsConfig extends Config {
         @Expose @ConfigOption(name = "Others Depth", desc = "Z scale (1 = normal).") @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.05f) public float othersZ = 0.6f;
     }
 
+    public static final class SpeedDisplay {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Show your speed (100% is normal walking speed, 400% the cap) on a HUD, like SkyblockAddons. Move it in /sb gui.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+    }
+
     /** The settings of the old Held Item Model (replaced by Skysoft's Held Item). */
     public static final class LegacyHeldItemModel {
         @Expose public boolean enabled = false;
@@ -1111,6 +1195,11 @@ public final class SkyBallsConfig extends Config {
         @ConfigOption(name = "Hide Explosions", desc = "Hide explosion particles (TNT, Bonzo staff, Wither impact and other server explosions).")
         @ConfigEditorBoolean
         public boolean hideExplosions = false;
+
+        @Expose
+        @ConfigOption(name = "Hide Block Break Particles", desc = "Hide the particles when a block breaks (yours or anyone's) and the bits that fly off a block while you mine it, like SkyHanni's.")
+        @ConfigEditorBoolean
+        public boolean hideBlockBreakParticles = false;
     }
 
     /** Firmament's storage overlay options (Firmament's StorageOverlay.TConfig). */
@@ -1245,7 +1334,6 @@ public final class SkyBallsConfig extends Config {
         }
 
         FileHolder holder = new FileHolder(path);
-        boolean configExisted = Files.exists(path);
 
         managed = new ManagedConfig<>(new io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<>(
             holder.file, SkyBallsConfig.class
@@ -1344,6 +1432,14 @@ public final class SkyBallsConfig extends Config {
     public static void openGui() {
         if (managed == null) return;
         if (editor == null) editor = managed.getEditor();
+        io.github.notenoughupdates.moulconfig.common.IMinecraft.INSTANCE.openWrappedScreen(editor);
+    }
+
+    /** Opens the settings searched for {@code search} (What's New's settings buttons). */
+    public static void openGui(String search) {
+        if (managed == null) return;
+        if (editor == null) editor = managed.getEditor();
+        editor.search(search);
         io.github.notenoughupdates.moulconfig.common.IMinecraft.INSTANCE.openWrappedScreen(editor);
     }
 

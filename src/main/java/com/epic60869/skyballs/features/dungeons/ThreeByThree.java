@@ -4,7 +4,6 @@ import com.epic60869.skyballs.SkyBallsConfig;
 import com.epic60869.skyballs.features.FeatureConfigs;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
 import com.epic60869.skyballs.sb.skyblock.dungeon.DungeonClass;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
@@ -40,7 +39,7 @@ public final class ThreeByThree {
 
     private static int colour(String value) {
         try {
-            return ChromaColour.Companion.specialToChromaRGB(value);
+            return com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB();
         } catch (Exception e) {
             return 0xFF55FF55;
         }

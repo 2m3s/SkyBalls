@@ -38,9 +38,9 @@ public final class ScreenshotShare {
 
     /** Settings saved with a host that's gone (Litterbox, 0x0.st) load as null, which means the default. */
     public enum Host {
-        SKYBALLS("SkyBalls (ImgBB, 30 days)"),
-        CATBOX("Catbox (permanent)"),
-        UGUU("Uguu (3 hours)");
+        SKYBALLS("SkyBalls"),
+        CATBOX("Catbox"),
+        UGUU("Uguu");
 
         private final String label;
 

@@ -339,7 +339,6 @@ public class Config {
         return instance;
     }
 
-    @SuppressWarnings("unused")
     public static Config resetAndSave() {
         instance = new Config();
         save();

@@ -91,7 +91,7 @@ public final class BlazeSlayer {
 
     /** The "First Dagger" dropdown. */
     public enum FirstDagger {
-        TWILIGHT("Spirit/Crystal"), FIREDUST("Ashen/Auric");
+        TWILIGHT("Twilight"), FIREDUST("Firedust");
 
         private final String label;
 

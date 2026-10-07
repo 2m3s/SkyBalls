@@ -113,7 +113,6 @@ public class TextField extends EditBox {
         return this;
     }
 
-    @SuppressWarnings("unused")
     public TextField lenient() {
         this.lenient = true;
         return this;

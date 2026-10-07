@@ -43,6 +43,11 @@ public abstract class ContainerSolverScreenMixin {
 			return;
 		}
 		com.epic60869.skyballs.features.misc.PricePaid.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot);
+		// SkyBalls: visitor reward warning (blocked offer buttons) and the Supercraft button.
+		if (com.epic60869.skyballs.features.garden.visitor.GardenVisitors.onSlotClicked((AbstractContainerScreen<?>) (Object) this, slot, input)) {
+			ci.cancel();
+			return;
+		}
 		// SkyBalls: Odin's terminal solver takes every click in a terminal (misclick and first-click protection).
 		if (com.epic60869.skyballs.features.dungeons.OdinTerminals.active()) {
 			if (com.epic60869.skyballs.features.dungeons.OdinTerminals.onSlotClicked(slot == null ? slotId : slot.index, button)) ci.cancel();

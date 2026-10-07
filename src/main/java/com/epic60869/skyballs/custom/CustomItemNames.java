@@ -17,7 +17,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.ItemStack;
 
-import com.epic60869.skyballs.custom.CustomConfigManager;
 import com.epic60869.skyballs.custom.screen.CustomizeScreen;
 
 public class CustomItemNames {

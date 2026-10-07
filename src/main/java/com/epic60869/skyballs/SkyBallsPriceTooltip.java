@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 /**
  * Adds prices to SkyBlock item tooltips, following Skyblocker's AvgBinTooltip, LBinTooltip and
- * NpcPriceTooltip and BazaarPriceTooltip: bazaar buy/sell price, 3 day average price, lowest BIN and NPC sell price, with the stack total and
+ * NpcPriceTooltip and BazaarPriceTooltip: bazaar buy/sell price, 3 day average price, lowest BIN, estimated item value and NPC sell price, with the stack total and
  * the price each when there is more than one item. Auction prices come from the same API
  * Skyblocker uses (hysky.de); NPC prices come from the Hypixel items API.
  */
@@ -84,6 +84,16 @@ public final class SkyBallsPriceTooltip {
             case NPC_SELL -> npcPrices.get(id);
         };
         if (price != null && price > 0) return price;
+        Double bin = lowestBins.get(id);
+        if (bin != null && bin > 0) return bin;
+        PriceHistory.Seen seen = PriceHistory.get(id);
+        return seen == null ? 0 : seen.price();
+    }
+
+    /** What it costs to get one {@code id}: bazaar insta-buy, else lowest BIN (or last seen). 0 if unknown. */
+    public static double costPrice(String id) {
+        Double buy = bazaarBuy.get(id);
+        if (buy != null && buy > 0) return buy;
         Double bin = lowestBins.get(id);
         if (bin != null && bin > 0) return bin;
         PriceHistory.Seen seen = PriceHistory.get(id);
@@ -233,6 +243,10 @@ public final class SkyBallsPriceTooltip {
         if (config.threeDayAverage) {
             Double price = threeDayAverage.get(apiId);
             if (price != null) lines.add(line("3 Day Avg. Price: ", ChatFormatting.GOLD, price, count));
+        }
+        if (config.estimatedValue) {
+            double value = EstimatedItemValue.estimate(id, apiId, Compat.customDataView(stack));
+            if (value > 0) lines.add(line("Estimated Item Value: ", ChatFormatting.GOLD, value, count));
         }
     }
 

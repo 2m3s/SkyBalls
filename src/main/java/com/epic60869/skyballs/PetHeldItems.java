@@ -48,10 +48,13 @@ public final class PetHeldItems {
         });
     }
 
-    /** "[Lvl 200] [122✦] Golden Dragon ✦" -> "golden dragon". */
-    private static String key(String petName) {
-        String name = SkyBallsLocation.strip(petName).replaceAll("\\[Lvl \\d+]", "").replaceAll("\\[[^]]*✦]", "")
-            .replace("✦", "").trim();
+    /**
+     * "[Lvl 200] [122✦] Golden Dragon ✦" or the Pets menu's "⭐ Golden Dragon" -> "golden dragon": symbols (a favourite
+     * star, the skin mark...) and extra spaces don't count, so the menu's and the tab list's names match.
+     */
+    static String key(String petName) {
+        String name = SkyBallsLocation.strip(petName == null ? "" : petName).replaceAll("\\[[^]]*]", "")
+            .replaceAll("[^\\p{L}\\p{N} ]", "").replaceAll("\\s+", " ").trim();
         return name.toLowerCase(Locale.ROOT);
     }
 
@@ -115,15 +118,21 @@ public final class PetHeldItems {
 
     /** An item's id from its name ("Lucky Clover" -> "PET_ITEM_LUCKY_CLOVER"), or the name itself if unknown. */
     private static String idFor(String name) {
-        String id = RepoItems.idByName(name.trim());
-        return id != null ? id : name.trim().toUpperCase(Locale.ROOT).replace(' ', '_');
+        // Pet items first: "Saddle" is also a plain item, and SADDLE isn't the pet one.
+        java.util.List<String> ids = RepoItems.idsByName(name.trim());
+        for (String id : ids) if (id.startsWith("PET_ITEM_")) return id;
+        return !ids.isEmpty() ? ids.getFirst() : name.trim().toUpperCase(Locale.ROOT).replace(' ', '_');
     }
 
     private static void load() {
         try {
             if (!Files.exists(file)) return;
             JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
-            root.entrySet().forEach(e -> HELD.put(e.getKey(), e.getValue().getAsString()));
+            // Keys saved before the name matching ignored symbols ("⭐  golden dragon") are tidied the same way.
+            root.entrySet().forEach(e -> {
+                String key = key(e.getKey());
+                if (!key.isEmpty() && (!HELD.containsKey(key) || !e.getValue().getAsString().isEmpty())) HELD.put(key, e.getValue().getAsString());
+            });
         } catch (Exception e) {
             System.err.println("[SkyBalls] Could not read pet-held-items.json: " + e.getMessage());
         }

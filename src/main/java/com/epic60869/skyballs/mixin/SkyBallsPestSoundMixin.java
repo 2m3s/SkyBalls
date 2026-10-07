@@ -9,7 +9,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Lets the Pest Spawn Sound setting keep, mute or replace Hypixel's pest spawn sound (SkyHanni's PestSpawnSound). */
+/**
+ * Lets the Pest Spawn Sound setting keep, mute or replace Hypixel's pest spawn sound (SkyHanni's PestSpawnSound), and
+ * mutes the nether portal sound of OVERFLOW! drops.
+ */
 @Mixin(ClientPacketListener.class)
 public abstract class SkyBallsPestSoundMixin {
     @Inject(method = "handleSoundEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER), cancellable = true)
@@ -19,5 +22,13 @@ public abstract class SkyBallsPestSoundMixin {
         String name = packet.getSound().value().location().getPath();
         double distance = Math.sqrt(mc.player.distanceToSqr(packet.getX(), packet.getY(), packet.getZ()));
         if (PestTimer.onPlaySound(name, packet.getVolume(), packet.getPitch(), distance)) ci.cancel();
+        else if (com.epic60869.skyballs.features.garden.OverflowDropSound.onPlaySound(name)) ci.cancel();
+    }
+
+    /** Sounds played on an entity (you) rather than at a position. */
+    @Inject(method = "handleSoundEntityEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V", shift = At.Shift.AFTER), cancellable = true)
+    private void skyballs$onEntitySound(net.minecraft.network.protocol.game.ClientboundSoundEntityPacket packet, CallbackInfo ci) {
+        String name = packet.getSound().value().location().getPath();
+        if (com.epic60869.skyballs.features.garden.OverflowDropSound.onPlaySound(name)) ci.cancel();
     }
 }

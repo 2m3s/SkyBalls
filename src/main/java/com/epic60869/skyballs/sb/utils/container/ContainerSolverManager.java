@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import com.epic60869.skyballs.sb.annotations.Init;
-import com.epic60869.skyballs.sb.mixins.accessors.AbstractContainerScreenAccessor;
 import com.epic60869.skyballs.sb.skyblock.dungeon.terminal.ColorTerminal;
 import com.epic60869.skyballs.sb.skyblock.dungeon.terminal.LightsOnTerminal;
 import com.epic60869.skyballs.sb.skyblock.dungeon.terminal.OrderTerminal;
@@ -56,7 +55,6 @@ public class ContainerSolverManager {
 		return currentSolver;
 	}
 
-	@SuppressWarnings("unused")
 	public static void registerSolver(ContainerSolver solver) {
 		solvers.add(solver);
 	}

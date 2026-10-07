@@ -223,7 +223,7 @@ public final class FishingData {
     }
 
     public enum AlertSource {
-        OWN_AND_PARTY("Own and party"), OWN("Own");
+        OWN_AND_PARTY("Own + Party"), OWN("Own");
 
         private final String label;
 
@@ -238,7 +238,7 @@ public final class FishingData {
     }
 
     public enum PriceScope {
-        OWN("Own"), OWN_AND_PARTY("Own and party"), OFF("Off");
+        OWN("Own"), OWN_AND_PARTY("Own + Party"), OFF("Off");
 
         private final String label;
 

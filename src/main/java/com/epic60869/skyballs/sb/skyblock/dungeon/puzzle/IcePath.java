@@ -22,7 +22,6 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import com.epic60869.skyballs.sb.SkyblockerMod;
 import com.epic60869.skyballs.sb.annotations.Init;
 import com.epic60869.skyballs.sb.config.SkyblockerConfigManager;
 import com.epic60869.skyballs.sb.debug.Debug;

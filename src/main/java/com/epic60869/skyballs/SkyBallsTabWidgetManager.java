@@ -68,7 +68,6 @@ public final class SkyBallsTabWidgetManager {
     }
 
     private static void updateWidgetsFrom(List<PlayerInfo> lines) {
-        PredicateState state = new PredicateState();
         Component sideThing = Component.empty();
         List<Component> contents = new ArrayList<>();
         List<PlayerInfo> raw = new ArrayList<>();
@@ -289,8 +288,6 @@ public final class SkyBallsTabWidgetManager {
     }
 
     private record NameAndInfo(String name, Component detail, int color) {}
-
-    private static final class PredicateState {}
 
     public record Widget(Component detail, List<Component> lines,
                          List<PlayerInfo> playerListEntries, int color) {

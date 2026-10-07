@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,6 +38,7 @@ import com.epic60869.skyballs.custom.util.Compat;
 public final class RepoItems {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final String NEU_REPO = "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/";
+	private static final String SKYHANNI_REPO = "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/";
 	private static final String HYPIXEL_ITEMS = "https://api.hypixel.net/v2/resources/skyblock/items";
 	private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
@@ -66,6 +66,11 @@ public final class RepoItems {
 
 	public static String neuRepoFile(String path) throws IOException, InterruptedException {
 		return fetch(NEU_REPO + path);
+	}
+
+	/** A file from SkyHanni's repo (e.g. "constants/Garden.json"). Blocking. */
+	public static String skyHanniRepoFile(String path) throws IOException, InterruptedException {
+		return fetch(SKYHANNI_REPO + path);
 	}
 
 	public static boolean itemsLoaded() {
@@ -129,6 +134,18 @@ public final class RepoItems {
 		return null;
 	}
 
+	/** Every item id with this plain name (some share one: "Saddle", or a pet item's five rarities). */
+	public static List<String> idsByName(String name) {
+		String wanted = net.minecraft.ChatFormatting.stripFormatting(name).trim();
+		List<String> ids = new ArrayList<>();
+		synchronized (ITEMS) {
+			for (RepoItem item : ITEMS.values()) {
+				if (item.name() != null && net.minecraft.ChatFormatting.stripFormatting(item.name()).trim().equalsIgnoreCase(wanted)) ids.add(item.id());
+			}
+		}
+		return ids;
+	}
+
 	/**
 	 * Hypixel's item model for the item ("hypixel_skyblock:item/uncategorized/summoning_eye"), drawn by Hypixel's
 	 * resource pack; null if it has none. Without that pack loaded the item looks like its plain material (paper).
@@ -181,6 +198,9 @@ public final class RepoItems {
 
 	private static ItemStack createStack(RepoItem repoItem) {
 		ItemStack stack = repoItem.texture() != null ? Compat.createSkull(repoItem.texture()) : new ItemStack(repoItem.item());
+		// Newer items are paper with Hypixel's model on top; use the model when it's loaded (Hypixel's pack, or vanilla).
+		Identifier model = repoItem.itemModel() == null ? null : Identifier.tryParse(repoItem.itemModel());
+		if (model != null && repoItem.texture() == null && hasItemModel(model)) stack.set(DataComponents.ITEM_MODEL, model);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal(repoItem.name()));
 		CompoundTag tag = new CompoundTag();
 		tag.putString("id", repoItem.id());
@@ -198,10 +218,11 @@ public final class RepoItems {
 				String id = item.get("id").getAsString();
 				String name = item.has("name") ? item.get("name").getAsString() : id;
 				String material = item.has("material") ? item.get("material").getAsString() : "";
+				int durability = item.has("durability") ? item.get("durability").getAsInt() : 0;
 				String texture = skinTexture(item.get("skin"));
 				String itemModel = item.has("item_model") ? item.get("item_model").getAsString() : null;
 				String tier = item.has("tier") ? item.get("tier").getAsString() : null;
-				loaded.put(id, new RepoItem(id, name, material(material), texture, itemModel, tier));
+				loaded.put(id, new RepoItem(id, name, material(material, durability), texture, itemModel, tier));
 			}
 			synchronized (ITEMS) {
 				ITEMS.clear();
@@ -223,9 +244,19 @@ public final class RepoItems {
 		return null;
 	}
 
-	private static Item material(String material) {
+	/** Whether the client has this item model (Hypixel's only exist while its resource pack is loaded). */
+	public static boolean hasItemModel(Identifier model) {
+		try {
+			var models = net.minecraft.client.Minecraft.getInstance().getModelManager();
+			return models.getItemModel(model) != models.getItemModel(Identifier.fromNamespaceAndPath("skyballs", "no_such_item_model"));
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	private static Item material(String material, int durability) {
 		if (material.equalsIgnoreCase("SKULL_ITEM")) return Items.PLAYER_HEAD;
-		Identifier id = Identifier.tryParse(material.toLowerCase(Locale.ROOT));
+		Identifier id = Identifier.tryParse(LegacyMaterials.modern(material, durability));
 		return id == null ? Items.BARRIER : BuiltInRegistries.ITEM.getOptional(id).orElse(Items.BARRIER);
 	}
 

@@ -22,7 +22,6 @@ public final class SkyBallsDiscordScreen extends Screen {
 
     private int panelX, panelY, panelW, panelH;
     private String view = "home";
-    private String selectedGuildId = "";
     private String selectedGuildName = "";
     private String selectedChannelId = "";
     private String selectedChannelName = "";
@@ -105,7 +104,6 @@ public final class SkyBallsDiscordScreen extends Screen {
     }
 
     private void requestChannels(String guildId, String guildName) {
-        selectedGuildId = guildId;
         selectedGuildName = guildName;
         selectedChannelId = "";
         selectedDmUserId = "";

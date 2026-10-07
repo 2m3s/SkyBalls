@@ -83,7 +83,8 @@ public final class DoorHighlight {
                     boolean openable = door.blood() ? bloodKey : witherKeys > 0;
                     BlockPos c = door.centre();
                     AABB box = new AABB(c.getX() - 1, 69, c.getZ() - 1, c.getX() + 2, 73, c.getZ() + 2);
-                    collector.submitOutlinedBox(box, openable ? OPENABLE : LOCKED, 3f, false);
+                    // Through walls, so you can see where the next door is from across the map.
+                    collector.submitOutlinedBox(box, openable ? OPENABLE : LOCKED, 3f, true);
                 }
             }
             if (config.keyHighlight && keyEntity != null && keyEntity.isAlive()) {

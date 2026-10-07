@@ -6,7 +6,6 @@ import com.epic60869.skyballs.features.core.EntityGlow;
 import com.epic60869.skyballs.features.core.SkyBallsChat;
 import com.epic60869.skyballs.features.core.SkyBallsLocation;
 import com.epic60869.skyballs.features.core.SkyBallsWorldRender;
-import io.github.notenoughupdates.moulconfig.ChromaColour;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -197,7 +196,7 @@ public final class SlayerTargetHighlight {
 
     private static int colour(String value) {
         try {
-            return ChromaColour.Companion.specialToChromaRGB(value);
+            return com.epic60869.skyballs.custom.util.ChromaColours.parse(value).getEffectiveColourRGB();
         } catch (Exception e) {
             return 0xFFFF5555;
         }

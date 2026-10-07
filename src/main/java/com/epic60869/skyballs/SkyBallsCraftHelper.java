@@ -150,10 +150,6 @@ public final class SkyBallsCraftHelper {
         if (selectedId != null) select(selectedId, amount, true);
     }
 
-    private static int perCraft() {
-        return tree == null || tree.recipe == null ? 1 : Math.max(1, tree.recipe.outputCount());
-    }
-
     /** HUD lines: title and the merged base ingredients, like SkyOcean's raw formatter. */
     private static List<Component> hudLines() {
         refresh();

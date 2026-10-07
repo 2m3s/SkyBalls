@@ -12,9 +12,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
-import com.epic60869.skyballs.sb.annotations.GenEquals;
-import com.epic60869.skyballs.sb.annotations.GenHashCode;
-import com.epic60869.skyballs.sb.annotations.GenToString;
 import com.epic60869.skyballs.sb.config.SkyblockerConfigManager;
 import com.epic60869.skyballs.sb.config.configs.UIAndVisualsConfig;
 import com.epic60869.skyballs.sb.utils.Location;
