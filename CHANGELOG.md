@@ -1,47 +1,93 @@
 # Changelog
 
-All notable changes to SkyBalls are listed here, newest first.
+All notable changes to Sky2M are listed here, newest first.
 
-## 1.5 — 2026-10-06
+## 1.0 — 2026-10-10
+
+The first Sky2M release: SkyBalls is now Sky2M. Commands are /s2 and /s2m (/sb and /skyballs are gone), chat messages start with [S2M], and your SkyBalls settings, keybinds and data are copied over the first time you start it. Remove the old SkyBalls jar from your mods folder.
+
+### Added
+- Terminal Solver Enabled (Dungeons > F7/M7 > Terminals and Devices, on by default): switch the terminal solver off, so terminals look and click like normal.
+- SkyBlock Only (General), from Killer560's Mod: one switch that pauses every Sky2M feature outside SkyBlock (the lobby, other games and servers). Singleplayer still works, and there's a few seconds' grace while switching servers so nothing flickers.
+- Custom Crosshair (Misc > Visual > Custom Crosshair), from Killer560's Mod: design your own crosshair (cross, T, X, dot, circle, cross and circle, or a picture), every size, colour (chroma too), outline and rotation, colours when looking at a mob or block, and spread when you move, sprint, jump or swing. Import a Valorant crosshair code, a CS2 share code, a KXH1 code or a PNG from your clipboard, export yours as a code, or start from a preset.
+- Pack Disabler (Misc > Items & Tooltips), from Killer560's Mod: SkyBlock items drawn the way they looked before Hypixel's 2026 resource pack, as their old vanilla item (so your own resource packs draw them), their old head, or a new texture for items that never had one. Hypixel's pack still loads; only item looks change. Off while Noamm's PackDisabler is installed.
+- Revert Master Stars (Misc > Items & Tooltips), like Killer560's Mod: Master Stars shown the old way, as that many of the item's stars in red instead of the new numbered star.
+- GIF Player (Misc > HUDs > GIF Player), from Killer560's Mod: every GIF in config/sky2m/gifs plays on loop as its own HUD you can move and resize in /s2 gui, with a speed setting, a size limit and a list of GIFs to hide.
+- DVD Screensaver (Misc > Visual > DVD Screensaver), from Killer560's Mod: text or a GIF bouncing around your screen like an old DVD player, with up to 10 at once, new colours on walls or corners, and a sound and message when it hits a corner exactly.
+- Trail (Misc > Visual > Trail), from Killer560's Mod: a trail of squares behind you as you move, in one colour on the ground and another in the air, with its length, square size, lifetime and fade.
+- Auto Join SkyBlock (Misc > Hypixel & Commands), like SkyHanni: when you join Hypixel you go straight into SkyBlock instead of staying in the main lobby. Only once per join, so /lobby still works.
+- Livid Finder (Dungeons > Floors 4-6, on by default), from SkyHanni: once the wool above the arena shows which Livid is real, she's boxed and labelled with a line from your crosshair (not while you're blind). It can also hide the wrong Livids and force the highlight colour. Replaces Odin's Livid Solver.
+- Enchanted Book Labels (Misc > Items & Tooltips, on by default): two letters in the top right of enchanted books naming their enchantment (Sh for Sharpness, UW for Ultimate Wise, in pink for Ultimate enchantments), so you can tell them apart without hovering. Books with several enchantments aren't labelled.
+- Discord Rich Presence (Misc > Discord & Screenshots, on by default): your Discord profile shows you're playing Sky2M, with where you are on SkyBlock and for how long. Needs the Discord app open; Show Location in Discord turns the location off.
+- Collection Portfolio (Misc > Collections, on by default): your collections are saved every 30 minutes on SkyBlock so /s2 collections can show how much each one went up over the last day, week or month. Needs your Collections API on.
+- Party Finder Stats (Dungeons > Party Finder Stats), from Odin's Better Party Finder: when someone joins your group from the Party Finder, their Catacombs level, class levels, secrets (and per run), watcher kills, floor times (hover Normal or Master), magical power, armour (hover each piece) and missing key items (Wither Blade, Terminator, Golden and Ender Dragon) are shown in chat, only to you, with a [KICK] button. Optional Auto Kick by S+ time on a floor, secrets, Catacombs level and magical power, remembering who it kicked. /s2 cata <name> shows anyone's.
+- Auto Requeue (Dungeons > Auto Requeue), from NoammAddons: when a run ends, the party goes into another run of the same floor after a delay you set, unless someone left. /s2 requeue cancel skips the next one.
+- Item Pickup Log (Misc > HUDs > Item Pickup Log), from SkyHanni: a HUD of the items you just picked up (+) and lost (-), sacks included, with SkyHanni's options: compact lines and numbers, sacks, shards, coins, the coin value of what you picked up, alignment, layout and how long lines stay. Moving items around your inventory isn't logged.
+- Translator (Chat > Translator), from SkyHanni: click a player's chat message to translate it into your language. The translation only shows in your chat; nothing is sent. /s2 translate <language> <message> translates your own message and copies it, ready to paste.
+- Bazaar & AH Search (Misc > Inventory & Storage), like Skyblocker: clicking Search in the Bazaar or Auction House opens a search box instead of the sign, suggesting item names as you type (only bazaar items in the Bazaar) and your last searches.
+- Inventory HUD (Misc > HUDs > Inventory HUD), from Killer560's Mod: your inventory as a HUD you can move and resize in /s2 gui.
+- Slayer Minibosses (Slayers, on by default): the slayer HUD also lists the minibosses near you, and "SLAYER BOSS" or "SLAYER MINIBOSS" is written above their name and health.
+- Right-click a HUD in /s2 gui to open its settings, like SkyHanni. Middle-click (or shift and right-click) turns its background on or off.
+- Discord App ID (Misc > Discord & Screenshots): Discord Rich Presence needs a Discord application's ID to show anything; paste yours here.
+
+### Changed
+- The /s2 menu is reorganised: the categories are in a clearer order (General, Chat, Online, Dungeons, Slayers, Combat, Mayors, Farming, Mining, Fishing, ...) and their settings are grouped into dropdowns and sub-dropdowns. Misc is split into Items & Tooltips, Inventory & Storage, HUDs, Collections, Visual, Hypixel & Commands and Discord & Screenshots; Puzzle Solvers has a dropdown per puzzle, and Secrets, Timers, Score, Mobs, Chest Profit, Diana, the slayers, Fishing and more are grouped the same way. Your settings are kept.
+- Offer Sharing Found Hotspots (Fishing > Alerts > Hotspots & Wormholes) is now off by default (and switched off once on update), and its chat message has a [Turn off] button.
+- Shard Level Up Highlight remembers your shard amounts between sessions and matches shards by item, so the Attribute Menu works without opening the Hunting Box every time. If it doesn't know your amounts yet, it says to open the Hunting Box once.
+- Performance: storage pages are decoded once instead of every few seconds (the recipe HUD and storage searches stuttered with a lot of storage), and the scoreboard, tab list, sidebar and HUD text are read with less work every tick and frame.
+- SkyBalls is now Sky2M: commands are /s2 and /s2m, chat messages start with [S2M], and the old /sb, /skyballs and /sbc commands are gone (/sbc is /s2c). Settings, keybinds and data in config/skyballs are copied to config/sky2m once.
+- Update checks look at the Sky2M releases on GitHub (2m3s/Sky2M-26.2 and 2m3s/Sky2M-26.3).
+- Party commands (!warp, !pt, !f7, ...) are always run, even when Sky2M thinks someone else leads: if you don't, Hypixel says so instead of the command silently doing nothing.
+- Deployable Timers finds power orbs and flares placed near you (yours or anyone's), like SkyblockAddons, instead of only ones you placed.
+- Slot Locking: binds can be finished by clicking the second slot, bound slots get a border, and Always Show Binds shows every bind in your inventory (Killer560's).
+
+### Fixed
+- /s2 recipe showed 0/0 for every ingredient when you already had the item: the ingredients now show what crafting it takes, with "You already have N" above them.
+- The boss-target hotkey could target someone else's slayer boss; the slayer HUD now follows the boss you targeted.
+- Hypixel Button didn't show over custom menus (Sky2M's and other mods' screens); it now draws on top of them.
+- Terracotta Timer (F6/M6): the timer stayed on the flower pot; it's above the terracotta once it's grown.
+- Discord Rich Presence never showed: it had no Discord application to connect to. Set Discord App ID.
+
+## SkyBalls 1.5 — 2026-10-06
 
 Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), so both builds have the same features, plus the new features below.
 
 ### Added
 - Livid Solver (Dungeons, F5/M5), from Odin: once the wool above the arena shows which Livid is real, a chat line names her and she's boxed in a colour you choose (not while you're blind), plus a HUD counting down her invulnerability.
 - Terracotta Timer (Dungeons, F6/M6), from Odin: seconds until each terracotta respawns, over its flower pot.
-- Blessing Display (Dungeons), from Odin: a HUD with the dungeon's blessings and their levels from the tab list, each with its own toggle and colour. Move it in /sb gui.
+- Blessing Display (Dungeons), from Odin: a HUD with the dungeon's blessings and their levels from the tab list, each with its own toggle and colour. Move it in /s2 gui.
 - Relic Place Timer (Dungeons > F7/M7 > Dragons and Relics), from NoammAddons: once all five relics are placed, who placed each one and how long after the Wither King appeared, with your PB for your relic.
 - Spawn Timer also shows your priority dragon's timer big in the middle of the screen, like NoammAddons.
 - Garden Visitors (Farming > Visitors), from SkyHanni: the Visitor Shopping List (what your visitors need, with prices, how many you have in your sacks, "Craftable!" and the items new visitors usually want; also in the visitor's menu, the Bazaar, your inventory and number signs, and optionally in the Bazaar Alley and farming areas), the Visitor Timer (visitors waiting and time until the next one, with the sixth visitor estimate, a warning and an optional ping), prices in the offer's tooltip (each item, coins per copper and per Garden Experience, and the base crops needed), the Reward Warning (a chat message and a warning over the visitor for rare rewards, and blocking refusing or accepting by reward, copper price, coin loss or never-accepted visitors; hold the bypass key to click anyway), status highlights on the visitors (new, items ready, accepted, refused), arrival title and chat message, hidden visitor chat and Hypixel's arrival message, compact reward messages, an accept hotkey, a Supercraft button, Drops Statistics, Charmed Visitors, the Jacob/Anita NPC fix, and highlighting or blocking visitors outside the Garden. Visitor names, rarities and wanted items come from SkyHanni's repo.
 - Enchant Parsing (Misc > Enchant Parsing), from SkyHanni: enchants in tooltips coloured by level (perfect enchants in moving chroma by default, then great, good and poor), ultimate enchants bold, sorted, laid out Normal, Compressed or Stacked, with stacking enchants' progress and an option to hide enchant descriptions. Enchant levels come from SkyHanni's repo.
 - Stash Messages (Chat > Stash Messages), from SkyHanni: Hypixel's stash reminder becomes one line you can click to pick up (or view) your stash, repeats of the same counts are hidden, and so is "One or more items didn't fit in your inventory...".
-- Hook & Bobber (Fishing), from SkyHanni: the Fishing Bobber Timer (how long your bobber has been out, from the cast or from when it lands) and the Fishing Hook Display (Hypixel's reel-in countdown and "!!!" bigger on your screen, with the original hidden). Move and resize them in /sb gui.
-- Bestiary Overlay (Combat > Bestiary Overlay), from SkyHanni: in the Bestiary menu, each family's kills and progress to max or to the next tier (hover for the details), sorted by global progress, total kills or kills needed, and each category's families found and completed, with clickable Number Format, Display Type, Number Type (Roman or normal) and Hide Maxed buttons. Maxed families and categories are highlighted green, and if Overall Progress is hidden the overlay asks you to turn it on and highlights its Eye of Ender red. Move and resize it in /sb gui.
+- Hook & Bobber (Fishing), from SkyHanni: the Fishing Bobber Timer (how long your bobber has been out, from the cast or from when it lands) and the Fishing Hook Display (Hypixel's reel-in countdown and "!!!" bigger on your screen, with the original hidden). Move and resize them in /s2 gui.
+- Bestiary Overlay (Combat > Bestiary Overlay), from SkyHanni: in the Bestiary menu, each family's kills and progress to max or to the next tier (hover for the details), sorted by global progress, total kills or kills needed, and each category's families found and completed, with clickable Number Format, Display Type, Number Type (Roman or normal) and Hide Maxed buttons. Maxed families and categories are highlighted green, and if Overall Progress is hidden the overlay asks you to turn it on and highlights its Eye of Ender red. Move and resize it in /s2 gui.
 - Highlight Withers (Dungeons > Mobs), like NoammAddons' Wither ESP but not ESP: a box around the F7/M7 boss withers you can see, hidden behind walls, in a colour you choose.
 - Highlight Teammates (Dungeons > Mobs): your dungeon teammates glow in their class colour, the same colours as the Leap Menu.
 - Highlight Active Pet (Misc > Pets): your summoned pet is highlighted in the Pets menu. Its colour can be changed.
 - Sack amounts are remembered (from the sack menus and the "[Sacks]" messages) for the visitor shopping list.
-- Warp to infested plots (Farming > Garden > Pest Finder), from SkyHanni: a Teleport Hotkey and /shtpinfested (/sbtpinfested if SkyHanni is installed) warp you to the nearest plot with pests with /plottp. Optionally even when you're already in one, or back to the Garden when there are no pests. Which plots have pests is tracked from the sidebar, the tab list's Pests widget, the Configure Plots menu and the pest spawn, kill and "no pests" messages; open Configure Plots once so renamed plots and the Barn are known.
+- Warp to infested plots (Farming > Garden > Pest Finder), from SkyHanni: a Teleport Hotkey and /shtpinfested (/s2tpinfested if SkyHanni is installed) warp you to the nearest plot with pests with /plottp. Optionally even when you're already in one, or back to the Garden when there are no pests. Which plots have pests is tracked from the sidebar, the tab list's Pests widget, the Configure Plots menu and the pest spawn, kill and "no pests" messages; open Configure Plots once so renamed plots and the Barn are known.
 - Mute Overflow Drop Sound (Farming > Garden, on by default): no nether portal sound with "OVERFLOW! Your ... has just dropped a Tool Exp Capsule!".
 - Loadout Highlight (Misc, on by default), from SkyHanni: the loadout you have equipped is highlighted in the Loadouts menu, in a colour you choose.
-- Party commands: !pt, !promote and !demote take the start of a name (!pt nix transfers to NixJussid), and there's a new !kick (!kick nix kicks NixJussid, never you), from the party members SkyBalls has seen in party messages and /p list. If several members start with it, it says so in party chat instead.
+- Party commands: !pt, !promote and !demote take the start of a name (!pt nix transfers to NixJussid), and there's a new !kick (!kick nix kicks NixJussid, never you), from the party members Sky2M has seen in party messages and /p list. If several members start with it, it says so in party chat instead.
 - Skill Progress is now SkyHanni's full version (Skill Progress settings, off by default): the progress display with level, skill icon, XP gained and progress or percentage and actions left, aligned over a progress bar (plain colour, chroma, or textured like the XP bar with five extra textures); the Skill ETA display with XP/hour, time to the next level or your goal, and the session timer (click to reset); the All Skills display (hover for XP, click to open /skills); overflow levels past the cap, with the overflow level-up message; custom goal levels with /shskills goal <skill> <level> (also /shskills levelwithxp and xpforlevel; /sbskills if SkyHanni is installed); overflow and goal progress in the Your Skills menu's tooltips; XP from Jerry Boxes, gifts and Lily-splosions; and hiding the skill XP in the action bar.
 - Skill Progress (Skills), from SkyHanni: the skill you're getting XP in with its level, a progress bar, percent and XP to the next level, XP per hour and the time until you level up.
 - Party Coord Waypoints (Mayors > Diana, on by default), like SkyHanni: coordinates a party member sends ("x: -30, y: 87, z: 126") get a beacon waypoint with their name and distance, until you reach it or for a minute.
 - Dungeon Chest Profit (Dungeons > Chest Profit): a reward chest's value minus its cost above the chest; at Croesus, each chest's profit with the best one highlighted, and the list of runs tinted green (unopened), yellow (one chest opened) or red (all claimed).
-- Highlight Bats (Dungeons > Mobs), and /sb debug starred to see what the starred mob highlight finds.
+- Highlight Bats (Dungeons > Mobs), and /s2 debug starred to see what the starred mob highlight finds.
 - Blood Camp Beam Time: the mob kill countdown (and its box) turns red at the time to shoot your Mage beam, 0.2s by default, like Odin and NoammAddons.
 - /pt Name runs /p transfer Name. Minecraft's advancement and recipe popups are always hidden.
 - Hide Block Break Particles (Misc > Random), like SkyHanni's: no particles when a block breaks, yours or anyone's, and none flying off the block you're mining.
-- Protect Item key (Options > Controls > SkyBalls, unbound by default): runs /sb protect on the item you're holding, or on the item under your mouse in any menu.
+- Protect Item key (Options > Controls > Sky2M, unbound by default): runs /s2 protect on the item you're holding, or on the item under your mouse in any menu.
 - Estimated Item Value (Misc > Item Price Tooltip, on by default), like SkyHanni's: below the lowest BIN and 3 day average, the item's price plus what's applied to it: recombobulator, hot and fuming potato books, enchantments, master stars, gemstones, Art of War and Art of Peace, scrolls, dyes, skins, rune, drill parts, Wood Singularity, Farming for Dummies, Polarvoid, Transmission Tuners, Mana Disintegrators, Jalapeño, Etherwarp, Book of Stats, Divan's Powder Coating and talisman enrichment, each at its bazaar insta-buy price or lowest BIN.
 - Bazaar Order Colours (Misc > Bazaar, on by default), like Bazaar Utils: in your Bazaar orders menu each order's slot is green when it's the best price, yellow when another order matches its price, and red when it's been outbid. Fully filled orders aren't coloured.
 - Highlight Infested Plots (Farming > Garden > Pest Finder, on by default): plots with pests are red in Configure Plots (/desk).
 - Plot Teleport Panel (Farming > Garden > Pest Finder, on by default), like Skyblocker's Garden Plots widget: in the Garden, a map of your plots to the right of your inventory. Click a plot to /plottp there; plots with pests are red with their pest count, locked plots grey and the plot you're in outlined, and "TP to Pests" warps to the nearest plot with pests.
 - Shard Level Up Highlight (Misc, on by default): attribute shards you own enough of to level up or unlock are highlighted green in the Hunting Box and the Attribute Menu (open the Hunting Box first so the menu knows how many you have).
 - Show Pet Level (Misc > Pets, on by default): each pet's level on its slot in the Pets menu, in gold when it's maxed.
-- Spirit Bear (Dungeons > Timers and Alerts, on by default), from Odin: in the F4 and M4 boss, a HUD with the spirits killed (25 on F4, 30 on M4), then the countdown until the Spirit Bear spawns once the last one dies, then "Alive!". Move it in /sb gui.
-- What's New (General > What's New After Updates, on by default), like SkyHanni: after SkyBalls updates, a chat message with a [What's New] button opens a list of the new features, each with an ON/OFF toggle and a button to its settings, plus All On / All Off. /sb whatsnew opens it any time.
+- Spirit Bear (Dungeons > Timers and Alerts, on by default), from Odin: in the F4 and M4 boss, a HUD with the spirits killed (25 on F4, 30 on M4), then the countdown until the Spirit Bear spawns once the last one dies, then "Alive!". Move it in /s2 gui.
+- What's New (General > What's New After Updates, on by default), like SkyHanni: after Sky2M updates, a chat message with a [What's New] button opens a list of the new features, each with an ON/OFF toggle and a button to its settings, plus All On / All Off. /s2 whatsnew opens it any time.
 
 ### Changed
 - Show Pet Level has its own Show Overflow Pet Level toggle (Misc > Pets), instead of following the Pet Display's Overflow Pet Levels setting.
@@ -53,8 +99,8 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Diana Profit Tracker is laid out like SBO's Diana loot tracker: every rare drop always listed with its count, lootshares, rate per mob it drops from and value, then your other drops, coins, burrows, mobs, profit (and per hour) and playtime.
 - Arrow Counter only shows while you hold a bow or crossbow (Arrow Counter Only With Bow, on by default).
 - Shorter dropdown labels in the settings, so they're no longer shrunk to fit (e.g. "Own + Party", "Insta-Sell", "24h + sec", "In Quest"). What each choice means is in the option's description.
-- [item] in plain chat now reads "[Heroic Hyperion](sb:HYPERION)" instead of a coded blob, so players without SkyBalls can read it; SkyBalls players still see the hoverable item. Old [item] links still work.
-- /sb protect marks protected items with a smaller star only; the green box around them is gone.
+- [item] in plain chat now reads "[Heroic Hyperion](sb:HYPERION)" instead of a coded blob, so players without Sky2M can read it; Sky2M players still see the hoverable item. Old [item] links still work.
+- /s2 protect marks protected items with a smaller star only; the green box around them is gone.
 - The Deployable Timers HUD works without Item Cooldowns turned on, and also times Warning and Alert Flares.
 
 ### Fixed
@@ -64,21 +110,21 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - The game lagged when a bestiary message (or any burst of chat) came in: compact chat compared every new line with your whole chat history (huge with More Chat History) and rebuilt the chat when the bestiary's two separator lines matched. It now only looks at the last 5 seconds and never compacts separator lines, and nickname replacement skips names that aren't in the message.
 - Terminals: the vanilla terminal menu no longer shows for a split second when a terminal opens or Hypixel reopens it.
 - Starred mob boxes no longer go on teammates standing next to a starred mob (often the Mage and Tank).
-- /sb protect's box and star no longer draw over tooltips and the item on your cursor.
+- /s2 protect's box and star no longer draw over tooltips and the item on your cursor.
 - Pet Display: a pet favourited in the Pets menu (⭐) never showed its held item on the icon, as its name didn't match the tab list's.
 - !pt Name transfers the party to Name; leader commands work when the game started while you were already in a party (it checks /p list).
 - Starred mob boxes no longer need a clear line of sight to the mob's head (they're hidden behind walls anyway).
 - Party Commands (!warp, !pt, !f7, !fps, !ping, the Diana ones...) didn't answer anyone with a Hypixel emblem (☘, ☣...) before their name, so they never worked for you. Your own !warp, !allinvite and !f7 / !m7 work too now while you're leader.
 - Blaze puzzle solver: blazes' names now have a symbol before "Blaze", which it didn't expect, so it found none. The kill order now follows where the blazes are (low in the room: highest HP first), like Skyblocker.
 - Pet Display and other item icons: items Hypixel lists with old 1.8 names (Raw Fish, Ink Sack dyes, Lily Pad, Dandelion, wool, glass...) showed as barriers or the wrong item; newer paper-based items (Winding Ivy, Sloth Claws...) use Hypixel's model or a downloaded icon instead of paper. A held "Saddle" is the pet item, not the plain saddle.
-- Shared items (SkyBalls chat, [item], [inv]) were drawn as paper even when their icon was available.
+- Shared items (Sky2M chat, [item], [inv]) were drawn as paper even when their icon was available.
 - [inv]: clicking an item in a shared inventory shows it big with its tooltip (Esc goes back to the inventory).
 - [item] with a pet, enchanted book or rune (ids with ";") showed as raw text instead of the item.
-- /sb who: a presence update from the server no longer empties the online list, and the screen says so when the server doesn't answer instead of loading forever. Errors from the SkyBalls server are now shown instead of being dropped silently.
+- /s2 who: a presence update from the server no longer empties the online list, and the screen says so when the server doesn't answer instead of loading forever. Errors from the Sky2M server are now shown instead of being dropped silently.
 - Deployable Timers HUD never showed power orbs (Overflux, Plasmaflux, Mana Flux, Radiant) or flares: they have no cooldown in their lore, so the timer was never started. Flares now last their real 3 minutes (the SOS Flare showed 30s), and power orbs' timers follow the time left on the orb's name tag.
 - Bazaar order notifications compared buy orders with the lowest sell offer (and sell offers with the top buy order), so buy orders were nearly always called outbid. Hypixel's API lists buy orders under "sell_summary"; they're now read the right way round.
 
-## 1.4.5 — 2026-10-04
+## SkyBalls 1.4.5 — 2026-10-04
 
 ### Added
 - Pest Spawn Timer (Farming > Garden > Pest Spawn Timer, on by default, while holding a farming tool), from SkyHanni: time since the last pest spawned, the pest cooldown and the average time pests take to spawn (leaving out spawns where you were AFK). The cooldown counts down the Pest Cooldown Time you set from each pest spawn; it doesn't read the tab list. Optional warnings a few seconds before the cooldown ends and when it's over (title, chat and a sound you choose), repeating until you open your wardrobe or loadouts, and a chat message with how long each spawn took. Show it only while holding a farming tool, vacuum or lasso.
@@ -87,21 +133,21 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 ### Removed
 - The old Pest Cooldown HUD and "Pests Spawned!" alert; the Pest Spawn Timer and Pest Spawn alert replace them, and keep your Pest Cooldown Time.
 
-## 1.4.1 — 2026-10-04
+## SkyBalls 1.4.1 — 2026-10-04
 
 ### Fixed
-- SkyBalls chat, ranks, login, bug reports, crash reports, screenshots, the event calendar, capes and Discord linking use the new server, shadowisabot.com (tastyfish.org no longer runs it, which caused "Couldn't check for bug reports: ... malformed JSON").
-- Nickname colours now show for you and other players in SkyBalls chat, Hypixel chat, tab and nametags: a nickname update with an empty (null) custom colour or font used to be dropped entirely, so the nickname appeared without its colour. Colour names are also read in any spelling ("Dark Blue", "dark_blue", "DarkBlue"), custom colours with or without "#", and a "Plain" nickname with no colour keeps the colour the name had.
+- Sky2M chat, ranks, login, bug reports, crash reports, screenshots, the event calendar, capes and Discord linking use the new server, shadowisabot.com (tastyfish.org no longer runs it, which caused "Couldn't check for bug reports: ... malformed JSON").
+- Nickname colours now show for you and other players in Sky2M chat, Hypixel chat, tab and nametags: a nickname update with an empty (null) custom colour or font used to be dropped entirely, so the nickname appeared without its colour. Colour names are also read in any spelling ("Dark Blue", "dark_blue", "DarkBlue"), custom colours with or without "#", and a "Plain" nickname with no colour keeps the colour the name had.
 - When the server turns Discord down, the Discord screen says so with the server's reason instead of staying on "Checking Discord connection...", and a failed Discord DM gives a clear message.
 
-## 1.4 — 2026-10-03
+## SkyBalls 1.4 — 2026-10-03
 
 ### Added
-- Inquisitor Gamble (Diana, on by default): when an Inquisitor you dug up dies or you lootshare one, it gets shot on screen. A crosshair sways over its heart while a heartbeat speeds up, then the gun fires: through the heart with "CHIMERA!" if a Chimera dropped, past the body with "MISSED!" if not. Nothing spoils it: SkyBalls's HUDs are hidden while it plays, and the Chimera chat line, drop announcer, rare drop animations and achievement popups wait until it's over. /sb inqgamble hit|miss to preview it.
-- Item Protect (/sb protect): protect the held item from dropping; protection follows its UUID as it moves, and a star marks protected items. Slot binding remains available separately.
+- Inquisitor Gamble (Diana, on by default): when an Inquisitor you dug up dies or you lootshare one, it gets shot on screen. A crosshair sways over its heart while a heartbeat speeds up, then the gun fires: through the heart with "CHIMERA!" if a Chimera dropped, past the body with "MISSED!" if not. Nothing spoils it: Sky2M's HUDs are hidden while it plays, and the Chimera chat line, drop announcer, rare drop animations and achievement popups wait until it's over. /s2 inqgamble hit|miss to preview it.
+- Item Protect (/s2 protect): protect the held item from dropping; protection follows its UUID as it moves, and a star marks protected items. Slot binding remains available separately.
 - Inventory Buttons (Misc), ported from Skyblocker's Quick Navigation: up to 14 creative-inventory tabs above and below every SkyBlock menu (Skills, Collections, Pets, Armor Sets, Sacks, Accessories, Storage, Home, Garden, Hub, Dungeon Hub, Auction House, Bazaar, Craft). The tab for the menu you're in is drawn selected; warps need a double click. Each tab's icon, menu title, command and tooltip can be changed.
 - Wardrobe and Loadout Hotkeys (Misc): configurable keys equip slots on the current Armor Sets or Loadouts page, like SkyHanni.
-- Item Sharing: [item] adds the held item to messages in plain chat and in /pc, /gc, /ac, /cc, /oc, /msg and /r, as well as SkyBalls chat. [inv] shares your whole inventory, hotbar and armour as one clickable [Name's Inventory] that opens it in a menu for other SkyBalls users ([brag] does the same).
+- Item Sharing: [item] adds the held item to messages in plain chat and in /pc, /gc, /ac, /cc, /oc, /msg and /r, as well as Sky2M chat. [inv] shares your whole inventory, hotbar and armour as one clickable [Name's Inventory] that opens it in a menu for other Sky2M users ([brag] does the same).
 - Bazaar notifications (Misc > Bazaar): track orders from setup messages or the Manage Orders screen, notify in chat when an order becomes outbid, and play sounds for outbid and filled orders.
 - Storage Value Breakdown: show an estimated total and the most valuable contents when an Ender Chest page or backpack is open.
 - Deployable Timers HUD: countdowns for active Power Orbs and SOS Flare, separate from item cooldowns.
@@ -128,7 +174,7 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Pet Display caches the active pet's tab-list icon so it remains visible across tab-row refreshes.
 
 ### Fixed
-- Spirit Leap menu: the Spirit Leap chest no longer shows behind SkyBalls's leap menu (and the inventory tabs and Profit Tracker stay off it).
+- Spirit Leap menu: the Spirit Leap chest no longer shows behind Sky2M's leap menu (and the inventory tabs and Profit Tracker stay off it).
 - Blaze puzzle solver (higher or lower) works again: it waited for a roof marker the blaze rooms don't have, so it never started.
 - Quiz solver: leaving the room while a question was being asked no longer loses the answer, and questions asked while you're outside the room are still read.
 - Party Commands: !help no longer disconnects you. It sent every Diana command in one message, which was over Minecraft's 256-character limit; now it's a short list.
@@ -139,13 +185,13 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Case Opening's GOLD GOLD GOLD sound is registered correctly, so it plays when a Legendary-or-better winner starts spinning.
 - Disabled Zealot Tracker no longer scans nearby entities; Slayer Boss Phase searches nearby owner tags spatially instead of walking every rendered entity.
 
-## 1.3.9.5 — 2026-09-30
+## SkyBalls 1.3.9.5 — 2026-09-30
 
 ### Added
-- Diana Mob Tracker, from SkyHanni's Mythological Creature Tracker: how many of each mythological creature you dug up with their share of the total, your lootshared Inquisitors, King Minos, Manticores and Sphinxes (from SBO), mobs per hour and how many creatures since each rare one, for this session, this mayor term or all time (/sb mobtracker session|season|alltime|reset). Hypixel's "You dug out a ..." message gets how many creatures it's been since the last one of that kind.
+- Diana Mob Tracker, from SkyHanni's Mythological Creature Tracker: how many of each mythological creature you dug up with their share of the total, your lootshared Inquisitors, King Minos, Manticores and Sphinxes (from SBO), mobs per hour and how many creatures since each rare one, for this session, this mayor term or all time (/s2 mobtracker session|season|alltime|reset). Hypixel's "You dug out a ..." message gets how many creatures it's been since the last one of that kind.
 - Diana Rare Drop Announcer, from SBO: your RNG drops (Chimera, Shimmering Wool, Manti-core, Fateful Stinger, Brain Food, Daedalus Stick, Minos Relic, Crown of Greed, Mythological Dye, Myth the Fish, Braided Griffin Feather) in chat with this season's count, the lootshare count and price, as a title, and sent to party chat (pick which drops). Also "Took 12 Inquisitors to get Chimera!", "Took 240 mobs and 1h 2m to get an Inquisitor!" and b2b messages, and optionally "Cocooned a ...!" in party chat. Lootshared drops and rare mobs are counted separately.
 - Diana Mob HP, from SBO: the health of the Diana mobs near you and King Minos's hits left on a HUD, with an optional "HP LOW!" alert for rare mobs.
-- Diana Achievements, from SBO: SBO's Diana achievements (b2b Chimera, 5k burrows in one event, 100 Inquisitors since Chimera, max bestiaries, Crown of Avarice and more) with a title and chat message, and /sb achievements to see them (/sb achievements backtrack checks your saved seasons). Repeat Each Event lets them be earned again every season.
+- Diana Achievements, from SBO: SBO's Diana achievements (b2b Chimera, 5k burrows in one event, 100 Inquisitors since Chimera, max bestiaries, Crown of Avarice and more) with a title and chat message, and /s2 achievements to see them (/s2 achievements backtrack checks your saved seasons). Repeat Each Event lets them be earned again every season.
 - Diana party commands, from SBO (Party Commands → Diana Commands, on when Party Commands is): !chim, !chimls, !inq, !king, !manti, !sphinx, !relic, !stick, !core, !wool, !food, !stinger, !feathers, !mobs, !burrows, !profit, !playtime, !mf, !stats <you>, !help and !since <chim|inq|relic|stick|king|manti|core|wool|food|...>, answered from this season's Diana mob, drop and profit trackers. Also SBO's !demote, !carrot and !time, and !promote / !demote can name a player.
 
 ### Changed
@@ -157,7 +203,7 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Leaderboards: drops that name the enchantment in the text, like "RARE DROP! Enchanted Book (Chimera 1) (+304 ✯ Magic Find)", now count (as "Chimera I") instead of being missed.
 - Diana: Siamese Lynx Highlight outlines the lynx the angry villager particles are over. It used to find the cats through their nametags and often picked the other one.
 
-## 1.3.9 — 2026-09-30
+## SkyBalls 1.3.9 — 2026-09-30
 
 ### Added
 - Smart Disconnect (Misc, on by default): clicking Disconnect in the pause menu asks first, with Cancel and a red Disconnect button.
@@ -167,51 +213,51 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Boss Highlight (Slayers, on by default), from Skysoft: a box (or a glowing outline) on your slayer boss and the minibosses you spawned while you can see them (not through walls), with a line to your boss or the closest miniboss.
 - Egg Hits Display (Slayers, on by default), from NoFrills: while you fight a Tarantula Broodfather, how many hits each egg sack still needs, shown big on the egg.
 - Etherwarp Overlay (Misc, on by default), from Odin: while you sneak with an etherwarp item, a box on the block you'd teleport to, in red when it would fail.
-- Farming Profit Tracker (Farming → Profit Tracker), from Skysoft: in the Garden, what your crops and Garden drops were worth, Bountiful coins, Kernels, pests vacuumed, total profit, profit per hour and your farming time (paused when you stop farming), for this session, today or in total (/sb farmingtracker session|today|total|reset). Replenish and compactors don't make crops count twice.
+- Farming Profit Tracker (Farming → Profit Tracker), from Skysoft: in the Garden, what your crops and Garden drops were worth, Bountiful coins, Kernels, pests vacuumed, total profit, profit per hour and your farming time (paused when you stop farming), for this session, today or in total (/s2 farmingtracker session|today|total|reset). Replenish and compactors don't make crops count twice.
 - Party Commands, from Odin: !f1-!f7, !m1-!m7 and !t1-!t5 join that floor or Kuudra tier while you're leader, and !fps, !ping and !tps answer in party chat whoever is leader (a moment later, so Hypixel doesn't say "Woah slow down"). Each has its own toggle.
 
 ### Removed
-- The SkyBalls casino: /sb casino, its games, the daily reward and the Daily Reward Reminder setting.
+- The Sky2M casino: /s2 casino, its games, the daily reward and the Daily Reward Reminder setting.
 - Diana's Own Mob Alerts: no more title across the screen when you dig up a rare mob yourself.
 
 ### Changed
-- The slayer profit chat line names the boss you killed: "[SB] T5 Tara Profit: -52.0k".
+- The slayer profit chat line names the boss you killed: "[S2M] T5 Tara Profit: -52.0k".
 - Diana: only Minos Inquisitors, Manticores and King Minos glow; other rare mobs (Minotaurs and the rest) no longer get a purple outline. Manticores are now shared and received with All Rare Mobs off.
 - Diana: Siamese Lynx Highlight (on by default) outlines the lynx you can hit (the one with angry villager particles) in green.
 - Diana: an arrow guess is only dropped for showing no burrow particles after 2.5 s in range, and only with Close Burrow Detection on, so it no longer vanishes just before the real burrow shows up (or when detection is off).
 - Diana warp keys: the guess warp goes to your newest guess instead of the nearest waypoint (a burrow you'd already found next to you blocked it), the rare mob warp no longer needs your spade in hand, and both say in chat why they didn't warp.
 
-## 1.3.8 — 2026-09-29
+## SkyBalls 1.3.8 — 2026-09-29
 
 ### Added
 - Diana burrows (Mayors → Diana → Burrows), from SkyBlock Overhaul (SBO):
-  - Close Burrow Detection: burrows near you are found from their particles and shown as Start, Mob or Treasure burrows. /sb clearburrows clears the waypoints.
+  - Close Burrow Detection: burrows near you are found from their particles and shown as Start, Mob or Treasure burrows. /s2 clearburrows clears the waypoints.
   - Arrow Guess: after each burrow, the arrow's particles point to the next one.
   - Spade Guess: where your spade's trail lands.
   - Waypoints are a coloured block border (guesses purple, mob burrows red, treasure gold, start green; all changeable), with an optional beacon beam in the same colour, and dig progress ([1/2]) to the right, left, above or below the name.
   - Multi Guesses keeps earlier guesses when a new one comes in, and Keep Waypoints on World Change keeps them when you change servers.
-- Diana Warp keys (Options → Controls → Key Binds → SkyBalls), from SBO: warp to the warp closest to your next burrow or guess, or to the newest rare mob your party shared. Pick which warps can be used under Mayors → Diana → Diana Warp.
+- Diana Warp keys (Options → Controls → Key Binds → Sky2M), from SBO: warp to the warp closest to your next burrow or guess, or to the newest rare mob your party shared. Pick which warps can be used under Mayors → Diana → Diana Warp.
 - Sphinx Solver (Mayors → Diana), from SBO: the Sphinx's answers show in chat with the right one in green, and clicking anywhere while chat is open answers it. There's also a key for it (use at your own risk).
-- Diana Profit Tracker (Mayors → Diana → Profit Tracker): what each Diana drop was worth, the coins you dug out, burrows dug, total profit, profit per burrow and per hour, and the time you spent, for this session, this mayor term or all time (/sb dianatracker session|season|alltime|reset). Move it in /sb hud.
+- Diana Profit Tracker (Mayors → Diana → Profit Tracker): what each Diana drop was worth, the coins you dug out, burrows dug, total profit, profit per burrow and per hour, and the time you spent, for this session, this mayor term or all time (/s2 dianatracker session|season|alltime|reset). Move it in /s2 hud.
 - Lobby Compromised (Mayors → Diana), from Skysoft: an alert when too many players who aren't in your party join your lobby while you do Diana, as a title and optionally in party chat.
 - Copy RNG Drops (Combat → Rare Drops): copies only RNG drops to your clipboard (PRAY TO RNGESUS and RNG METER drops, and slayer, Diana and fishing RNG items), for when you don't want every rare drop copied.
 - Copy Slayer Drops and Copy Garden Drops (Combat → Rare Drops): copy only slayer drops (anything on a slayer's drop list), or only Garden drops (RARE CROP drops and anything else that drops in the Garden, like pest drops).
 
 ### Changed
-- The jumpscare now has a 1 in 1,000 chance each time you run /sb: it plays, then the menu opens, instead of a random chance every second while playing. Still never in dungeons or Kuudra.
-- One SkyBalls category in Options → Controls → Key Binds: the Command Keys binds are in it now, with the new Diana keys.
+- The jumpscare now has a 1 in 1,000 chance each time you run /s2: it plays, then the menu opens, instead of a random chance every second while playing. Still never in dungeons or Kuudra.
+- One Sky2M category in Options → Controls → Key Binds: the Command Keys binds are in it now, with the new Diana keys.
 - Pest Highlight draws a box around each pest (seen through crops and walls) instead of outlining its invisible Silverfish or Bat and the armor stand it wears.
 - New Mayors category in the sidebar, with Diana under it: the Diana rare mob sharing and lootshare settings moved there from Combat (your settings move with them).
-- Screenshot uploads go through the SkyBalls server to ImgBB (links last 30 days), like Skysoft's. If that doesn't work they go to Catbox instead. Catbox (permanent) and Uguu (3 hours) can still be picked under Misc → Screenshots.
+- Screenshot uploads go through the Sky2M server to ImgBB (links last 30 days), like Skysoft's. If that doesn't work they go to Catbox instead. Catbox (permanent) and Uguu (3 hours) can still be picked under Misc → Screenshots.
 
 ### Removed
 - 0x0.st as a screenshot host: it has stopped taking uploads.
 
-## 1.3.7 — 2026-09-29
+## SkyBalls 1.3.7 — 2026-09-29
 
 ### Added
 - Pet HUD shows your pet's held item (Pets → Pets Display → Show Held Item). The tab list doesn't show it, so it's learned from the Pets menu (open it once), "Your pet is now holding ..." and Autopet messages, and remembered per pet.
-- Overflow pet level ups in chat again (NopoMod's): "[SB] Your Golden Dragon leveled up to level 158!" when your pet reaches the next overflow level. Needs Overflow Pet Levels on (Pets).
+- Overflow pet level ups in chat again (NopoMod's): "[S2M] Your Golden Dragon leveled up to level 158!" when your pet reaches the next overflow level. Needs Overflow Pet Levels on (Pets).
 - Boss Profit (Slayers): after each slayer boss, "Profit: +50k" (or "-10k") in chat, and a Boss Profit HUD that shows the boss's profit when it dies and hides 2 seconds after its drops are in. Only that boss's drops count (SkyHanni's slayer drop lists), not mob drops or other items picked up meanwhile. Hover the chat line for each drop and its value, the drops' total, the quest's cost and the total. The HUD shows the moment the boss dies and fills in as the drops arrive (sack drops come with Hypixel's "[Sacks]" message); the drops are read from the items the boss shows on the ground, your inventory and your sacks, and the chat line goes out once they've landed (or the "[Sacks]" message with them comes). The cost is Hypixel's price for the boss and tier, or half of it with Aatrox's Slashed Pricing when your purse shows that.
 - Sign Calculator (Misc), from Skyblocker: on SkyBlock's number signs (auction prices, bazaar amounts) the number you typed shows above the sign, e.g. `15m = 15,000,000`, and sums like `2.5m*3` are worked out and sent as the number.
 - RNG Drop Totem Animation (Combat → Rare Drops), from Skyblocker: big RNG drops pop up like a Totem of Undying, with particles and a sound.
@@ -219,12 +265,12 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - RNG Meter Value (Slayers): in a slayer or dungeon RNG Meter menu, each drop shows its price and how many coins one Slayer XP (or Score) of meter progress is worth, e.g. a 10M drop needing 100k XP shows "1 XP = 100 coins". Above the menu, "Best Profit" names the drop worth the most per point.
 - Slayer time messages (SkyHanni's): how long your boss took to kill, timed to the moment it dies (its health hits 0 or it's gone; a cocooned boss when it's cocooned), not to Hypixel's chat message, your personal best for that boss and tier on the same line, e.g. "It took 34.52s to kill Revenant Horror V (PB: 30.10s)" or "(NEW PERSONAL BEST! Previous: 36.00s)", and how long the whole quest took. Each can be turned off, and there's a compact style.
 - The slayer boss phase display shows your Tarantula's egg sacs (time left and hits) under its health.
-- Slayer kill time leaderboard: your slayer personal bests are shared with the SkyBalls leaderboard (Slayers → Personal Best → Share Slayer PBs, on by default; bests from before this update are sent the next time you connect). `/sb leaderboard slayer` shows every boss and tier with its record holder and your time and rank (click a row for its top 10), and `/sb leaderboard slayer <boss>` shows the top 10 for one boss, e.g. `Revenant Horror V`. Without a connection it shows your own times. The board is also in Discord (`/leaderboard slayer`).
-- Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/sb hud`. Offline it keeps the last standings it got.
+- Slayer kill time leaderboard: your slayer personal bests are shared with the Sky2M leaderboard (Slayers → Personal Best → Share Slayer PBs, on by default; bests from before this update are sent the next time you connect). `/s2 leaderboard slayer` shows every boss and tier with its record holder and your time and rank (click a row for its top 10), and `/s2 leaderboard slayer <boss>` shows the top 10 for one boss, e.g. `Revenant Horror V`. Without a connection it shows your own times. The board is also in Discord (`/leaderboard slayer`).
+- Slayer PB Leaderboard HUD (Slayers → PB Leaderboard HUD): the kill time standings for your current or last slayer boss (or one you pin), your place, and while your boss is alive a live timer against your PB and the #1 time. Shows during a slayer quest by default (or always, or on slayer islands), with 3 to 10 rows; move it in `/s2 hud`. Offline it keeps the last standings it got.
 - Enderman Slayer (Slayers → Enderman), from SkyHanni: highlights the Yang Glyph (beacon) while a Voidgloom holds it, throws it and after it lands, with a timer until it explodes, plus an optional title warning and line to it; highlights Nukekubi Fixation skulls in gold with an optional line to each; phase numbers (1/3, or 1/6 for tier IV) in the Slayer Boss Phase HUD; hides the smoke, flame and witch particles around endermen in The End; and a line to your Voidgloom Seraph.
-- Blaze Slayer (Slayers → Blaze), from SkyHanni: outlines the Inferno Demonlord and its demons in their Hellion Shield's colour with the shield above them; a dagger HUD with your Twilight and Firedust attunements that can mark the one matching the nearest shield (Hypixel's attunement title is hidden while it shows); hides the "Strike using the ... attunement" and "Your hit was reduced by Hellion Shield!" messages; a Fire Pits warning for tiers III and IV; phase numbers in the Slayer Boss Phase HUD; Clear View, which hides particles and fireballs within 10 blocks of a boss; and a Fire Pillar countdown HUD (move it in `/sb hud`).
+- Blaze Slayer (Slayers → Blaze), from SkyHanni: outlines the Inferno Demonlord and its demons in their Hellion Shield's colour with the shield above them; a dagger HUD with your Twilight and Firedust attunements that can mark the one matching the nearest shield (Hypixel's attunement title is hidden while it shows); hides the "Strike using the ... attunement" and "Your hit was reduced by Hellion Shield!" messages; a Fire Pits warning for tiers III and IV; phase numbers in the Slayer Boss Phase HUD; Clear View, which hides particles and fireballs within 10 blocks of a boss; and a Fire Pillar countdown HUD (move it in `/s2 hud`).
 - Diana Rare Mobs (Combat → Diana Rare Mobs), from Skysoft. Rare Mob Sharing: when you dig up a Minos Inquisitor or King Minos (or every rare mob, with All Rare Mobs) its coordinates go out in party chat, and rare mobs your party shares get a waypoint, a title and a line from your crosshair. Lootshare Helper: your hits on a shared rare mob are counted, and once you've done 1% of its health (enough to lootshare it) "Lootsharing" over the mob turns from red to cyan and "Loot share secured!" goes out in party chat. Party members who secured it get a cyan ✓ above their head, and whoever spawned the mob a pink one. It also draws the 30 block lootshare radius. Uses the same party messages as Skysoft, so both mods see each other's shares and checkmarks. Damage only counts with a Griffin pet out.
-- Party Finder Announcements (SkyBalls Online → SB Chat, on by default): when someone opens a new `/sb pf` listing, the SkyBalls server announces it in chat (who is looking for how many more, for what, and their note) with a [JOIN] button (not on your own listings). Turn it off to stop seeing them.
+- Party Finder Announcements (Sky2M Online → S2M Chat, on by default): when someone opens a new `/s2 pf` listing, the Sky2M server announces it in chat (who is looking for how many more, for what, and their note) with a [JOIN] button (not on your own listings). Turn it off to stop seeing them.
 
 ### Changed
 - Settings reorganised. Your settings move with them.
@@ -234,12 +280,12 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
   - In every category the dropdowns come before the single toggles; Kills Since Rare Drop is last in Slayers.
 - Screenshot uploads go to 0x0.st (kept for at least 30 days) instead of Litterbox. Uguu (3 hours) and Catbox (permanent) can be picked under Misc → Screenshots.
 - Warp Shortcuts use SkyHanni's and Skysoft's short warp commands: every warp name works without /warp (/dhub, /crypts, /garden, ...) and tab-completes, and in the Garden /home, /barn and /tp <plot> work like SkyHanni's. It applies straight away, and the list of warps to set up is gone.
-- New installs start with almost every feature off: turn on what you want in /sb. Options inside a feature keep their defaults, and SBC chat stays on. Existing settings don't change.
-- /sb gui only shows the HUDs whose feature is turned on.
+- New installs start with almost every feature off: turn on what you want in /s2. Options inside a feature keep their defaults, and SBC chat stays on. Existing settings don't change.
+- /s2 gui only shows the HUDs whose feature is turned on.
 - Performance: the slayer boss scan only runs during a slayer quest and skips non-boss nametags early; starred mob highlighting checks every 4 ticks; SkyBlock item ids are cached instead of copying each item's data; the pickaxe ability reads the tab list every 4 ticks; settings are checked for changes every 5 seconds outside menus (and saved when the game closes); two chat regexes are built once.
 - Museum tooltip: your donations are also read from Hypixel's museum API (through SBC) when you join and every 10 minutes, so you don't have to open the museum menus first.
 - The jumpscare lasts 1 second.
-- `/sb leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
+- `/s2 leaderboard` lists the running event boards plus a clickable Slayer PBs entry, and tab-completes slayer bosses. Event boards keep their names: one called "slayer" still opens that board.
 
 ### Fixed
 - Pest Highlight didn't find any pests: Hypixel's pests are now an invisible Silverfish or Bat under the pest's name, with a new icon, and the name can be a text display. Pests are found by their name again, and the pest count on the scoreboard is read with the new icon.
@@ -253,44 +299,44 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 ### Removed
 - Auto Welcome.
 
-## 1.3.6 — 2026-09-28
+## SkyBalls 1.3.6 — 2026-09-28
 
 ### Removed
 - The SS skip helper (start-click counter and limit) from the Simon Says solver.
 - The accessory helper next to the Accessory Bag.
-- The profile viewer (`/sb pv`), and the Profile buttons in `/sb who` and the friends list.
+- The profile viewer (`/s2 pv`), and the Profile buttons in `/s2 who` and the friends list.
 - The Hide Menu terminal option: the vanilla terminal menu is now always hidden while a solver shows (Melody too, unless its solver is off).
 
 ### Fixed
 - Simon Says: the SS skip reordering could highlight the wrong buttons and block the right one; a quick correct click on the next button was blocked until the server showed the previous press. Every highlighted button now shows its number in the sequence.
 - Terminals: the NoammAddons style looked the same as Odin's. It now draws like NoammAddons: only the terminal's own cells in a compact grid, with its title, padding and border.
 - Cocoon alerts now fire for Special Zealots and other elusive mobs (and names with an apostrophe).
-- Items shared in SkyBalls chat show their real icon when clicked (off Hypixel too) instead of paper or a barrier.
+- Items shared in Sky2M chat show their real icon when clicked (off Hypixel too) instead of paper or a barrier.
 - Copy Rare Drops (and the big drop animation) now work for every rare drop line: VERY RARE, CRAZY RARE, INSANE, PRAY TO RNGESUS, PET and RNG METER drops, the Garden's RARE CROP lines, RARE REWARD, OUTSTANDING CATCH and Diana's "You dug out a ..." drops.
 - The slayer boss phase display only shows your boss's health (or its hits), not nearby pets or damage numbers.
 
 ### Changed
 - The accessory tooltip is now a 1:1 port of Skyblocker's: it also remembers recombobulated accessories, and shows nothing until your SkyBlock profile is known. As in Skyblocker, "↑ Upgradable" means you own that accessory and a higher tier of it exists.
 
-## 1.3.5 — 2026-09-28
+## SkyBalls 1.3.5 — 2026-09-28
 
 ### Added
 - Museum tooltip (from Skyblocker): item tooltips say whether the item is donated to your museum, and which museum category it's in. Look through your Museum's category menus once and it's remembered per profile.
 - Accessory tooltip (from Skyblocker): accessory tooltips say whether you're missing it, already have it, or whether it's an upgrade or downgrade of the one you have from the same family, with the tiers, e.g. "✦ Upgrade (2→3/4)". Look through each page of your Accessory Bag once and it's remembered per profile.
 
-- SkyBalls Online (new settings category): replies and a ↩ button in SkyBalls chat, highlighted mentions with a ping, @name completion, emoji reactions (hover a message with chat open), item sharing (`/sb share`, the Share Item key, `[item]`), and clear notices when a message is refused or you're muted.
-- `/sb ignore`, `/sb unignore`, `/sb friend add|remove|accept|deny`, and `/sb friends` with requests and privacy settings. Popups when friends come online.
-- `/sb who` is now a screen with nicknames, ranks, badges, friends, location, AFK, time online and mod version. Your area, server and AFK status are shared (you can turn this off).
-- Casino: coinflip, dice, roulette, slots and higher/lower next to blackjack, plus the daily reward (with a reminder), stats and leaderboards (`/sb casino`, `/sb casino daily`).
-- Profile viewer: `/sb pv [player] [profile]`.
-- Gradient and Chroma nickname styles, badges and supporter symbols before names, capes, and `/sb cosmetics`.
-- Update notices from the SkyBalls server (required ones on every join and on the title screen), announcements and the message of the day, feature flags, crash reports (can be turned off) and settings cloud sync (`/sb settings`).
-- Item cooldowns on item slots, the event calendar with reminders (`/sb calendar`), the accessory helper next to the Accessory Bag, and pest highlight in the Garden.
-- `/sb help` lists every command.
+- Sky2M Online (new settings category): replies and a ↩ button in Sky2M chat, highlighted mentions with a ping, @name completion, emoji reactions (hover a message with chat open), item sharing (`/s2 share`, the Share Item key, `[item]`), and clear notices when a message is refused or you're muted.
+- `/s2 ignore`, `/s2 unignore`, `/s2 friend add|remove|accept|deny`, and `/s2 friends` with requests and privacy settings. Popups when friends come online.
+- `/s2 who` is now a screen with nicknames, ranks, badges, friends, location, AFK, time online and mod version. Your area, server and AFK status are shared (you can turn this off).
+- Casino: coinflip, dice, roulette, slots and higher/lower next to blackjack, plus the daily reward (with a reminder), stats and leaderboards (`/s2 casino`, `/s2 casino daily`).
+- Profile viewer: `/s2 pv [player] [profile]`.
+- Gradient and Chroma nickname styles, badges and supporter symbols before names, capes, and `/s2 cosmetics`.
+- Update notices from the Sky2M server (required ones on every join and on the title screen), announcements and the message of the day, feature flags, crash reports (can be turned off) and settings cloud sync (`/s2 settings`).
+- Item cooldowns on item slots, the event calendar with reminders (`/s2 calendar`), the accessory helper next to the Accessory Bag, and pest highlight in the Garden.
+- `/s2 help` lists every command.
 
 ### Changed
 - Copy Rare Drops shows what was copied in chat, using Copy Chat's preview settings.
-- SkyBalls chat logs in on every connection and reconnects with a growing delay, saying "SBC offline" once instead of on every retry. Casino actions are queued to the server's limit of 5 a second.
+- Sky2M chat logs in on every connection and reconnects with a growing delay, saying "SBC offline" once instead of on every retry. Casino actions are queued to the server's limit of 5 a second.
 - Performance: nicknames in nametags and the tab list are worked out once per name change instead of every frame, and HUD text is built once per tick instead of every frame.
 
 ### Removed
@@ -299,34 +345,34 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 ### Fixed
 - The slayer boss phase display never showed when you had a nickname set, because it looked for your nickname instead of your username on the boss's "Spawned by" line. It also no longer needs the sidebar to show your slayer quest, and keeps the colours of multi-line nametags.
 
-## 1.3.4.5 — 2026-09-27
+## SkyBalls 1.3.4.5 — 2026-09-27
 
 ### Fixed
 - "Took N bosses to drop" said 0 bosses the first time you got a drop. It now counts every boss since tracking started, and waits a second before counting so the kill that gave the drop is included (as in NopoMod). Drops in the Rift count for Vampire slayer. After you change worlds, a drop only counts if that slayer has given it before, until you kill another boss.
 - Leaderboards and the casino wait for the server to confirm your Minecraft login before sending anything. A leaderboard drop the server refused because you weren't logged in is sent again once after logging back in, so it isn't lost.
 
-## 1.3.4 — 2026-09-27
+## SkyBalls 1.3.4 — 2026-09-27
 
 ### Added
-- Discord leaderboards: leaderboards run from the SkyBalls Discord (for example "most Summoning Eyes this week") count your drops and other chat events through the mod automatically. Enchanted book drops count by their enchantment (a Chimera leaderboard counts Chimera books), and a drop counts once even if Hypixel sends it twice. /sb leaderboard lists the running ones; /sb leaderboard <name> shows the standings.
+- Discord leaderboards: leaderboards run from the Sky2M Discord (for example "most Summoning Eyes this week") count your drops and other chat events through the mod automatically. Enchanted book drops count by their enchantment (a Chimera leaderboard counts Chimera books), and a drop counts once even if Hypixel sends it twice. /s2 leaderboard lists the running ones; /s2 leaderboard <name> shows the standings.
 
 ### Changed
-- The [SB] in front of SkyBalls messages is light purple instead of dark green.
+- The [S2M] in front of Sky2M messages is light purple instead of dark green.
 
 ### Fixed
 - Hovering an image link in chat shows just the image, without the link's hover text on top.
-- Storage overlay: the mouse wheel still didn't scroll over items whose tooltip is taller than the screen (Tooltip Scroll took it). In the storage overlay and /sb storageoverview the wheel now always scrolls the storage; Tooltip Scroll's keys still move long tooltips.
+- Storage overlay: the mouse wheel still didn't scroll over items whose tooltip is taller than the screen (Tooltip Scroll took it). In the storage overlay and /s2 storageoverview the wheel now always scrolls the storage; Tooltip Scroll's keys still move long tooltips.
 
-## 1.3.3 — 2026-09-27
+## SkyBalls 1.3.3 — 2026-09-27
 
 ### Added
-- /sb search is now a port of SkyOcean's item search (MIT): category buttons (All, Storage, Island, Museum, Inventory), sorting by Amount, Price or Rarity (up or down), a $ button with the total value of what's listed, and copies of the same item shown as one entry with the total count. The tooltip lists where each copy is. Clicking an item opens its Ender Chest page or backpack, warps to your island and draws a rainbow box around its chest, or warps to the museum; the item then stays highlighted in menus for a minute (it used to flash for one frame).
-- /sb search remembers the chests on your private island: open a chest and its items are saved (per profile, like your storage). Breaking the chest or turning it into a Minion Chest forgets it.
-- /sb search remembers what's in your museum: browse the museum's category menus in the Hub and the items kept there are saved. Items shown as not donated or taken out are forgotten. Museum items don't count for the craft helper or the portfolio.
-- Nicknames now live on shadowisabot.com (run /website in the SkyBalls Discord to get a login code) and show for your own name and everyone else's. Once your account is linked there, /sb nick sets it in game too: /sb nick <name>, /sb nick <colour> <name>, /sb nick rainbow <name>, /sb nick #hex <name> or /sb nick off. Without a linked account /sb nick doesn't show. /sb togglenick, the nickname editor and the Nickname settings are removed, and everyone's nickname always shows.
-- /sb discord: the link to the SkyBalls Discord.
-- /sb casino: blackjack with play money. Everyone starts with $100; bet, then Hit, Stand or Double (blackjack pays 3:2, the dealer stands on 17). If you go broke you get $100 again a day later. A leaderboard beside the table ranks everyone with the mod by most money. The SBC chat server holds the balances and deals the cards, and your Minecraft login is checked, so nobody can edit their money.
-- Held Item Model is replaced by a port of Skysoft's Held Item (Misc > Held Item, or /sb helditem): an editor over the game where you drag the item to move it (right-drag for depth), scroll to resize it, and use sliders for position, scale, swing speed and rotation, for every item (Global) or just the one in your hand (This Item), with undo and redo. New: an Item Only swing style (the item swings, not your arm), switching an item to its vanilla texture instead of Hypixel's, and the Held Item Update Fix (on by default: the item doesn't dip when Hypixel updates it, and mining isn't interrupted). Your old settings and items saved with /sb helditem save are copied over; check them in the editor, since positions are measured differently. Swing X/Y/Z, Swing Rotation, No Swing Animation and No Re-equip Animation are gone.
+- /s2 search is now a port of SkyOcean's item search (MIT): category buttons (All, Storage, Island, Museum, Inventory), sorting by Amount, Price or Rarity (up or down), a $ button with the total value of what's listed, and copies of the same item shown as one entry with the total count. The tooltip lists where each copy is. Clicking an item opens its Ender Chest page or backpack, warps to your island and draws a rainbow box around its chest, or warps to the museum; the item then stays highlighted in menus for a minute (it used to flash for one frame).
+- /s2 search remembers the chests on your private island: open a chest and its items are saved (per profile, like your storage). Breaking the chest or turning it into a Minion Chest forgets it.
+- /s2 search remembers what's in your museum: browse the museum's category menus in the Hub and the items kept there are saved. Items shown as not donated or taken out are forgotten. Museum items don't count for the craft helper or the portfolio.
+- Nicknames now live on shadowisabot.com (run /website in the Sky2M Discord to get a login code) and show for your own name and everyone else's. Once your account is linked there, /s2 nick sets it in game too: /s2 nick <name>, /s2 nick <colour> <name>, /s2 nick rainbow <name>, /s2 nick #hex <name> or /s2 nick off. Without a linked account /s2 nick doesn't show. /s2 togglenick, the nickname editor and the Nickname settings are removed, and everyone's nickname always shows.
+- /s2 discord: the link to the Sky2M Discord.
+- /s2 casino: blackjack with play money. Everyone starts with $100; bet, then Hit, Stand or Double (blackjack pays 3:2, the dealer stands on 17). If you go broke you get $100 again a day later. A leaderboard beside the table ranks everyone with the mod by most money. The SBC chat server holds the balances and deals the cards, and your Minecraft login is checked, so nobody can edit their money.
+- Held Item Model is replaced by a port of Skysoft's Held Item (Misc > Held Item, or /s2 helditem): an editor over the game where you drag the item to move it (right-drag for depth), scroll to resize it, and use sliders for position, scale, swing speed and rotation, for every item (Global) or just the one in your hand (This Item), with undo and redo. New: an Item Only swing style (the item swings, not your arm), switching an item to its vanilla texture instead of Hypixel's, and the Held Item Update Fix (on by default: the item doesn't dip when Hypixel updates it, and mining isn't interrupted). Your old settings and items saved with /s2 helditem save are copied over; check them in the editor, since positions are measured differently. Swing X/Y/Z, Swing Rotation, No Swing Animation and No Re-equip Animation are gone.
 - SBC chat rank announcements: when someone is given a rank prefix or has it removed, SBC chat shows "Steve Has Been Granted [VIP] By Console" (or "Steve's [VIP] Prefix Has Been Removed By Console") with the prefix in its exact colour. Hidden when SBC chat is hidden.
 
 ### Fixed
@@ -336,30 +382,30 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Storage overlay: the mouse wheel didn't scroll while over an item. Block Scrolling on Items is now off by default, and Tooltip Scroll no longer takes the wheel from it.
 - Storage overlay: the scroll bar keeps the knob under the mouse when clicked or dragged, and reaches the top and bottom.
 - Tooltip Scroll took the mouse wheel whenever any tooltip showed (settings, lists, menus). It now only moves tooltips too big to fit on screen.
-- /sb search did nothing off Hypixel, and could be closed again by the chat closing.
+- /s2 search did nothing off Hypixel, and could be closed again by the chat closing.
 
-## 1.3.2.5 — 2026-09-27
+## SkyBalls 1.3.2.5 — 2026-09-27
 
 ### Added
-- Hypixel item emojis in every chat (all, party, guild, private and SkyBalls chat; everyone with SkyBalls sees the icons), like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond: (any SkyBlock item id in lower case) show the item's real SkyBlock icon; hover it for the name. The icons are downloaded once from Coflnet and kept in config/skyballs/item-icons, so they don't need Hypixel's resource pack (without it the Summoning Eye is just paper). Chat > Hypixel Item Emojis.
+- Hypixel item emojis in every chat (all, party, guild, private and Sky2M chat; everyone with Sky2M sees the icons), like the SkyHelper Discord: :summoning_eye:, :hyperion:, :enchanted_diamond: (any SkyBlock item id in lower case) show the item's real SkyBlock icon; hover it for the name. The icons are downloaded once from Coflnet and kept in config/sky2m/item-icons, so they don't need Hypixel's resource pack (without it the Summoning Eye is just paper). Chat > Hypixel Item Emojis.
 - Emoji autocomplete shows each emoji's picture next to its name, includes the item emojis, and can be turned off (Chat > Emoji Autocomplete).
 
 ### Fixed
 - Typing ":" in chat lagged: it listed every emoji. The list is now up to 50 matches (names starting with what you typed first).
 - Storage overlay Dark Mode (Misc > Storage Overlay Settings): the backgrounds, slots and scroll bar are drawn dark, with a Dark Mode Shade to pick how dark.
 
-## 1.3.2 — 2026-09-27
+## SkyBalls 1.3.2 — 2026-09-27
 
 ### Added
-- /sb opens where you left it: the same category, scroll position and open sections, until you restart the game.
+- /s2 opens where you left it: the same category, scroll position and open sections, until you restart the game.
 - RNG HUD colours: Farming > Farming RNG HUD has Drop Colour, Pet Rarity Colours and Price Colour; Misc > Item Notification has Use Item Rarity Colour and Name Colour.
 
 ### Changed
 - Update notifications are checked every minute while you play (was every 10 minutes), so a new release shows in chat within a minute. Checks that find nothing new don't count toward GitHub's limit.
 - Current Chat Display ("Chat: All") is drawn under the command and emoji suggestions instead of over them.
-- Storage overlay is now Firmament's, ported from Firmament (GPL-3.0-or-later, textures CC-BY-4.0): one scrollable view of every Ender Chest page and backpack with your inventory, a search box (matching pages only, results highlighted) and "Edit Pages" for the normal Storage menu. The open page is the real menu, so clicking, dragging, shift-click and tooltips work as normal, and it stays open while Hypixel switches pages (no mouse jump). New settings under Misc > Storage Overlay Settings (columns, height, scroll, outline, highlight colours). New commands: /sb storage, /sb storageoverview, /sb storagename enderchest|backpack <page> [name]. Pages saved before still show.
-- SkyBalls is now licensed GPL-3.0-or-later (needed for the Firmament code).
-- Messages from Discord in SkyBalls chat start with the green [SB] like the rest, then a blue [Discord]: "[SB] [Discord] [name]: message".
+- Storage overlay is now Firmament's, ported from Firmament (GPL-3.0-or-later, textures CC-BY-4.0): one scrollable view of every Ender Chest page and backpack with your inventory, a search box (matching pages only, results highlighted) and "Edit Pages" for the normal Storage menu. The open page is the real menu, so clicking, dragging, shift-click and tooltips work as normal, and it stays open while Hypixel switches pages (no mouse jump). New settings under Misc > Storage Overlay Settings (columns, height, scroll, outline, highlight colours). New commands: /s2 storage, /s2 storageoverview, /s2 storagename enderchest|backpack <page> [name]. Pages saved before still show.
+- Sky2M is now licensed GPL-3.0-or-later (needed for the Firmament code).
+- Messages from Discord in Sky2M chat start with the green [S2M] like the rest, then a blue [Discord]: "[S2M] [Discord] [name]: message".
 
 ### Fixed
 - Item Notification stopped counting (and hid) with a personal compactor putting items into your sacks, with Check Sacks off: each new enchanted item that came and went within 10 seconds was taken for the same one. Only a quick swap (under half a second) is ignored now, once.
@@ -367,14 +413,14 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Collection Tracker went up by millions when you supercrafted (Enchanted Gold Blocks into your sacks were counted, the Gold Ingots taken out weren't). Each "[Sacks]" message is now counted per collection with what went in and what came out together.
 - Collection Tracker counted items taken out of your sacks as gathered: they landed in your inventory and looked like a pickup. When the "[Sacks]" message shows them coming out, that pickup is taken back.
 
-## 1.3.1 — 2026-09-27
+## SkyBalls 1.3.1 — 2026-09-27
 
 ### Fixed
 - Item Notification (and the Collection Tracker) counted items after you opened and closed a menu such as your sacks: Hypixel resends your inventory a moment after a menu closes. They now wait a second after a menu closes or you change area, and items taken out of your sacks (the Sacks menu or /gfs) don't count.
 - Putting items back into your sacks showed them as a drop (twice) and added them to the Collection Tracker again (a stack too many). Hypixel puts the same list on several parts of the "[Sacks]" message and it was read for each; each list is now read once, what the message takes out is subtracted, and items that just left your inventory aren't a drop.
 - Storage overlay: moving an item could throw it on the ground (releasing the mouse reached the hidden menu, which saw a click outside it). Switching pages no longer jumps the mouse to the middle of the screen and back.
 
-## 1.3.0 — 2026-09-27
+## SkyBalls 1.3.0 — 2026-09-27
 
 ### Added
 - Hypixel Button (Misc, on by default): a Hypixel button on the title screen, next to Multiplayer, that joins play.hypixel.net in one click.
@@ -394,11 +440,11 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Simon Says solver didn't work: it waited for the floor and Skyblocker's boss-room detection; it now works anywhere in a dungeon (it only reacts to the Simon Says blocks).
 - Copy Chat could copy a line a couple of rows above the one under the mouse; it now uses where chat really drew each line.
 - Copy Chat's key set to right click (or another mouse button) did nothing.
-- /sb search, the Storage Search key and saving storage pages did nothing when your server address had a port (play.hypixel.net:25565) or until Hypixel said your Profile ID again; the profile is now remembered and any Hypixel address works. Pages saved before still show.
+- /s2 search, the Storage Search key and saving storage pages did nothing when your server address had a port (play.hypixel.net:25565) or until Hypixel said your Profile ID again; the profile is now remembered and any Hypixel address works. Pages saved before still show.
 - Collection Tracker counted too much: items picked up and then moved into your sacks were counted again from the "[Sacks]" message, and a compactor adding the enchanted item a tick before removing the 160 base items counted 160 each time. Gains now count once they've stayed for half a second, and a sack message only adds what didn't just come out of your inventory.
 - Item Notification could show the same drop twice (Hypixel swapping the stack out and back, or the drop also going into your sacks).
 
-## 1.2.9 — 2026-09-26
+## SkyBalls 1.2.9 — 2026-09-26
 
 ### Added
 - Terminals > Hide Menu (on by default): while a terminal is being solved, only the solver shows. The chest, its items, your inventory and item tooltips are hidden, like other terminal solvers. The Odin style shows the terminal's name above the solver, and Melody keeps its lanes and buttons.
@@ -411,33 +457,33 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 
 ### Changed
 - Click in order! colours are now Numbers Next / Second / Third under Terminals (green, yellow and red by default).
-- The 1 in 10,000 jumpscare can't happen in Kuudra runs either (it already couldn't in dungeons), or while SkyBalls hasn't read your location yet.
+- The 1 in 10,000 jumpscare can't happen in Kuudra runs either (it already couldn't in dungeons), or while Sky2M hasn't read your location yet.
 - Copy Chat has one setting, Copy Message Key: any key or mouse button (right click by default) copies the message under the mouse. Right-Click To Copy, Shift+right-click and Copy Line Key are gone.
 - The "GOLD GOLD GOLD" sound is louder again.
 
 ### Fixed
-- The dungeon floor still showed as "-" for some players. SkyBalls now also reads the sidebar straight from the scoreboard's teams (like NoammAddons), so it's found even when a scoreboard mod hides or replaces the sidebar, and doesn't take the Dungeon Hub's queue line for the floor. The backup that reads "[MVP++] Name entered The Catacombs, Floor VII!" now matches the message (it has lines of dashes around it) and is kept on the way into the run, and the Floor 7 bosses talking also set floor 7. This fixes F7/M7 positional messages, the Score Display, Platform Highlight and the device solvers when the sidebar can't be read.
-- Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. SkyBalls now applies them last. If it still moves, turn off the other mod's animations.
+- The dungeon floor still showed as "-" for some players. Sky2M now also reads the sidebar straight from the scoreboard's teams (like NoammAddons), so it's found even when a scoreboard mod hides or replaces the sidebar, and doesn't take the Dungeon Hub's queue line for the floor. The backup that reads "[MVP++] Name entered The Catacombs, Floor VII!" now matches the message (it has lines of dashes around it) and is kept on the way into the run, and the Floor 7 bosses talking also set floor 7. This fixes F7/M7 positional messages, the Score Display, Platform Highlight and the device solvers when the sidebar can't be read.
+- Held Item Model: Swing X/Y/Z and Swing Speed were skipped for players who also run another mod with swing animations (NoammAddons, Odin, ...), so the item still moved across the screen. Sky2M now applies them last. If it still moves, turn off the other mod's animations.
 - Arrow Align misclick protection: when more than one layout fitted, frames that were already right could still be clicked. Only the first layout that fits is used now.
-- Nicknames above heads (yours and other SkyBalls users') kept the plain name with no colour or font. The nick is now put into the player name tag right where it's made, like NoammAddons does for its badges, and also into every entity's name tag, so it shows however the tag was made (vanilla or another mod). A nickname that contains the real username as a word is no longer replaced twice, and text before a skipped partial match (like "2m3sx") is no longer dropped from the name.
+- Nicknames above heads (yours and other Sky2M users') kept the plain name with no colour or font. The nick is now put into the player name tag right where it's made, like NoammAddons does for its badges, and also into every entity's name tag, so it shows however the tag was made (vanilla or another mod). A nickname that contains the real username as a word is no longer replaced twice, and text before a skipped partial match (like "2m3sx") is no longer dropped from the name.
 - Platform Highlight (3x3) didn't show: it needed the floor from the sidebar and could be switched off by a moment where the tab list area wasn't read. It now uses the F7/M7 detection from chat and the boss, turns on from any Goldor line (or Storm's death) in case the first was missed, and Healer Only uses the Your Class setting.
 - Zealot Tracker sometimes counted one Summoning Eye twice, and pasting "RARE DROP! Summoning Eye" into chat counted as a drop. Only Hypixel's own drop line counts now: it has to start the message and "RARE DROP!" has to be bold like Hypixel writes it, which players can't do. The same line arriving twice at once counts once. The tracker also saves when the game closes.
 - Copy Chat sometimes copied the message above the one you clicked. It now finds the line under the mouse with the same maths as vanilla chat.
 - Quiz solver didn't highlight the answer when it couldn't find the room's corner block; it now uses the dungeon room matching to place the answers.
 
-## 1.2.8.5 — 2026-09-26
+## SkyBalls 1.2.8.5 — 2026-09-26
 
 ### Changed
 - Click in order! terminal: the next three numbers are green, yellow and red (they were three greens that were hard to tell apart), with the Odin and NoammAddons solvers. Settings still on the old greens are updated; Numbers 1-3 can still be changed.
 - Dungeon Case Opening: the "GOLD GOLD GOLD" sound is much louder (about 4x), and plays as soon as the spin starts when it is going to land on a gold (Legendary or better) item, instead of when it stops.
 
 ### Fixed
-- The dungeon floor wasn't recognised (`/sb debug` showed "Dungeon floor: -"), so F7/M7 positional messages (Py Stand Here, Mage Stop, SS, ...) didn't show, and anything else that needs the floor (Score Display, dungeon map, device solvers) could break. SkyBalls now finds the SkyBlock sidebar with any scoreboard mod, even one that puts its own sidebar in its place, reads the floor even when one of Hypixel's hidden padding characters sits inside "(F7)", and falls back to the "... entered The Catacombs, Floor VII!" message when a run starts. `/sb debug` also shows the sidebar's title and location line.
-- Terminal Solver: terminals could open as the normal menu with no solver, because the solver waited for SkyBalls to know you were in a dungeon. It now starts for any terminal on Hypixel (their names only exist in F7/M7).
+- The dungeon floor wasn't recognised (`/s2 debug` showed "Dungeon floor: -"), so F7/M7 positional messages (Py Stand Here, Mage Stop, SS, ...) didn't show, and anything else that needs the floor (Score Display, dungeon map, device solvers) could break. Sky2M now finds the SkyBlock sidebar with any scoreboard mod, even one that puts its own sidebar in its place, reads the floor even when one of Hypixel's hidden padding characters sits inside "(F7)", and falls back to the "... entered The Catacombs, Floor VII!" message when a run starts. `/s2 debug` also shows the sidebar's title and location line.
+- Terminal Solver: terminals could open as the normal menu with no solver, because the solver waited for Sky2M to know you were in a dungeon. It now starts for any terminal on Hypixel (their names only exist in F7/M7).
 - Melody (Odin style): with the menu's items hidden, only the lit slots were drawn, so the board and buttons couldn't be seen. Like Odin's Melody GUI, every lane and button now has a background cell (Melody Background colour), with the column, pointer and button to press lit on top.
 - Arrow Align Block Wrong Clicks still didn't block anything: the solver only ran once the dungeon floor was known. It now runs next to the Arrow Align board in any dungeon, and wrong clicks are stopped before they're sent, the same way as Odin.
 
-## 1.2.8 — 2026-09-26
+## SkyBalls 1.2.8 — 2026-09-26
 
 ### Added
 - Dungeon Case Opening at Croesus (Dungeons > Case Opening > Croesus, on by default): the chests you open at Croesus spin too, with that run's floor drops in the reel, like SkyOcean. Hide Contents In Croesus (on by default) hides what's in those chests in the run's menu so the spin isn't spoiled.
@@ -451,17 +497,17 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Terminal Solver: the vanilla terminal showed through. With NoammAddons the real menu isn't drawn behind the panel any more; with Odin the terminal's own items and their tooltips are hidden and only the solution shows, like Odin.
 - Arrow Align Block Wrong Clicks: each click on a frame was counted twice, so the last click a frame needed could be blocked as wrong. Clicks are counted once, and frames that are already right can't be clicked (hold shift to click anyway), like Odin.
 
-## 1.2.7 — 2026-09-26
+## SkyBalls 1.2.7 — 2026-09-26
 
 ### Fixed
-- With a scoreboard mod like CustomScoreboard, SkyBalls couldn't read the sidebar, so the dungeon floor and time were unknown: the Score Display stayed at 0, the NoammAddons map drew rooms at the wrong size and place, and F7/M7 positional messages didn't show. It now finds the SkyBlock sidebar either way.
+- With a scoreboard mod like CustomScoreboard, Sky2M couldn't read the sidebar, so the dungeon floor and time were unknown: the Score Display stayed at 0, the NoammAddons map drew rooms at the wrong size and place, and F7/M7 positional messages didn't show. It now finds the SkyBlock sidebar either way.
 
-## 1.2.6 — 2026-09-26
+## SkyBalls 1.2.6 — 2026-09-26
 
 ### Added
 - Join commands (Misc > Join Commands): `/f0` (Entrance) to `/f7` and `/m1` to `/m7` join that Catacombs floor, and `/t1` to `/t5` join Kuudra (Basic, Hot, Burning, Fiery, Infernal).
 - Held Item Model: Swing X, Swing Y and Swing Z. Set them to 0 and the item still rotates when you swing but doesn't move across the screen, like NoammAddons.
-- Screenshot Sharing (Misc): after F2, the "Saved screenshot as ..." message has an [Upload] button. It uploads the picture to Litterbox (or Catbox) and gives you the link with [Send in /sbc] and [Copy Link]; the link previews when hovered.
+- Screenshot Sharing (Misc): after F2, the "Saved screenshot as ..." message has an [Upload] button. It uploads the picture to Litterbox (or Catbox) and gives you the link with [Send in /s2c] and [Copy Link]; the link previews when hovered.
 
 ### Changed
 - Positional messages: the built-in spots (Py Stand Here, Mage Stop, Arch/Healer/Tank Stand Here, SS) show on F7 and M7 while Built-in Waypoints is on, instead of only for your class in the right boss phase.
@@ -472,15 +518,15 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Teleport maze solver could send you round in a loop back to the pad you came from; the pad you leave now counts as used, like Odin's solver.
 - The game could crash when entering a dungeon (the dungeon map crashed while logging a player it couldn't match). The same hidden problem in waypoint groups is fixed too.
 - Storage Overlay: opening /ec showed the real Ender Chest page underneath the overlay; now only the overlay shows.
-- Messages from the SkyBalls chat bot showed as "[SkyJew]: [SJ] ..."; they show as SkyBalls and [SB].
+- Messages from the Sky2M chat bot showed as "[SkyJew]: [SJ] ..."; they show as Sky2M and [S2M].
 - Hovering an ImgBB link in chat (like Skysoft's "Screenshot uploaded: https://ibb.co/...") showed no preview. Links to image pages on ImgBB, Imgur, Gyazo, Lightshot and Postimages now preview the picture on the page.
-- Update notifications check the renamed SkyBalls GitHub page (they stopped arriving after the rename).
+- Update notifications check the renamed Sky2M GitHub page (they stopped arriving after the rename).
 
-## 1.2.5 — 2026-09-26
+## SkyBalls 1.2.5 — 2026-09-26
 
 ### Changed
-- SkyJew is now **SkyBalls**: `/sb`, `/skyballs`, `/sbc` for SkyBalls chat, and [SB] in chat (the old `/sj` commands are gone). The [SB] in SkyBalls chat is dark green, like Hypixel's "Guild >". Your settings carry over automatically. **Delete the old SkyJew jar** when you install this one, or both will load.
-- Ranks ([OWNER], [TESTER], ...) only show in SkyBalls chat, and Chat > Custom Chat > Show Ranks turns them off completely. Rank changes made on the website show up right away when the server announces them.
+- SkyJew is now **Sky2M**: `/s2`, `/sky2m`, `/s2c` for Sky2M chat, and [S2M] in chat (the old `/s2` commands are gone). The [S2M] in Sky2M chat is dark green, like Hypixel's "Guild >". Your settings carry over automatically. **Delete the old SkyJew jar** when you install this one, or both will load.
+- Ranks ([OWNER], [TESTER], ...) only show in Sky2M chat, and Chat > Custom Chat > Show Ranks turns them off completely. Rank changes made on the website show up right away when the server announces them.
 - The Collection Tracker is just two lines now: "Collection: 12,345,678" (with the item's icon), and the next player above you on the Elite leaderboard with how far ahead of you they are.
 - The Pickaxe Ability HUD reads Hypixel's Pickaxe Ability tab list widget, like SkyHanni, instead of guessing from chat. Turn that widget on in Hypixel's tab list settings.
 - The Enchanting Runes nickname font is made of letters now (the Unicode enchanting table alphabet), so it shows in every tab list, including other mods'.
@@ -488,44 +534,44 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Chat image previews work with Discord, Imgur and Gyazo links, show "Loading image..." while downloading, and sit above the link's tooltip.
 
 ### Added
-- `/sb bugreport`, `/sb suggest` and `/sb feedback`: send a bug report, suggestion or feedback (a title and a description) to the SkyBalls team.
+- `/s2 bugreport`, `/s2 suggest` and `/s2 feedback`: send a bug report, suggestion or feedback (a title and a description) to the Sky2M team.
 - Dungeon Case Opening (Dungeons > Case Opening, off by default): Obsidian and Bedrock chests open like a CS2 case (SkyOcean's Dungeon Gambling) and stop on the best item. Legendary or better plays "GOLD GOLD GOLD".
-- Item Notification (Misc > Item Notification): SkyOcean's Sack Notification as a HUD. When an item on your list goes into your sacks or inventory it shows like the farming RNG HUD ("5x Enchanted Diamond 8.5k"). The list is edited in its own window with item name suggestions (EDIT, or `/sb itemnotify`).
+- Item Notification (Misc > Item Notification): SkyOcean's Sack Notification as a HUD. When an item on your list goes into your sacks or inventory it shows like the farming RNG HUD ("5x Enchanted Diamond 8.5k"). The list is edited in its own window with item name suggestions (EDIT, or `/s2 itemnotify`).
 - Storage Overlay (Misc, on by default): every Ender Chest page and backpack at once in /storage and in any page, like Firmament. Click a page's name to open it; the open page and your inventory work as normal.
 - Slot Locking & Binding (Misc): press L over a slot to lock it (it can't be clicked, moved or dropped), and B to bind a hotbar slot to an inventory slot so a shift-click swaps them (Odin's Slot Binds).
 - Copy Chat (Chat > Copy Chat): right-click a chat message to copy it, Shift+right-click for one line, with a preview (NoFrills' Chat Tweaks). Rank prefixes aren't copied.
-- `/sb toggle <setting>` turns any setting on or off, `/sb togglenick <player>` hides or shows someone's nickname for you, `/sb who` lists who is online with the mod, and `/sb disableall` (or `/sbdisableall`) turns everything off after you click to confirm.
+- `/s2 toggle <setting>` turns any setting on or off, `/s2 togglenick <player>` hides or shows someone's nickname for you, `/s2 who` lists who is online with the mod, and `/s2 disableall` (or `/s2disableall`) turns everything off after you click to confirm.
 - No Swing Animation (Misc > Held Item Model, off by default), like NoFrills.
-- SB Chat Ping (Chat > Custom Chat, off by default): a ping when someone sends a message in /sbc.
+- S2M Chat Ping (Chat > Custom Chat, off by default): a ping when someone sends a message in /s2c.
 - Farming RNG HUD: Epic and Legendary slug pets from pests, shown in their rarity colour ("1x Legendary Slug Pet") at a set price of 500k (Epic) and 5m (Legendary).
 
 ### Fixed
-- `/sb nick`: picking a preset colour also updates the colour picker and hex box.
+- `/s2 nick`: picking a preset colour also updates the colour picker and hex box.
 - Calendar dates are also added from the menu's own tooltip, so another mod's tooltip code can't stop them showing.
 - Mouse Reset puts the cursor in the middle of the screen (it went near the top-left at GUI scales above 1).
-- `/sb log` said the changelog wasn't available; it shows it again.
+- `/s2 log` said the changelog wasn't available; it shows it again.
 - No Swing Animation didn't do anything; it works now.
 
-## 1.2.4 — 2026-09-26
+## SkyBalls 1.2.4 — 2026-09-26
 
 ### Added
 - Update notifications: when a newer SkyJew is out you get "New SkyJew Mod Version 1.2.4 --> 1.2.6" in chat (always the newest one), with a Download link (Misc > Update Notifications).
-- Auto Welcome (Misc > Auto Welcome): put players on your list and SkyJew welcomes them when they come online, in guild chat or with /msg, with your own message ({name} is their name). It can also welcome new guild members. Manage the list with `/sj welcome add|remove <name>` and `/sj welcome list`.
+- Auto Welcome (Misc > Auto Welcome): put players on your list and SkyJew welcomes them when they come online, in guild chat or with /msg, with your own message ({name} is their name). It can also welcome new guild members. Manage the list with `/s2 welcome add|remove <name>` and `/s2 welcome list`.
 
 ### Changed
 - SkyJew's chat messages start with [SJ] instead of [SkyJew].
 - SkyJew ranks ([OWNER], [TESTER] and the ones set on tastyfish.org) now show in front of those players' names in every chat, not only /sjc (Chat > Custom Chat > Ranks In All Chat).
-- The Collection Tracker HUD copies SkyHanni's Crop Milestones display, for any collection: "Collection Milestones", the item's icon with your collection tier ("Cobblestone 11➜12"), your progress in that tier ("12,345/20,000"), the time to the next tier, Items/Hour and the percentage, then your Elite rank and how much you need to pass the next player. `/sj trackcollection <item> [goal]` pins one collection with an optional goal (e.g. `/sj trackcollection wheat 10m`), like SkyHanni's /shtrackcollection; `/sj trackcollection` follows what you gather again and `/sj trackcollection stop` hides it.
+- The Collection Tracker HUD copies SkyHanni's Crop Milestones display, for any collection: "Collection Milestones", the item's icon with your collection tier ("Cobblestone 11➜12"), your progress in that tier ("12,345/20,000"), the time to the next tier, Items/Hour and the percentage, then your Elite rank and how much you need to pass the next player. `/s2 trackcollection <item> [goal]` pins one collection with an optional goal (e.g. `/s2 trackcollection wheat 10m`), like SkyHanni's /shtrackcollection; `/s2 trackcollection` follows what you gather again and `/s2 trackcollection stop` hides it.
 - Ranked players can use their own name as a nickname.
 
 ### Fixed
-- `/sj nick` Font button: the ◀ arrow went forward too; it now goes back.
+- `/s2 nick` Font button: the ◀ arrow went forward too; it now goes back.
 - The Enchanting Runes and Illager Runes nickname fonts showed broken characters for anything they don't have (numbers and symbols in the enchanting one); those now use the normal font.
 - Rune prices: the lowest BIN list only has runes someone is selling right now, so most rune levels had no price. The price tooltip and Portfolio now fall back to the 3 day average and then to the last price seen (with how long ago), and Portfolio knows the names of runes that are in the 3 day average too.
 - Nicknames (with their font) now show in tab lists drawn by other mods (SkyHanni, Skyblocker) too.
-- The `/sj nick` menu couldn't be closed: Esc and Done sent you back to the chat box, or did nothing when the name wasn't allowed. Esc now always closes (a name that isn't allowed just isn't saved) and Done closes once the name is allowed.
+- The `/s2 nick` menu couldn't be closed: Esc and Done sent you back to the chat box, or did nothing when the name wasn't allowed. Esc now always closes (a name that isn't allowed just isn't saved) and Done closes once the name is allowed.
 
-## 1.2.3 — 2026-09-26
+## SkyBalls 1.2.3 — 2026-09-26
 
 ### Changed
 - Dungeon map: new NoammAddons (Legit) style, now the default. Rooms are redrawn in clean colours with checkmarks, room names or secret counts, bordered player heads with optional names (Holding Leap / Always), and optional extra info under the map. Every colour and size can be changed. The old look is still there as Map Style: Skyblocker.
@@ -534,33 +580,33 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Devices: Odin's Simon Says, Arrow Align and Sharp Shooter (i4) solvers. Simon Says and Arrow Align block wrong clicks (hold Shift to click anyway).
 - Blood Camp now follows Odin: a head is only tracked once the Watcher throws it, so the heads hanging on the walls no longer throw off the landing boxes. Adds a position box moved ahead by your ping, box colours and size, offset, spawn tick, interpolation and the Watcher bar (blood mobs left in the boss bar).
 - Goldor tick timer counts 50 ticks by default (adjustable).
-- `/sj nick` has a new screen laid out like `/sj custom`: name and toggles, colour swatches with Rainbow and a custom colour picker, and live TAB / chat / nametag previews.
-- `/sj recipe` only uses the Recipe HUD now; the panel next to the inventory is gone.
+- `/s2 nick` has a new screen laid out like `/s2 custom`: name and toggles, colour swatches with Rainbow and a custom colour picker, and live TAB / chat / nametag previews.
+- `/s2 recipe` only uses the Recipe HUD now; the panel next to the inventory is gone.
 - HUDs keep their place relative to the screen when you change GUI scale or window size, instead of piling up at an edge. Storage search fits on the screen at high GUI scale.
 - All boxes, lines and text in the world are drawn every frame, so they follow moving mobs and your camera smoothly.
 - Last Breath RELEASE plays a bell by default (Bell, Note Block Bell, Ding, XP Orb or None) at full volume.
 - Compact chat stacks repeats onto the newest message at the bottom instead of the old one higher up.
 - Price tooltips: items sold on the bazaar show the bazaar insta-buy and insta-sell price where the lowest BIN and 3 day average would be (for the whole sack in the Sacks menu).
 - The settings title shows the installed version (e.g. SkyJew Mod v1.2.3).
-- `/sj log` opens a changelog window instead of printing in chat: arrows (or the left and right keys) switch versions, and the list scrolls.
+- `/s2 log` opens a changelog window instead of printing in chat: arrows (or the left and right keys) switch versions, and the list scrolls.
 - Launchers show the mod as "SkyJew by 2m3s", with 2m3s's head as its icon.
 
 ### Added
-- Dungeon routes folder: put any route file in `config/skyjew/dungeon route/` (Stella / SkyJew, SecretRoutes or Dungeon Rooms Mod style). Rooms without a route there use Stella's routes. Changes load automatically; `/sj route reload` and `/sj route folder` too.
+- Dungeon routes folder: put any route file in `config/skyjew/dungeon route/` (Stella / SkyJew, SecretRoutes or Dungeon Rooms Mod style). Rooms without a route there use Stella's routes. Changes load automatically; `/s2 route reload` and `/s2 route folder` too.
 - Water Board: Skyblocker's water path and lever previews, next to Odin's solver.
 - SS skip helper: counts your Simon Says start button clicks above the button and blocks clicks past the limit (default 4).
 - Starred mob highlight colour, fill and line width.
 - Scrollable tooltips: scroll to move long tooltips (Shift for sideways).
 - Toggle Sprint, with a key in Controls and a small HUD.
 - "Your Class" option for the built-in positional waypoints, if your class isn't detected.
-- `/sj waypoints`: Skyblocker's waypoint editor, with groups per island, ordered waypoints (`/sj waypoints ordered next|previous|reset`) and Skyblocker / Skytils / Coleweight import and export.
-- `/sj log`: the changes in the version you have installed, in game.
-- Crystal Hollows waypoints, like Skyblocker: places you find are marked (Mines of Divan, Jungle Temple, Goblin Queen's Den, ...), coordinates in chat become waypoints, and `/sj crystalwaypoints add|share|remove|clear`.
+- `/s2 waypoints`: Skyblocker's waypoint editor, with groups per island, ordered waypoints (`/s2 waypoints ordered next|previous|reset`) and Skyblocker / Skytils / Coleweight import and export.
+- `/s2 log`: the changes in the version you have installed, in game.
+- Crystal Hollows waypoints, like Skyblocker: places you find are marked (Mines of Divan, Jungle Temple, Goblin Queen's Den, ...), coordinates in chat become waypoints, and `/s2 crystalwaypoints add|share|remove|clear`.
 - Pickaxe ability HUD: cooldown of Mining Speed Boost, Pickobulus and the other abilities, with a ready alert.
 - Warp shortcuts: `/dhub` instead of `/warp dhub`, and the same for every warp in Misc > Warp Shortcut List.
 - Price Paid tooltip, like NoFrills: items you buy on the auction house show what you paid for them.
 - Collection tracker, like SkyHanni's farming display but for every collection: while you mine, farm, forage or fish it shows your collection, what you've gained this session (and per hour) and your rank on the Elite collection leaderboard, with how much you need to pass the next player. Enchanted items from compactors count as the items they're made of (Enchanted Cobblestone = 160 Cobblestone).
-- /sj nick fonts: a Font button in the nickname menu with Bold, Italic, Small Caps, Full Width, Bubble, Script, Fraktur, Double Struck, Monospace, Sans Bold, Minecraft's enchanting and illager runes and Uniform. The nickname filter also sees through look-alike letters now.
+- /s2 nick fonts: a Font button in the nickname menu with Bold, Italic, Small Caps, Full Width, Bubble, Script, Fraktur, Double Struck, Monospace, Sans Bold, Minecraft's enchanting and illager runes and Uniform. The nickname filter also sees through look-alike letters now.
 - Custom Chat > Show SJ Chat: turn off to hide other players' `/sjc` messages.
 - SJ chat rank prefixes, tied to the accounts themselves and managed from the tastyfish.org admin page (the mod checks for changes every 5 minutes). [OWNER] and [TESTER] are built in. Nicknames that copy a ranked player's name or a rank are not allowed.
 - Portfolio: auction house and bazaar prices have their own buttons (AH: Lowest BIN / 3-day avg, BZ: Sell / Buy price), so all four combinations work.
@@ -576,7 +622,7 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Pet display was blank when the server address had a port or wasn't exactly hypixel.net, and when Hypixel put icons around "[Lvl N]".
 - Calendar real-time dates didn't show: calendar menus and dates written in tooltips are matched more loosely.
 - Slayer tracker and boss phase HUDs didn't work: Hypixel's padding emoji in the sidebar broke the matching, and boss nametags are now text displays.
-- Last Breath, Ice Spray, masks, arrows, farming tools and other items renamed with `/sj custom` are still recognised.
+- Last Breath, Ice Spray, masks, arrows, farming tools and other items renamed with `/s2 custom` are still recognised.
 - The 1/10,000 jumpscare no longer happens in dungeons.
 - Storm pad tick timer was one tick short; it now counts down to 0 on the pad tick like Odin (the Goldor timer too).
 - Superpairs solver didn't show the cards you had revealed; they now stay visible on their slots.
@@ -585,23 +631,23 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 ### Removed
 - Farming Profit Tracker (the Skysoft port).
 
-## 1.2.2 — 2026-09-25
+## SkyBalls 1.2.2 — 2026-09-25
 
 ### Added
 - Leap Menu (Dungeons): an Odin-style Spirit Leap menu with one box per teammate. Each class has its own colour (Archer orange, Mage blue, Berserk red, Healer purple, Tank green) and corner, and both can be changed.
 - Blood Camp (Dungeons): Watcher move prediction with a Move Timer HUD and a "Kill Mobs" title, and kill timers that box where each blood mob lands with a countdown until it spawns.
 - Door and key highlight: wither and blood doors are outlined green when your team has the key and red when locked; dropped keys are outlined and announced.
 - Score (Dungeons): 270 and 300 score titles, sounds and chat messages, a separate party-chat toggle and editable message for each (sent as "[SJ] ..."), and a Score Display HUD with score, secrets, crypts, deaths and mimic/prince.
-- Positional messages: `/sj posmsg add here|at|in ...` sends a party message when you reach a spot, like Odin. Built-in waypoints include "Py Stand Here" at 95, 165.5, 94.4 during Storm on floor 7 (Mage only), "Mage Stop" at 34, 169, 65 during Storm (Mage only), "Arch Stand Here" at 102-104, 168, 49 during Storm (Archer only), "Tank Stand Here" at 109, 170, 93 during Storm (Tank only), "Healer Stand Here After Lighting" at 58, 169, 66 during Storm (Healer only), and "SS" during Goldor until Necron (Healer only): the block at 109, 120, 93 is highlighted and standing at 108, 120, 93 sends "At SS" to party chat once. Radius messages draw an Odin-style ring.
-- `/sj route import`: imports routes from your clipboard or a file (Stella / SkyJew format, or SecretRoutes files).
+- Positional messages: `/s2 posmsg add here|at|in ...` sends a party message when you reach a spot, like Odin. Built-in waypoints include "Py Stand Here" at 95, 165.5, 94.4 during Storm on floor 7 (Mage only), "Mage Stop" at 34, 169, 65 during Storm (Mage only), "Arch Stand Here" at 102-104, 168, 49 during Storm (Archer only), "Tank Stand Here" at 109, 170, 93 during Storm (Tank only), "Healer Stand Here After Lighting" at 58, 169, 66 during Storm (Healer only), and "SS" during Goldor until Necron (Healer only): the block at 109, 120, 93 is highlighted and standing at 108, 120, 93 sends "At SS" to party chat once. Radius messages draw an Odin-style ring.
+- `/s2 route import`: imports routes from your clipboard or a file (Stella / SkyJew format, or SecretRoutes files).
 - Last Breath release cue: a sound and RELEASE title once you have charged Last Breath for 5 server ticks (adjustable).
 - Misc > Random: Low Fire (lowers the burning overlay) and Hide Explosions.
 - Platform Highlight (3x3) (Dungeons): one box over the floor 7 3x3 platform (x 53-55, z 113-115) from when Goldor starts, like NoFrills, with Healer Only, style and colour options.
-- Pristine Record (Mining): remembers your highest pristine proc, overall and per gemstone, and alerts on a new PB. `/sj pristine` lists them.
-- Portfolio (`/sj portfolio`): track items you own (e.g. pet skins) with live prices. Quantities are counted from your inventory and every Ender Chest / backpack page you have opened, plus an extra amount you can type. Set a buy price to see profit/loss. Auction and bazaar sales of tracked items can be logged (asking first or automatically), value history is saved every 30 minutes with an in-game graph, and Export CSV writes portfolio.csv, history.csv and sold.csv for Excel.
-- `/sj recipe` now works like SkyOcean's craft helper: the panel next to your inventory has -/+ buttons for the amount (Shift 10, Ctrl 64), and a movable Recipe HUD shows the item and the base ingredients you still need while you play (Misc > Recipe HUD).
+- Pristine Record (Mining): remembers your highest pristine proc, overall and per gemstone, and alerts on a new PB. `/s2 pristine` lists them.
+- Portfolio (`/s2 portfolio`): track items you own (e.g. pet skins) with live prices. Quantities are counted from your inventory and every Ender Chest / backpack page you have opened, plus an extra amount you can type. Set a buy price to see profit/loss. Auction and bazaar sales of tracked items can be logged (asking first or automatically), value history is saved every 30 minutes with an in-game graph, and Export CSV writes portfolio.csv, history.csv and sold.csv for Excel.
+- `/s2 recipe` now works like SkyOcean's craft helper: the panel next to your inventory has -/+ buttons for the amount (Shift 10, Ctrl 64), and a movable Recipe HUD shows the item and the base ingredients you still need while you play (Misc > Recipe HUD).
 - Misc > Player Size: make yourself, other players, or both smaller or bigger (client side), like Odin.
-- Misc > Held Item Model: move, rotate and scale the item in your hand and change swing speed, like Skysoft; `/sj helditem save` stores settings for one item.
+- Misc > Held Item Model: move, rotate and scale the item in your hand and change swing speed, like Skysoft; `/s2 helditem save` stores settings for one item.
 
 ### Changed
 - Splits now work like Odin's: Blood Open, Blood Clear, Portal Entry, each boss phase and Total, with Boss Entry, tick times, per-floor personal bests and a "took" message after each split.
@@ -618,25 +664,25 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - The dungeon floor is read correctly from the sidebar ("Floor pattern doesn't match").
 - Beacon beams from mods built for Minecraft 26.1 (such as Odin's quiz and terminal beams) no longer show the missing texture.
 - The "Kills Since Rare Drop" setting was not saved.
-- Storage search (`/sj search`) kept one storage for every profile, so your ironman showed your main profile's items. Each SkyBlock profile now has its own storage (reopen your Ender Chest and backpacks once per profile).
+- Storage search (`/s2 search`) kept one storage for every profile, so your ironman showed your main profile's items. Each SkyBlock profile now has its own storage (reopen your Ender Chest and backpacks once per profile).
 
-## 1.2.1 — 2026-09-25
+## SkyBalls 1.2.1 — 2026-09-25
 
 ### Fixed
 - The Zealot Tracker could count zealots other players killed right next to you. A kill now only counts when you also get the Combat XP for it.
 - The Item Price Tooltip didn't show NPC sell prices. The lines are now in the order NPC Sell Price, Lowest BIN Price, 3 Day Avg. Price, and the settings are in the same order.
 
-## 1.2 — 2026-09-25
+## SkyBalls 1.2 — 2026-09-25
 
 ### Added
-- Commands are no longer case-sensitive: `/SJ GUI` works the same as `/sj gui`.
+- Commands are no longer case-sensitive: `/SJ GUI` works the same as `/s2 gui`.
 - Item Price Tooltip (Misc): 3 day average price, lowest BIN and NPC sell price on SkyBlock items, like Skyblocker.
 - Current chat display: shows which chat you're typing in (All, Party, Guild, Officer, Co-op, a private conversation or SkyJew chat) above the chat box, like SkyHanni.
 - Ultrasequencer order numbers: every slot shows its place in the order, with the next one in yellow.
 
 ### Changed
 - The zealot counter is now a Zealot Tracker in the style of SkyHanni's trackers: kills, Summoning Eyes and kills since your last eye. Click Total / This Session while your inventory is open to switch. Only your own kills count, including Hyperion multi-kills.
-- HUD elements no longer have a background by default. Right-click any HUD in `/sj gui` to turn its background on.
+- HUD elements no longer have a background by default. Right-click any HUD in `/s2 gui` to turn its background on.
 - In every settings section, dropdowns are now listed above the single toggles.
 - The Enchanting tab has moved into Misc as the Experimental Table section. Your settings carry over.
 - Settings now save as soon as you change them, not only when the settings screen closes.
@@ -655,16 +701,16 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - The Chronomatron solver didn't highlight anything.
 - Calendar real-time dates didn't show in the calendar menus.
 
-## 1.1 — 2026-09-25
+## SkyBalls 1.1 — 2026-09-25
 
 ### Added
 
 **General**
-- `/sj gui` can now move and resize every HUD element, not just a few. Elements snap to the screen edges and can't be dragged off screen.
-- Right-click any HUD in `/sj gui` to turn its background on or off.
-- `/sj keys` now uses a full port of the CommandKeys mod (keybinds, macros and profiles). Your old command keys are migrated automatically.
-- `/sj custom` has been rebuilt as a port of Skyblocker's item customisation: custom names, dyes (including animated dyes), armor trims and helmet textures.
-- `/sj recipe <item> [amount]` shows a SkyOcean-style craft helper. It shows the full recipe tree and what you still need, counting items in your storage. It also has `/sj recipe amount <n>` and `/sj recipe clear`.
+- `/s2 gui` can now move and resize every HUD element, not just a few. Elements snap to the screen edges and can't be dragged off screen.
+- Right-click any HUD in `/s2 gui` to turn its background on or off.
+- `/s2 keys` now uses a full port of the CommandKeys mod (keybinds, macros and profiles). Your old command keys are migrated automatically.
+- `/s2 custom` has been rebuilt as a port of Skyblocker's item customisation: custom names, dyes (including animated dyes), armor trims and helmet textures.
+- `/s2 recipe <item> [amount]` shows a SkyOcean-style craft helper. It shows the full recipe tree and what you still need, counting items in your storage. It also has `/s2 recipe amount <n>` and `/s2 recipe clear`.
 - Item Rarity is now a dropdown with style and opacity options. It works in your inventory, in containers and on the hotbar.
 - SkyBlock calendar time and a date calculator, ported from Skyblocker.
 - Nicknames now show above players' heads and in the tab list for everyone using SkyJew. Hovering a nickname shows the player's real name. Offensive nicknames are blocked.
@@ -702,15 +748,15 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Splits, tick timers, mask timers and an M7 debuff alert.
 - Highlight starred mobs: draws a box around ✯ mobs, visible through walls.
 - Secret routes in Stella's format. Rooms without your own route use Stella's routes.
-  - `/sj route start` records a route automatically: secrets, levers, etherwarps, superbooms, pearls and mined blocks. `/sj route stop` saves it.
-  - `/sj route next` / `back` step through a route, and `/sj route clear` deletes your route for the current room.
-  - All your routes are saved in one file. `/sj export` writes them to `routes-export.json` and copies them to your clipboard.
+  - `/s2 route start` records a route automatically: secrets, levers, etherwarps, superbooms, pearls and mined blocks. `/s2 route stop` saves it.
+  - `/s2 route next` / `back` step through a route, and `/s2 route clear` deletes your route for the current room.
+  - All your routes are saved in one file. `/s2 export` writes them to `routes-export.json` and copies them to your clipboard.
 
 **Party**
 - Party commands.
 
 ### Changed
-- The notes screen (`/sj notes`) has been rebuilt with a proper multi-line editor and autosave.
+- The notes screen (`/s2 notes`) has been rebuilt with a proper multi-line editor and autosave.
 - The cocoon alert no longer has a mob list text box. It alerts for important mobs only.
 - The commission HUD now looks like Skyblocker's. Its background toggle is now saved.
 
@@ -725,20 +771,20 @@ Everything from the Minecraft 26.3 build (its 1.0 to 1.1 and what came after), s
 - Pet level was shown twice in the pet HUD.
 - Item rarity backgrounds didn't show in the player inventory.
 - Calendar time was wrong.
-- `/sj search` still showed the first page's items on later pages.
+- `/s2 search` still showed the first page's items on later pages.
 - Image link previews in SJ chat stopped showing on hover.
 - Other players' nicknames in the tab list.
 - A crash on start-up when items were created too early.
 - A crash from nicknames being applied repeatedly in the tab list.
 
-## 1 — 2026-09-25
+## SkyBalls 1 — 2026-09-25
 
 First release.
 
 - Farming RNG tracker and HUD.
-- Storage search (`/sj search`).
-- Custom item tools (`/sj custom`).
-- Command keys (`/sj keys`).
-- Notes (`/sj notes`).
-- Main `/sj` GUI.
+- Storage search (`/s2 search`).
+- Custom item tools (`/s2 custom`).
+- Command keys (`/s2 keys`).
+- Notes (`/s2 notes`).
+- Main `/s2` GUI.
 - Version checker.
